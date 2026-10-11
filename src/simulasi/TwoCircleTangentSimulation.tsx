@@ -9,43 +9,44 @@ import {
   Play,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
   X,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { flushSync } from "react-dom";
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./TwoCircleTangentSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi dua lingkaran dan garis singgung persekutuannya.
+/* Simulasi dua lingkaran dan garis singgung persekutuannya — tema slate
+   seperti landing page 1729. Urutan desain: ponsel lanskap → desktop →
+   ponsel potret. Layar penuh: grafik 100% layar, toolbar dan panel pengatur
+   mengambang.
+
    Lingkaran 1: pusat O₁(x₁, y₁), jari-jari r₁. Lingkaran 2: O₂(x₂, y₂), r₂.
    d = jarak kedua pusat.
 
    Garis singgung persekutuan ν·X = c (ν = vektor satuan normal) memenuhi
        ν·O₁ − c = s₁ r₁   dan   ν·O₂ − c = s₂ r₂,   s = ±1
-   - luar  (kedua pusat di sisi yang sama, s₁ = s₂):   ada bila d ≥ |r₁ − r₂|
-   - dalam (pusat di sisi berlawanan,      s₁ = −s₂):  ada bila d ≥ r₁ + r₂
-   Panjang ruas singgung:  luar √(d² − (r₁ − r₂)²),  dalam √(d² − (r₁ + r₂)²).
+   - luar  (s₁ = s₂):  ada bila d ≥ |r₁ − r₂|,  ℓ = √(d² − (r₁ − r₂)²)
+   - dalam (s₁ = −s₂): ada bila d ≥ r₁ + r₂,    ℓ = √(d² − (r₁ + r₂)²)
 
-   Alat bantu belajar (ditambahkan):
-   - Fokus satu garis singgung (Luar 1/2, Dalam 1/2).
-   - Tanda siku-siku (jari-jari ⟂ garis singgung) di titik singgung.
-   - Label panjang ruas singgung ℓ langsung pada grafik.
-   - Mode "Proses": 4 langkah mencari ℓ lewat segitiga siku-siku bantu O₁PO₂.
-       Garis bantu dari O₂ sejajar T₁T₂ memotong O₁T₁ (atau perpanjangannya) di P.
-       Karena T₁T₂O₂P persegi panjang: PO₂ = ℓ, T₁P = r₂,
-       O₁P = |r₁ − r₂| (luar) atau r₁ + r₂ (dalam), dan O₁O₂ = d.
+   Mode "Proses": 4 langkah mencari ℓ lewat segitiga siku-siku bantu O₁PO₂.
+   Garis dari O₂ sejajar T₁T₂ memotong O₁T₁ (atau perpanjangannya) di P.
+   T₁T₂O₂P persegi panjang, jadi PO₂ = ℓ, T₁P = r₂, dan
+   O₁P = |r₁ − r₂| (luar) atau r₁ + r₂ (dalam). */
 
-   Tata letak: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1. */
-
-/* ---------- Tipe ---------- */
+/* ───────── Tipe ───────── */
 
 type Vec = [number, number];
 type Params = {
@@ -60,18 +61,15 @@ type Opts = {
   ext: boolean;
   int: boolean;
   points: boolean;
-  radii: boolean;
+  rightAngle: boolean;
+  lengths: boolean;
   rad: boolean;
   centerline: boolean;
   homothety: boolean;
   extend: boolean;
   fill: boolean;
-  rightAngle: boolean;
-  lengths: boolean;
-  extRadius: boolean;
-  parLine: boolean;
 };
-type PanelTab = "par" | "opt" | "proc" | "res" | "info";
+type Tab = "set" | "proc" | "res";
 /** Garis singgung yang ditampilkan: semua, atau tepat satu. */
 type Focus = "all" | "ext-0" | "ext-1" | "int-0" | "int-1";
 type Kind = "ext" | "int";
@@ -81,7 +79,6 @@ type DataCurve = {
   dataX: number[];
   dataY: number[];
   updateDataArray: () => void;
-  setAttribute: (attributes: Record<string, unknown>) => void;
 };
 /** Titik pusat yang bisa diseret. */
 type DragPoint = {
@@ -91,7 +88,7 @@ type DragPoint = {
   on: (event: string, handler: () => void) => unknown;
 };
 type Tangent = {
-  /** +1 = singgung luar, −1 = singgung dalam (tanda sisi pusat O₂) */
+  /** +1 = singgung luar, −1 = singgung dalam */
   s: 1 | -1;
   nx: number;
   ny: number;
@@ -100,7 +97,7 @@ type Tangent = {
   t2: Vec;
 };
 
-/* ---------- Konstanta ---------- */
+/* ───────── Konstanta ───────── */
 
 /** JXG.COORDS_BY_USER */
 const COORDS_BY_USER = 1;
@@ -112,70 +109,40 @@ const D_CAP = 20;
 /** Toleransi (satuan jarak) untuk menganggap dua lingkaran bersinggungan. */
 const EPS = 0.006;
 const HOME_BOX: [number, number, number, number] = [-14, 10, 14, -10];
-/** Layar kecil atau pendek memakai panel kanan bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
+const STEP_COUNT = 4;
 
 const DEFAULT_PARAMS: Params = { x1: -4, y1: -1, r1: 3, x2: 4, y2: 2, r2: 2 };
 const DEFAULT_OPTS: Opts = {
   ext: true,
   int: true,
   points: true,
-  radii: false,
-  rad: true,
+  rightAngle: true,
+  lengths: true,
+  rad: false,
   centerline: true,
   homothety: false,
   extend: true,
   fill: true,
-  rightAngle: true,
-  lengths: true,
-  extRadius: false,
-  parLine: false,
 };
 
-const COLOR_C1 = "#087f8c";
-const COLOR_C2 = "#6b4e9b";
-const COLOR_EXT = "#2f6bd0";
-const COLOR_INT = "#b23a48";
-const COLOR_GUIDE = "#63727d";
-const COLOR_TOUCH = "#183e54";
-const COLOR_HELP = "#c77700";
+/* Warna grafik: dipakai juga oleh legenda, slider, dan hasil di panel. */
+const color = {
+  c1: "#0d9488",
+  c2: "#7c3aed",
+  ext: "#2563eb",
+  int: "#e11d48",
+  guide: "#94a3b8",
+  touch: "#0f172a",
+  help: "#ca8a04",
+  d: "#475569",
+};
 
-const FOCUS_OPTIONS: {
-  key: Focus;
-  label: string;
-  title: string;
-  color: string;
-}[] = [
-  {
-    key: "all",
-    label: "Semua",
-    title: "Tampilkan semua garis singgung",
-    color: COLOR_TOUCH,
-  },
-  {
-    key: "ext-0",
-    label: "Luar 1",
-    title: "Hanya garis singgung persekutuan luar 1",
-    color: COLOR_EXT,
-  },
-  {
-    key: "ext-1",
-    label: "Luar 2",
-    title: "Hanya garis singgung persekutuan luar 2",
-    color: COLOR_EXT,
-  },
-  {
-    key: "int-0",
-    label: "Dalam 1",
-    title: "Hanya garis singgung persekutuan dalam 1",
-    color: COLOR_INT,
-  },
-  {
-    key: "int-1",
-    label: "Dalam 2",
-    title: "Hanya garis singgung persekutuan dalam 2",
-    color: COLOR_INT,
-  },
+const FOCUS_OPTIONS: { key: Focus; label: string; color: string }[] = [
+  { key: "all", label: "Semua", color: color.touch },
+  { key: "ext-0", label: "Luar 1", color: color.ext },
+  { key: "ext-1", label: "Luar 2", color: color.ext },
+  { key: "int-0", label: "Dalam 1", color: color.int },
+  { key: "int-1", label: "Dalam 2", color: color.int },
 ];
 const FOCUS_NAME: Record<Focus, string> = {
   all: "Semua",
@@ -184,65 +151,44 @@ const FOCUS_NAME: Record<Focus, string> = {
   "int-0": "Dalam 1",
   "int-1": "Dalam 2",
 };
-const STEP_COUNT = 4;
 
-const PRESETS: {
-  label: string;
-  title: string;
-  color: string;
-  params: Params;
-}[] = [
+const PRESETS: { label: string; color: string; params: Params }[] = [
   {
     label: "Terpisah",
-    title: "Saling lepas",
-    color: COLOR_C1,
+    color: color.c1,
     params: { x1: -4, y1: 0, r1: 3, x2: 3.5, y2: 0, r2: 2 },
   },
   {
-    label: "Luar",
-    title: "Bersinggungan luar",
-    color: COLOR_EXT,
+    label: "Singgung luar",
+    color: color.ext,
     params: { x1: -3, y1: 0, r1: 3, x2: 2, y2: 0, r2: 2 },
   },
   {
-    label: "Potong",
-    title: "Berpotongan di dua titik",
-    color: COLOR_C2,
+    label: "Berpotongan",
+    color: color.c2,
     params: { x1: -2, y1: 0, r1: 3, x2: 2, y2: 0, r2: 2.5 },
   },
   {
-    label: "Dalam",
-    title: "Bersinggungan dalam",
-    color: COLOR_INT,
+    label: "Singgung dalam",
+    color: color.int,
     params: { x1: -1, y1: 0, r1: 5, x2: 2, y2: 0, r2: 2 },
   },
 ];
 
-const panelTabs: { tab: PanelTab; label: string }[] = [
-  { tab: "par", label: "Parameter" },
-  { tab: "opt", label: "Tampilan" },
-  { tab: "proc", label: "Proses" },
-  { tab: "res", label: "Hasil" },
-  { tab: "info", label: "Info" },
-];
-
 const optionRows: { key: keyof Opts; label: string }[] = [
-  { key: "ext", label: "Garis singgung persekutuan luar" },
-  { key: "int", label: "Garis singgung persekutuan dalam" },
-  { key: "points", label: "Titik-titik singgung" },
-  { key: "radii", label: "Jari-jari ke titik singgung" },
-  { key: "rightAngle", label: "Tanda siku-siku (jari-jari ⟂ garis singgung)" },
-  { key: "lengths", label: "Label panjang ruas singgung ℓ" },
-  { key: "extRadius", label: "Perpanjang jari-jari melewati titik singgung" },
-  { key: "parLine", label: "Garis lewat O₂ sejajar garis singgung" },
-  { key: "rad", label: "Jari-jari r₁ dan r₂" },
-  { key: "centerline", label: "Garis hubung pusat O₁O₂" },
-  { key: "homothety", label: "Titik potong garis singgung (E dan I)" },
-  { key: "extend", label: "Perpanjang garis singgung" },
-  { key: "fill", label: "Warnai lingkaran" },
+  { key: "ext", label: "Singgung luar" },
+  { key: "int", label: "Singgung dalam" },
+  { key: "points", label: "Titik singgung" },
+  { key: "rightAngle", label: "Siku-siku" },
+  { key: "lengths", label: "Panjang ℓ" },
+  { key: "rad", label: "Jari-jari" },
+  { key: "centerline", label: "Garis pusat" },
+  { key: "homothety", label: "Titik E & I" },
+  { key: "extend", label: "Perpanjang" },
+  { key: "fill", label: "Warnai" },
 ];
 
-/* ---------- Matematika ---------- */
+/* ───────── Matematika ───────── */
 
 /** Jarak terjauh sepanjang arah a dari (x, y) yang masih di dalam batas pusat. */
 function rayMax(x: number, y: number, a: number) {
@@ -266,11 +212,11 @@ function analyze(p: Params) {
 
   let relation: string;
   if (d <= 1e-3) relation = r1 === r2 ? "Berimpit" : "Sepusat (konsentris)";
-  else if (d > sum + EPS) relation = "Saling lepas (terpisah)";
+  else if (d > sum + EPS) relation = "Saling lepas";
   else if (Math.abs(d - sum) <= EPS) relation = "Bersinggungan luar";
   else if (d > diff + EPS) relation = "Berpotongan di dua titik";
   else if (Math.abs(d - diff) <= EPS) relation = "Bersinggungan dalam";
-  else relation = "Satu lingkaran di dalam lingkaran lain";
+  else relation = "Satu di dalam yang lain";
 
   const ext: Tangent[] = [];
   const inn: Tangent[] = [];
@@ -355,9 +301,7 @@ function resolveTarget(
 }
 
 /** Geometri segitiga bantu O₁PO₂ untuk satu garis singgung.
-    P = O₁ − (r₁ − s·r₂)·ν. Luar (s = 1): P pada O₁T₁ dengan T₁P = r₂.
-    Dalam (s = −1): P pada perpanjangan O₁T₁ dengan T₁P = r₂.
-    T₁T₂O₂P selalu persegi panjang, jadi PO₂ = T₁T₂ dan ∠O₁PO₂ = 90°. */
+    P = O₁ − (r₁ − s·r₂)·ν. T₁T₂O₂P selalu persegi panjang. */
 function helperGeometry(p: Params, t: Tangent) {
   const k = p.r1 - t.s * p.r2;
   const P: Vec = [p.x1 - k * t.nx, p.y1 - k * t.ny];
@@ -386,9 +330,9 @@ function arcPoints(
   return out;
 }
 
-/* ---------- Format ---------- */
+/* ───────── Format ───────── */
 
-function fmt(value: number, digits = 3) {
+function fmt(value: number, digits = 2) {
   if (!Number.isFinite(value)) return "—";
   if (Math.abs(value) < Math.pow(10, -digits) / 2) return "0";
   return new Intl.NumberFormat("id-ID", {
@@ -401,14 +345,14 @@ function fmt(value: number, digits = 3) {
 
 const fmtPt = (x: number, y: number) => `(${fmt(x)}; ${fmt(y)})`;
 
-/** Menyusun suku-suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
+/** Menyusun suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
 function poly(terms: [number, string][]) {
   let out = "";
   terms.forEach(([coef, symbol]) => {
-    if (Math.abs(coef) < 5e-4) return;
+    if (Math.abs(coef) < 5e-3) return;
     const abs = Math.abs(coef);
     const body =
-      symbol !== "" && Math.abs(abs - 1) < 5e-4
+      symbol !== "" && Math.abs(abs - 1) < 5e-3
         ? symbol
         : `${fmt(abs)}${symbol}`;
     if (out === "") out = coef < 0 ? `−${body}` : body;
@@ -419,7 +363,7 @@ function poly(terms: [number, string][]) {
 
 /** (x − h)² dengan tanda yang rapi. */
 function sq(variable: string, h: number) {
-  if (Math.abs(h) < 5e-4) return `${variable}²`;
+  if (Math.abs(h) < 5e-3) return `${variable}²`;
   return h > 0 ? `(${variable} − ${fmt(h)})²` : `(${variable} + ${fmt(-h)})²`;
 }
 
@@ -434,23 +378,9 @@ const lineEq = (t: Tangent) =>
 
 const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
-/* ---------- Hook & komponen kecil ---------- */
+/* ───────── Baris pengatur ───────── */
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
+/** Tombol − / + yang bisa ditahan untuk mengubah nilai terus-menerus. */
 function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
   const stepRef = useRef(onStep);
   stepRef.current = onStep;
@@ -462,17 +392,11 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     timers.current = {};
   };
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timers.current.delay);
-      window.clearInterval(timers.current.repeat);
-    },
-    [],
-  );
+  useEffect(() => stop, []);
 
   return (direction: 1 | -1) => ({
     type: "button" as const,
-    className: "tc-nudge",
+    className: "tc-step",
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       stop();
@@ -480,7 +404,7 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
       timers.current.delay = window.setTimeout(() => {
         timers.current.repeat = window.setInterval(
           () => stepRef.current(direction),
-          70,
+          60,
         );
       }, 400);
     },
@@ -490,14 +414,14 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     onBlur: stop,
     onContextMenu: (event: { preventDefault: () => void }) =>
       event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
+    // detail === 0 → aktivasi lewat keyboard
     onClick: (event: { detail: number }) => {
       if (event.detail === 0) stepRef.current(direction);
     },
   });
 }
 
-/** Satu baris: r  −  ──●──  +  [5]  ▶ */
+/** Satu baris:  r₁  −  ────●────  +  3  ▶ */
 function ParamRow({
   id,
   label,
@@ -505,9 +429,7 @@ function ParamRow({
   value,
   min,
   max,
-  step,
-  nudge,
-  digits,
+  digits = 1,
   bipolar,
   tone,
   playing,
@@ -520,9 +442,7 @@ function ParamRow({
   value: number;
   min: number;
   max: number;
-  step: number;
-  nudge: number;
-  digits: number;
+  digits?: number;
   bipolar?: boolean;
   tone: string;
   playing?: boolean;
@@ -534,55 +454,53 @@ function ParamRow({
     return Math.round(v * f) / f;
   };
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
-  const bind = useHoldRepeat((d) => onChange(round(clamp(value + d * nudge))));
+  const bind = useHoldRepeat((d) => onChange(round(clamp(value + d * 0.1))));
   const pct = max > min ? ((clamp(value) - min) / (max - min)) * 100 : 0;
-  const rangeStyle = {
+  const style = {
     "--lo": bipolar ? `${Math.min(50, pct)}%` : "0%",
     "--hi": bipolar ? `${Math.max(50, pct)}%` : `${pct}%`,
-    "--tone": tone,
+    "--sc": tone,
   } as CSSProperties;
 
   return (
-    <div className="tc-param" style={{ "--tone": tone } as CSSProperties}>
+    <div className="tc-slider" style={style}>
       <label htmlFor={id} title={title}>
         {label}
       </label>
-      <button {...bind(-1)} aria-label={`Kurangi ${title}`}>
-        <Minus size={12} aria-hidden="true" />
+      <button
+        {...bind(-1)}
+        disabled={value <= min}
+        aria-label={`Kurangi ${title}`}
+      >
+        <Minus size={14} aria-hidden="true" />
       </button>
       <input
+        id={id}
         className="tc-range"
         type="range"
         min={min}
         max={max}
-        step={step}
+        step={0.1}
         value={clamp(value)}
-        style={rangeStyle}
-        aria-label={`Penggeser ${title}`}
+        aria-valuetext={`${title} sama dengan ${fmt(value, digits)}`}
         onChange={(event) =>
           onChange(round(clamp(Number(event.currentTarget.value))))
         }
       />
-      <button {...bind(1)} aria-label={`Tambah ${title}`}>
-        <Plus size={12} aria-hidden="true" />
+      <button
+        {...bind(1)}
+        disabled={value >= max}
+        aria-label={`Tambah ${title}`}
+      >
+        <Plus size={14} aria-hidden="true" />
       </button>
-      <input
-        id={id}
-        className="tc-num"
-        type="number"
-        inputMode="decimal"
-        step={step}
-        value={value}
-        aria-label={`Nilai ${title}`}
-        onChange={(event) => {
-          const v = parseFloat(event.currentTarget.value);
-          if (Number.isFinite(v)) onChange(round(clamp(v)));
-        }}
-      />
+      <output htmlFor={id} aria-live="off">
+        {fmt(value, digits)}
+      </output>
       {onPlay ? (
         <button
           type="button"
-          className="tc-icon-btn"
+          className="tc-step tc-play"
           aria-pressed={!!playing}
           aria-label={
             playing ? `Hentikan animasi ${title}` : `Animasikan ${title}`
@@ -603,25 +521,25 @@ function ParamRow({
   );
 }
 
-const kv = (key: string, value: string) => (
-  <div className="tc-kv" key={key}>
-    <span>{key}</span>
-    <b>{value}</b>
+const cell = (key: string, value: string, tone?: string, wide?: boolean) => (
+  <div key={key} className={wide ? "tc-wide" : undefined}>
+    <dt>{key}</dt>
+    <dd style={tone ? { color: tone } : undefined}>{value}</dd>
   </div>
 );
 
-/* ---------- Komponen utama ---------- */
+/* ───────── Komponen utama ───────── */
 
 export function TwoCircleTangentSimulation() {
   const baseId = useId().replace(/:/g, "");
   const boardId = `tc-board-${baseId}`;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const boardRef = useRef<Board | null>(null);
   const centersRef = useRef<DragPoint[]>([]);
   const nativeFsRef = useRef(false);
-  const syncSizeRef = useRef<(() => void) | null>(null);
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
 
   const [params, setParams] = useStoredSimulationState<Params>(
     "twocircle.params",
@@ -631,7 +549,7 @@ export function TwoCircleTangentSimulation() {
     "twocircle.opts",
     DEFAULT_OPTS,
   );
-  // gabungkan dengan nilai bawaan agar pengaturan lama (tanpa opsi baru) tetap valid
+  // gabungkan dengan nilai bawaan agar pengaturan lama tetap valid
   const opts = useMemo<Opts>(
     () => ({ ...DEFAULT_OPTS, ...storedOpts }),
     [storedOpts],
@@ -643,13 +561,9 @@ export function TwoCircleTangentSimulation() {
   // 0 = mode proses mati; 1..STEP_COUNT = langkah penjelasan
   const [step, setStep] = useState(0);
   const [anim, setAnim] = useState<Anim>(null);
-  const [tab, setTab] = useState<PanelTab>("par");
-  const [isFull, setIsFull] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
+  const [tab, setTab] = useState<Tab>("set");
+  const [isFs, setIsFs] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  // Layar kecil / pendek dan layar penuh memakai panel kanan bertab.
-  const tabbed = smallScreen || isFull;
 
   // data yang dibaca papan JSXGraph (selalu lewat ref agar tidak basi)
   const pRef = useRef(params);
@@ -677,13 +591,15 @@ export function TwoCircleTangentSimulation() {
 
   const an = analyze(params);
 
+  /* ───────── Parameter ───────── */
+
   const setParam = (patch: Partial<Params>) => {
     setAnim(null);
     setParams((prev) => ({ ...prev, ...patch }));
   };
 
-  const setOpt = (key: keyof Opts, value: boolean) =>
-    setOpts((prev) => ({ ...prev, [key]: value }));
+  const setOpt = (key: keyof Opts) =>
+    setOpts((prev) => ({ ...DEFAULT_OPTS, ...prev, [key]: !oRef.current[key] }));
 
   const reset = () => {
     setAnim(null);
@@ -704,16 +620,16 @@ export function TwoCircleTangentSimulation() {
       y2: round3(params.y1 + Math.sin(angle) * value),
     });
 
-  /* Tampilan: zoom, pusatkan */
+  /* ───────── Tampilan ───────── */
+
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
 
-  /* Layar penuh */
-  const toggleFullscreen = async () => {
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (isFull || document.fullscreenElement === el) {
+    if (isFs || document.fullscreenElement === el) {
       if (document.fullscreenElement === el) {
         try {
           await document.exitFullscreen();
@@ -722,41 +638,62 @@ export function TwoCircleTangentSimulation() {
         }
       }
       nativeFsRef.current = false;
-      setIsFull(false);
+      setIsFs(false);
       return;
     }
-
-    // flushSync memastikan kelas .is-fullscreen/.is-tabbed sudah ada di DOM
-    // SEBELUM requestFullscreen dipanggil (tanpa ini, React baru menerapkannya
-    // sesudahnya, sehingga transisi pertama memakai tata letak desktop).
+    // Pasang tata letak layar penuh lebih dulu (flushSync), baru minta layar
+    // penuh asli, agar ukuran grafik langsung benar.
     flushSync(() => {
       setPanelOpen(false);
-      setIsFull(true);
+      setIsFs(true);
     });
     if (el.requestFullscreen) {
       try {
         await el.requestFullscreen();
         nativeFsRef.current = true;
       } catch {
-        // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
+        /* tetap pakai layar penuh CSS */
       }
     }
   };
 
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
+  useEffect(() => {
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
+      screen as unknown as {
+        orientation?: {
+          lock?: (m: "landscape") => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).orientation;
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
+    return () => {
+      try {
+        o.unlock?.();
+      } catch {
+        /* abaikan */
+      }
+    };
+  }, [isFs]);
+
+  // Sinkron saat keluar lewat Esc / gestur sistem.
   useEffect(() => {
     const onChange = () => {
       if (!document.fullscreenElement && nativeFsRef.current) {
         nativeFsRef.current = false;
-        setIsFull(false);
+        setIsFs(false);
       }
     };
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (
-        event.key === "Escape" &&
+        e.key === "Escape" &&
         !document.fullscreenElement &&
         !nativeFsRef.current
       ) {
-        setIsFull(false);
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -767,33 +704,11 @@ export function TwoCircleTangentSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
-  useEffect(() => {
-    if (!isFull) return undefined;
-    if (!window.matchMedia("(pointer: coarse)").matches) return undefined;
-    const orientation = (
-      screen as unknown as {
-        orientation?: {
-          lock?: (mode: "landscape") => Promise<void>;
-          unlock?: () => void;
-        };
-      }
-    ).orientation;
-    if (typeof orientation?.lock !== "function") return undefined;
-    orientation.lock("landscape").catch(() => undefined);
-    return () => {
-      try {
-        orientation.unlock?.();
-      } catch {
-        /* abaikan */
-      }
-    };
-  }, [isFull]);
+  /* ───────── Papan JSXGraph ───────── */
 
-  /* Papan JSXGraph */
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
+    const el = hostRef.current;
+    if (!el) return;
 
     const board = JXG.JSXGraph.initBoard(boardId, {
       boundingbox: HOME_BOX,
@@ -801,11 +716,9 @@ export function TwoCircleTangentSimulation() {
       showCopyright: false,
       showNavigation: false,
       keepAspectRatio: true, // lingkaran harus tetap terlihat bulat
-      // Ukuran papan diatur sepenuhnya oleh syncSize di bawah. Pengamat ukuran
-      // bawaan JSXGraph (throttle + setTimeout) bisa berebut dan meninggalkan
-      // tinggi kanvas yang basi saat masuk layar penuh.
+      // Ukuran papan diatur oleh sync di bawah; pengamat bawaan dimatikan
+      // agar tidak berebut saat masuk layar penuh.
       resize: { enabled: false, throttle: 100 },
-      // geser dengan tahan klik kiri atau satu jari (papan memakai touch-action: none)
       pan: { enabled: true, needShift: false, needTwoFingers: false },
       zoom: {
         wheel: true,
@@ -819,39 +732,29 @@ export function TwoCircleTangentSimulation() {
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
-    });
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
       highlight: false,
-    };
+    });
+
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
+    const axis = {
+      strokeColor: "#94a3b8",
+      strokeWidth: 1.25,
+      highlight: false,
+      ticks,
+    };
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
     // analisis dihitung sekali per perubahan parameter
     let cache: { p: Params; v: Analysis } | null = null;
@@ -875,7 +778,7 @@ export function TwoCircleTangentSimulation() {
 
     /* Kurva berdasarkan daftar titik; null menyembunyikannya */
     const makeCurve = (
-      color: string,
+      stroke: string,
       width: number,
       dash: number,
       opacity: number,
@@ -883,7 +786,7 @@ export function TwoCircleTangentSimulation() {
       fill?: { color: string; opacity: number },
     ) => {
       const curve = board.create("curve", [[0], [0]], {
-        strokeColor: color,
+        strokeColor: stroke,
         strokeWidth: width,
         strokeOpacity: opacity,
         fillColor: fill ? fill.color : "none",
@@ -913,7 +816,7 @@ export function TwoCircleTangentSimulation() {
       const c = circ(which);
       return arcPoints(c.x, c.y, c.r, 0, 360);
     };
-    const colorOf = (which: 1 | 2) => (which === 1 ? COLOR_C1 : COLOR_C2);
+    const colorOf = (which: 1 | 2) => (which === 1 ? color.c1 : color.c2);
 
     // isi lingkaran (tanpa garis tepi) lalu garis tepinya
     ([1, 2] as const).forEach((which) => {
@@ -931,7 +834,7 @@ export function TwoCircleTangentSimulation() {
     });
 
     // garis hubung pusat (diperpanjang bila titik E dan I ditampilkan)
-    makeCurve(COLOR_GUIDE, 1.4, 2, 0.9, () => {
+    makeCurve(color.guide, 1.5, 2, 1, () => {
       if (!show("centerline")) return null;
       const a = A();
       const p = pRef.current;
@@ -951,19 +854,15 @@ export function TwoCircleTangentSimulation() {
 
     // garis singgung persekutuan: garis panjang tipis + ruas T₁T₂ tebal
     const kinds = ["ext", "int"] as const;
-    const listOf = (kind: (typeof kinds)[number]) =>
-      kind === "ext" ? A().ext : A().inn;
-    const colorKind = (kind: (typeof kinds)[number]) =>
-      kind === "ext" ? COLOR_EXT : COLOR_INT;
+    const listOf = (kind: Kind) => (kind === "ext" ? A().ext : A().inn);
+    const colorKind = (kind: Kind) => (kind === "ext" ? color.ext : color.int);
 
-    // apakah garis singgung (kind, i) ditampilkan: mode proses > fokus > pilihan centang
-    const target = () => {
-      const l = lRef.current;
-      return resolveTarget(A(), l.focus);
-    };
-    const vis = (kind: (typeof kinds)[number], i: number) => {
-      const t = listOf(kind)[i];
-      if (!t) return false;
+    const stepNow = () => lRef.current.step;
+    const isOnly = () => lRef.current.step > 0 || lRef.current.focus !== "all";
+    // garis singgung yang dijelaskan / ditampilkan: mode proses > fokus > centang
+    const target = () => resolveTarget(A(), lRef.current.focus);
+    const vis = (kind: Kind, i: number) => {
+      if (!listOf(kind)[i]) return false;
       const l = lRef.current;
       if (l.step > 0) {
         const tg = target();
@@ -972,8 +871,6 @@ export function TwoCircleTangentSimulation() {
       if (l.focus !== "all") return l.focus === `${kind}-${i}`;
       return show(kind);
     };
-    const isOnly = () => lRef.current.step > 0 || lRef.current.focus !== "all";
-    const stepNow = () => lRef.current.step;
 
     /* Tanda siku-siku di titik v, antara arah ke a dan ke b (ukuran tetap dalam piksel) */
     const rightAngle = (v: Vec, a: Vec, b: Vec): Vec[] | null => {
@@ -1013,7 +910,7 @@ export function TwoCircleTangentSimulation() {
             [px + dirX * s, py + dirY * s],
           ];
         });
-        makeCurve(colorKind(kind), 3.4, 0, 1, () => {
+        makeCurve(colorKind(kind), 3.5, 0, 1, () => {
           if (!vis(kind, i)) return null;
           const t = listOf(kind)[i];
           return t ? [t.t1, t.t2] : null;
@@ -1025,11 +922,8 @@ export function TwoCircleTangentSimulation() {
     kinds.forEach((kind) => {
       [0, 1].forEach((i) => {
         ([1, 2] as const).forEach((which) => {
-          makeCurve(COLOR_GUIDE, 1.3, 2, 1, () => {
-            if (
-              !vis(kind, i) ||
-              !(show("radii") || show("rightAngle") || stepNow() >= 1)
-            )
+          makeCurve(color.guide, 1.25, 2, 1, () => {
+            if (!vis(kind, i) || !(show("rightAngle") || stepNow() >= 1))
               return null;
             const t = listOf(kind)[i];
             if (!t) return null;
@@ -1037,7 +931,7 @@ export function TwoCircleTangentSimulation() {
             return [[c.x, c.y], which === 1 ? t.t1 : t.t2];
           });
           makeCurve(
-            COLOR_TOUCH,
+            color.touch,
             1.5,
             0,
             1,
@@ -1051,39 +945,32 @@ export function TwoCircleTangentSimulation() {
               const other = which === 1 ? t.t2 : t.t1;
               return rightAngle(own, [c.x, c.y], other);
             },
-            { color: COLOR_TOUCH, opacity: 0.12 },
+            { color: color.touch, opacity: 0.12 },
           );
         });
       });
     });
 
-    // perpanjangan jari-jari O₁T₁ dan O₂T₂ (lurus melewati titik singgung)
-    // dan garis lewat O₂ sejajar garis singgung; keduanya bertemu di P
+    /* ----- Proses: segitiga siku-siku bantu O₁PO₂ ----- */
+    // perpanjangan jari-jari O₁T₁ dan O₂T₂, dan garis lewat O₂ sejajar
+    // garis singgung; keduanya bertemu di P (langkah 2+)
     kinds.forEach((kind) => {
       [0, 1].forEach((i) => {
         ([1, 2] as const).forEach((which) => {
-          makeCurve(
-            stepNow() >= 2 ? COLOR_HELP : COLOR_GUIDE,
-            1.3,
-            2,
-            0.85,
-            () => {
-              if (!vis(kind, i) || !(show("extRadius") || stepNow() >= 2))
-                return null;
-              const t = listOf(kind)[i];
-              if (!t) return null;
-              const c = circ(which);
-              const s = extent();
-              return [
-                [c.x - t.nx * s, c.y - t.ny * s],
-                [c.x + t.nx * s, c.y + t.ny * s],
-              ];
-            },
-          );
+          makeCurve(color.help, 1.25, 2, 0.9, () => {
+            if (!vis(kind, i) || stepNow() < 2) return null;
+            const t = listOf(kind)[i];
+            if (!t) return null;
+            const c = circ(which);
+            const s = extent();
+            return [
+              [c.x - t.nx * s, c.y - t.ny * s],
+              [c.x + t.nx * s, c.y + t.ny * s],
+            ];
+          });
         });
-        makeCurve(colorKind(kind), 1.4, 3, 0.85, () => {
-          if (!vis(kind, i) || !(show("parLine") || stepNow() >= 2))
-            return null;
+        makeCurve(colorKind(kind), 1.5, 3, 0.9, () => {
+          if (!vis(kind, i) || stepNow() < 2) return null;
           const t = listOf(kind)[i];
           if (!t) return null;
           const c = circ(2);
@@ -1096,22 +983,23 @@ export function TwoCircleTangentSimulation() {
       });
     });
 
-    /* ----- Proses: segitiga siku-siku bantu O₁PO₂ ----- */
     const proc = () => {
       if (stepNow() < 1) return null;
       const tg = target();
       if (!tg) return null;
       return { tg, ...helperGeometry(pRef.current, tg.t) };
     };
+    type Proc = NonNullable<ReturnType<typeof proc>>;
+
     // persegi panjang T₁T₂O₂P (langkah 2+)
-    makeCurve(COLOR_GUIDE, 1.4, 3, 0.95, () => {
+    makeCurve(color.guide, 1.5, 3, 1, () => {
       const g = proc();
       if (!g || stepNow() < 2) return null;
       return [g.tg.t.t1, g.tg.t.t2, g.O2, g.P, g.tg.t.t1];
     });
     // isi segitiga O₁PO₂ (langkah 3+)
     makeCurve(
-      COLOR_HELP,
+      color.help,
       0,
       0,
       1,
@@ -1120,29 +1008,29 @@ export function TwoCircleTangentSimulation() {
         if (!g || stepNow() < 3) return null;
         return [g.O1, g.P, g.O2, g.O1];
       },
-      { color: COLOR_HELP, opacity: 0.14 },
+      { color: color.help, opacity: 0.16 },
     );
     // sisi miring O₁O₂ = d (langkah 3+)
-    makeCurve(COLOR_TOUCH, 2.6, 0, 1, () => {
+    makeCurve(color.touch, 2.75, 0, 1, () => {
       const g = proc();
       if (!g || stepNow() < 3) return null;
       return [g.O1, g.O2];
     });
     // sisi tegak O₁P (langkah 2+)
-    makeCurve(COLOR_HELP, 3.6, 0, 1, () => {
+    makeCurve(color.help, 3.75, 0, 1, () => {
       const g = proc();
       if (!g || stepNow() < 2) return null;
       return [g.O1, g.P];
     });
-    // sisi tegak PO₂ = ℓ, sejajar dan sama panjang dengan T₁T₂ (langkah 2+)
-    makeCurve(COLOR_EXT, 2.6, 4, 1, () => {
+    // sisi tegak PO₂ = ℓ (langkah 2+)
+    makeCurve(color.ext, 2.75, 4, 1, () => {
       const g = proc();
       if (!g || stepNow() < 2) return null;
       return [g.P, g.O2];
     });
     // tanda siku-siku di P (langkah 3+)
     makeCurve(
-      COLOR_HELP,
+      color.help,
       1.6,
       0,
       1,
@@ -1151,7 +1039,7 @@ export function TwoCircleTangentSimulation() {
         if (!g || stepNow() < 3) return null;
         return rightAngle(g.P, g.O1, g.O2);
       },
-      { color: COLOR_HELP, opacity: 0.2 },
+      { color: color.help, opacity: 0.22 },
     );
 
     // jari-jari r₁ dan r₂ (ke atas)
@@ -1170,15 +1058,14 @@ export function TwoCircleTangentSimulation() {
     const dot = (
       x: () => number,
       y: () => number,
-      color: string,
+      fill: string,
       size: number,
     ) =>
       board.create("point", [x, y], {
         name: "",
         withLabel: false,
         size,
-        face: "o",
-        fillColor: color,
+        fillColor: fill,
         strokeColor: "#ffffff",
         strokeWidth: 1.5,
         fixed: true,
@@ -1188,7 +1075,7 @@ export function TwoCircleTangentSimulation() {
       x: () => number,
       y: () => number,
       text: string | (() => string),
-      color: string,
+      tone: string,
       offset: [number, number] = [8, 8],
     ) =>
       board.create(
@@ -1199,8 +1086,8 @@ export function TwoCircleTangentSimulation() {
           text,
         ],
         {
-          fontSize: 14,
-          strokeColor: color,
+          fontSize: 13,
+          strokeColor: tone,
           offset,
           highlight: false,
           fixed: true,
@@ -1223,7 +1110,7 @@ export function TwoCircleTangentSimulation() {
               return t ? t[end][1] : Number.NaN;
             },
             colorKind(kind),
-            4.5,
+            5,
           );
         });
       });
@@ -1234,8 +1121,8 @@ export function TwoCircleTangentSimulation() {
       const g = proc();
       return g && stepNow() >= 2 ? g.P[axis] : Number.NaN;
     };
-    dot(procPt(0), procPt(1), COLOR_HELP, 5);
-    label(procPt(0), procPt(1), "P", COLOR_HELP, [-14, 8]);
+    dot(procPt(0), procPt(1), color.help, 5);
+    label(procPt(0), procPt(1), "P", color.help, [-14, 8]);
 
     // nama titik singgung T₁ dan T₂ (hanya saat satu garis ditampilkan)
     ([1, 2] as const).forEach((which) => {
@@ -1245,7 +1132,7 @@ export function TwoCircleTangentSimulation() {
         if (!tg || !vis(tg.kind, tg.i)) return Number.NaN;
         return which === 1 ? tg.t.t1[axis] : tg.t.t2[axis];
       };
-      label(pos(0), pos(1), which === 1 ? "T₁" : "T₂", COLOR_TOUCH, [
+      label(pos(0), pos(1), which === 1 ? "T₁" : "T₂", color.touch, [
         -8,
         which === 1 ? 14 : -22,
       ]);
@@ -1266,7 +1153,7 @@ export function TwoCircleTangentSimulation() {
           () => (shown() ? (t()!.t1[0] + t()!.t2[0]) / 2 : Number.NaN),
           () => (shown() ? (t()!.t1[1] + t()!.t2[1]) / 2 : Number.NaN),
           () =>
-            `${isOnly() ? "" : `${FOCUS_NAME[`${kind}-${i}` as Focus]}: `}ℓ = ${fmt(len(), 2)}`,
+            `${isOnly() ? "" : `${FOCUS_NAME[`${kind}-${i}` as Focus]}: `}ℓ = ${fmt(len())}`,
           colorKind(kind),
           [8, 8],
         );
@@ -1275,10 +1162,10 @@ export function TwoCircleTangentSimulation() {
 
     // label sisi segitiga bantu: huruf (langkah 3), nilai (langkah 4)
     const sideLabel = (
-      from: (g: NonNullable<ReturnType<typeof proc>>) => Vec,
-      to: (g: NonNullable<ReturnType<typeof proc>>) => Vec,
-      text: (g: NonNullable<ReturnType<typeof proc>>) => string,
-      color: string,
+      from: (g: Proc) => Vec,
+      to: (g: Proc) => Vec,
+      text: (g: Proc) => string,
+      tone: string,
       offset: [number, number],
       minStep = 3,
     ) => {
@@ -1294,32 +1181,27 @@ export function TwoCircleTangentSimulation() {
           const g = proc();
           return g ? text(g) : "";
         },
-        color,
+        tone,
         offset,
       );
     };
-    const legName = (g: NonNullable<ReturnType<typeof proc>>) =>
-      g.tg.kind === "ext" ? "r₁ − r₂" : "r₁ + r₂";
+    const legName = (g: Proc) => (g.tg.kind === "ext" ? "|r₁ − r₂|" : "r₁ + r₂");
     sideLabel(
       (g) => g.O1,
       (g) => g.O2,
       (g) =>
         stepNow() >= 4
-          ? `d = ${fmt(Math.hypot(g.O2[0] - g.O1[0], g.O2[1] - g.O1[1]), 2)}`
+          ? `d = ${fmt(Math.hypot(g.O2[0] - g.O1[0], g.O2[1] - g.O1[1]))}`
           : "d",
-      COLOR_TOUCH,
+      color.touch,
       [6, -22],
     );
     sideLabel(
       (g) => g.O1,
       (g) => g.P,
       (g) =>
-        stepNow() >= 4
-          ? `${g.tg.kind === "ext" ? "|r₁ − r₂|" : "r₁ + r₂"} = ${fmt(g.leg, 2)}`
-          : g.tg.kind === "ext"
-            ? "|r₁ − r₂|"
-            : legName(g),
-      COLOR_HELP,
+        stepNow() >= 4 ? `${legName(g)} = ${fmt(g.leg)}` : legName(g),
+      color.help,
       [-70, 6],
       2,
     );
@@ -1327,35 +1209,17 @@ export function TwoCircleTangentSimulation() {
       (g) => g.P,
       (g) => g.O2,
       () => "ℓ",
-      COLOR_EXT,
+      color.ext,
       [6, 6],
     );
 
     // E (titik potong garis singgung luar) dan I (garis singgung dalam)
-    dot(
-      () => (show("homothety") && show("ext") ? A().E[0] : Number.NaN),
-      () => A().E[1],
-      COLOR_EXT,
-      5,
-    );
-    dot(
-      () => (show("homothety") && show("int") ? A().I[0] : Number.NaN),
-      () => A().I[1],
-      COLOR_INT,
-      5,
-    );
-    label(
-      () => (show("homothety") && show("ext") ? A().E[0] : Number.NaN),
-      () => A().E[1],
-      "E",
-      COLOR_EXT,
-    );
-    label(
-      () => (show("homothety") && show("int") ? A().I[0] : Number.NaN),
-      () => A().I[1],
-      "I",
-      COLOR_INT,
-    );
+    const eOn = () => show("homothety") && show("ext");
+    const iOn = () => show("homothety") && show("int");
+    dot(() => (eOn() ? A().E[0] : Number.NaN), () => A().E[1], color.ext, 5);
+    dot(() => (iOn() ? A().I[0] : Number.NaN), () => A().I[1], color.int, 5);
+    label(() => (eOn() ? A().E[0] : Number.NaN), () => A().E[1], "E", color.ext);
+    label(() => (iOn() ? A().I[0] : Number.NaN), () => A().I[1], "I", color.int);
 
     // label jari-jari dan pusat
     ([1, 2] as const).forEach((which) => {
@@ -1381,7 +1245,7 @@ export function TwoCircleTangentSimulation() {
       const pt = board.create("point", [c.x, c.y], {
         name: "",
         withLabel: false,
-        size: 6,
+        size: 7,
         face: "o",
         fillColor: colorOf(which),
         strokeColor: "#ffffff",
@@ -1397,40 +1261,22 @@ export function TwoCircleTangentSimulation() {
 
     board.update();
 
-    // Selaraskan ukuran papan dengan kotaknya. Pembanding utamanya adalah ukuran
-    // yang DIKETAHUI JSXGraph (canvasWidth/Height), sehingga papan yang
-    // tertinggal selalu terkoreksi. Skala dan titik tengah dipertahankan.
-    const syncSize = () => {
+    // Saat ukuran berubah (layar penuh / putar layar): pertahankan skala
+    // dan titik tengah agar grafik tidak melompat.
+    let last = { w: el.clientWidth, h: el.clientHeight };
+    const sync = (force = false) => {
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (w <= 0 || h <= 0) return;
-      const sized = board as unknown as {
-        canvasWidth: number;
-        canvasHeight: number;
-        fullUpdate?: () => void;
-      };
-      const oldW = sized.canvasWidth;
-      const oldH = sized.canvasHeight;
-      // Selain canvasWidth/Height, cocokkan juga dengan ukuran SVG yang benar-
-      // benar tergambar, karena nilai internal JSXGraph bisa sudah "benar"
-      // sementara SVG-nya masih berukuran lama.
-      const svg = el.querySelector("svg");
-      const svgW = svg ? Math.round(svg.getBoundingClientRect().width) : w;
-      const svgH = svg ? Math.round(svg.getBoundingClientRect().height) : h;
-      if (w === oldW && h === oldH && svgW === w && svgH === h) return;
+      if (!force && w === last.w && h === last.h) return;
+
       const bb = board.getBoundingBox();
       const spanX = bb[2] - bb[0];
       const spanY = bb[1] - bb[3];
       board.resizeContainer(w, h, true, true);
-      if (w === oldW && h === oldH) {
-        // Hanya SVG yang tertinggal: ukuran logis sama, cukup gambar ulang.
-        sized.fullUpdate?.();
-        board.update();
-        return;
-      }
-      if (oldW > 0 && oldH > 0 && spanX > 0 && spanY > 0) {
-        const ux = oldW / spanX;
-        const uy = oldH / spanY;
+      if (last.w > 0 && last.h > 0 && spanX > 0 && spanY > 0) {
+        const ux = last.w / spanX;
+        const uy = last.h / spanY;
         const cx = (bb[0] + bb[2]) / 2;
         const cy = (bb[1] + bb[3]) / 2;
         board.setBoundingBox(
@@ -1438,17 +1284,16 @@ export function TwoCircleTangentSimulation() {
           true,
         );
       }
-      sized.fullUpdate?.();
+      last = { w, h };
       board.update();
     };
-    syncSizeRef.current = syncSize;
-    const observer = new ResizeObserver(syncSize);
+    syncRef.current = sync;
+    const observer = new ResizeObserver(() => sync());
     observer.observe(el);
-    if (el.parentElement) observer.observe(el.parentElement);
 
     return () => {
+      syncRef.current = null;
       observer.disconnect();
-      syncSizeRef.current = null;
       centersRef.current = [];
       JXG.JSXGraph.freeBoard(board);
       boardRef.current = null;
@@ -1474,42 +1319,27 @@ export function TwoCircleTangentSimulation() {
     boardRef.current?.update();
   }, [params, opts, focus, step]);
 
-  // Masuk/keluar layar penuh atau ganti mode panel mengubah ukuran papan
+  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi.
   useEffect(() => {
-    // Browser menyelesaikan transisi layar penuh asli dengan waktu yang tidak
-    // pasti (animasi bilah browser, perubahan viewport). Selama ~2 detik papan
-    // dicocokkan dengan kotaknya setiap frame; syncSize murah karena langsung
-    // keluar bila ukurannya sudah sama.
-    let raf = 0;
-    const started = performance.now();
-    const tick = () => {
-      syncSizeRef.current?.();
-      if (performance.now() - started < 2000) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [isFull, tabbed]);
-
-  useEffect(() => {
-    let timer = 0;
-    const sync = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => syncSizeRef.current?.(), 120);
-    };
-    window.addEventListener("resize", sync);
-    document.addEventListener("fullscreenchange", sync);
-    window.visualViewport?.addEventListener("resize", sync);
+    const run = () => syncRef.current?.(true);
+    const raf = requestAnimationFrame(() => requestAnimationFrame(run));
+    const t1 = window.setTimeout(run, 150);
+    const t2 = window.setTimeout(run, 450);
+    document.addEventListener("fullscreenchange", run);
+    window.addEventListener("resize", run);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("resize", sync);
-      document.removeEventListener("fullscreenchange", sync);
-      window.visualViewport?.removeEventListener("resize", sync);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.removeEventListener("fullscreenchange", run);
+      window.removeEventListener("resize", run);
     };
-  }, []);
+  }, [isFs]);
 
   // Animasi: O₂ maju-mundur sepanjang garis O₁O₂ (jauh → dekat → di dalam)
   useEffect(() => {
-    if (!anim) return undefined;
+    if (!anim) return;
     let raf = 0;
     let last = performance.now();
     let dir = -1;
@@ -1543,7 +1373,7 @@ export function TwoCircleTangentSimulation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anim]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Nilai turunan ───────── */
 
   const sameParams = (a: Params, b: Params) =>
     (Object.keys(a) as (keyof Params)[]).every(
@@ -1559,6 +1389,7 @@ export function TwoCircleTangentSimulation() {
   const startProcess = () => {
     setAnim(null);
     setStep(1);
+    setTab("proc");
   };
   const goStep = (delta: number) =>
     setStep((value) => Math.min(STEP_COUNT, Math.max(1, value + delta)));
@@ -1579,313 +1410,222 @@ export function TwoCircleTangentSimulation() {
     : "—";
   const procSteps: { title: string; caption: string; body: string }[] = [
     {
-      title: "Jari-jari ⟂ garis singgung",
-      caption:
-        "Jari-jari ke titik singgung selalu tegak lurus pada garis singgung.",
-      body: "O₁T₁ dan O₂T₂ adalah jari-jari yang ditarik ke titik singgung. Jari-jari selalu tegak lurus pada garis singgung, jadi ∠O₁T₁T₂ = ∠O₂T₂T₁ = 90°. Akibatnya O₁T₁ ∥ O₂T₂.",
+      title: "Jari-jari ⟂ singgung",
+      caption: "Jari-jari ke titik singgung tegak lurus garis singgung.",
+      body: "O₁T₁ dan O₂T₂ ditarik ke titik singgung. Jari-jari selalu tegak lurus garis singgung, jadi ∠O₁T₁T₂ = ∠O₂T₂T₁ = 90° dan O₁T₁ ∥ O₂T₂.",
     },
     {
       title: "Garis bantu dari O₂",
       caption: "Perpanjangan O₁T₁ dan garis dari O₂ ∥ T₁T₂ bertemu di P.",
       body: isExt
-        ? `Perpanjang jari-jari O₁T₁ melewati T₁ dan tarik garis dari O₂ yang sejajar T₁T₂; keduanya berpotongan di titik P. Bangun T₁T₂O₂P punya tiga sudut siku-siku, jadi ia persegi panjang: PO₂ = T₁T₂ = ℓ dan T₁P = O₂T₂ = r₂. Karena O₁T₁ = r₁, maka O₁P = |r₁ − r₂| = ${fmt(leg)}.${
-            leg < 1e-6
-              ? " Di sini r₁ = r₂, sehingga P berimpit dengan O₁ dan T₁T₂O₂O₁ sendiri sudah persegi panjang."
-              : ""
+        ? `Perpanjang O₁T₁ melewati T₁ dan tarik garis dari O₂ yang sejajar T₁T₂; keduanya bertemu di P. T₁T₂O₂P punya tiga sudut siku-siku, jadi persegi panjang: PO₂ = T₁T₂ = ℓ dan T₁P = r₂. Karena O₁T₁ = r₁, maka O₁P = |r₁ − r₂| = ${fmt(leg)}.${
+            leg < 1e-6 ? " Di sini r₁ = r₂, sehingga P berimpit dengan O₁." : ""
           }`
-        : `Perpanjang jari-jari O₁T₁ melewati T₁, lalu tarik garis dari O₂ yang sejajar T₁T₂; keduanya berpotongan di titik P. Bangun T₁T₂O₂P persegi panjang: PO₂ = T₁T₂ = ℓ dan T₁P = O₂T₂ = r₂. Karena P di seberang O₁ terhadap T₁, maka O₁P = O₁T₁ + T₁P = r₁ + r₂ = ${fmt(leg)}.`,
+        : `Perpanjang O₁T₁ melewati T₁ dan tarik garis dari O₂ yang sejajar T₁T₂; keduanya bertemu di P. T₁T₂O₂P persegi panjang: PO₂ = ℓ dan T₁P = r₂. Karena P di seberang O₁ terhadap T₁, maka O₁P = r₁ + r₂ = ${fmt(leg)}.`,
     },
     {
       title: "Segitiga siku-siku O₁PO₂",
-      caption: "Segitiga O₁PO₂ siku-siku di P, sisi miringnya d.",
-      body: `Segitiga O₁PO₂ siku-siku di P. Sisi miringnya O₁O₂ = d = ${fmt(an.d)}, sisi tegaknya O₁P = ${legAbs} = ${fmt(leg)}, dan sisi tegak lainnya PO₂ = ℓ, yang ingin dicari.`,
+      caption: "O₁PO₂ siku-siku di P, sisi miringnya d.",
+      body: `Sisi miring O₁O₂ = d = ${fmt(an.d)}, sisi tegak O₁P = ${legAbs} = ${fmt(leg)}, dan sisi tegak PO₂ = ℓ yang dicari.`,
     },
     {
       title: "Hitung dengan Pythagoras",
-      caption: `Pythagoras: ℓ² = d² − (${legAbs})², jadi ℓ = ${fmt(tLen, 2)}.`,
+      caption: `ℓ² = d² − (${legAbs})², jadi ℓ = ${fmt(tLen)}.`,
       body: `Dari d² = (${legAbs})² + ℓ² diperoleh ℓ = √(d² − (${legAbs})²).`,
     },
   ];
-  const countText = `${an.count} garis singgung persekutuan${
+
+  const countText = `${an.count} garis singgung${
     focus !== "all"
-      ? ` · fokus: ${FOCUS_NAME[focus]}${focusMissing ? " (tidak ada)" : ""}`
+      ? ` · ${FOCUS_NAME[focus]}${focusMissing ? " (tidak ada)" : ""}`
       : ""
   }`;
-  const extText = an.ext.length ? `${an.ext.length} garis` : "tidak ada";
-  const intText = an.inn.length ? `${an.inn.length} garis` : "tidak ada";
-
-  const focusPicker = (
-    <div className="tc-focus-wrap">
-      <p className="tc-group" style={{ color: COLOR_TOUCH }}>
-        Garis singgung yang ditampilkan
-      </p>
-      <div className="tc-focus" role="group" aria-label="Pilih garis singgung">
-        {FOCUS_OPTIONS.map((item) => {
-          const exists = item.key === "all" || !!resolveTarget(an, item.key);
-          return (
-            <button
-              key={item.key}
-              type="button"
-              title={item.title}
-              aria-label={item.title}
-              aria-pressed={focus === item.key}
-              disabled={!exists && focus !== item.key}
-              style={{ "--kc": item.color } as CSSProperties}
-              onClick={() => setFocus(item.key)}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-      {focusMissing && (
-        <p className="tc-focus-note">
-          {FOCUS_NAME[focus]} tidak ada pada posisi lingkaran ini. Ubah d atau
-          jari-jari, atau pilih garis lain.
-        </p>
-      )}
-      {step > 0 && focus === "all" && target && (
-        <p className="tc-focus-note">
-          Mode proses menjelaskan {targetName}. Pilih garis lain di atas bila
-          ingin yang berbeda.
-        </p>
-      )}
-    </div>
-  );
 
   return (
-    <div
-      ref={rootRef}
-      className={`twocircle-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFull ? " is-fullscreen" : ""}`}
-    >
-      <p className="tc-orientation-hint">
+    <div ref={rootRef} className={`tc${isFs ? " is-fs" : ""}`}>
+      <p className="tc-hint">
         <Smartphone size={14} aria-hidden="true" />
         <span>
-          Miringkan ponsel ke mode lanskap agar grafik dan panel isian tampil
-          berdampingan.
+          Miringkan ponsel ke mode lanskap agar grafik dan pengatur nyaman
+          dipakai.
         </span>
       </p>
 
-      <div className="tc-boards">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="tc-board-panel" aria-label="Grafik dua lingkaran">
+      <div className="tc-layout">
+        {/* ───── Grafik ───── */}
+        <section className="tc-graph" aria-label="Grafik dua lingkaran">
           <div className="tc-stage">
             <div
-              className="tc-board"
               id={boardId}
-              ref={containerRef}
-              tabIndex={0}
-              aria-label="Grafik dua lingkaran dan garis singgung persekutuannya. Seret latar untuk menggeser, roda mouse atau cubit untuk zoom, seret titik pusat O1 atau O2 untuk memindahkan lingkaran."
+              ref={hostRef}
+              className="tc-board"
+              aria-label="Grafik dua lingkaran dan garis singgung persekutuannya. Seret latar untuk menggeser, gulir atau cubit untuk memperbesar, seret titik pusat O1 atau O2 untuk memindahkan lingkaran."
             />
 
-            <p
-              className="tc-chip"
-              style={{ borderLeftColor: COLOR_EXT }}
-              aria-live="polite"
-            >
-              <b style={{ color: COLOR_EXT }}>{an.relation}</b>
-              <span>{countText}</span>
-            </p>
-
-            <div className="tc-pinfo" aria-live="off">
-              <span>
-                <b>d</b> = {fmt(an.d, 2)}
-              </span>
-              {an.ext.length > 0 && kindShown("ext") && (
-                <span>
-                  <b>ℓ luar</b> = {fmt(an.lenExt, 2)}
-                </span>
-              )}
-              {an.inn.length > 0 && kindShown("int") && (
-                <span>
-                  <b>ℓ dalam</b> = {fmt(an.lenInt, 2)}
-                </span>
+            <div className="tc-hud">
+              <p className="tc-chip" aria-live="polite">
+                <b>{an.relation}</b>
+                <span>{countText}</span>
+              </p>
+              {step > 0 ? (
+                <p className="tc-pinfo tc-pstep" aria-live="polite">
+                  <b>
+                    {step}/{STEP_COUNT}
+                    {target ? ` ${procSteps[step - 1].title}` : ""}
+                  </b>
+                  <span>
+                    {target
+                      ? procSteps[step - 1].caption
+                      : "Tidak ada garis singgung yang bisa dijelaskan."}
+                  </span>
+                </p>
+              ) : (
+                <p className="tc-pinfo">
+                  <span>
+                    <b>d</b> = {fmt(an.d)}
+                  </span>
+                  {an.ext.length > 0 && kindShown("ext") && (
+                    <span>
+                      <b style={{ color: color.ext }}>ℓ luar</b> ={" "}
+                      {fmt(an.lenExt)}
+                    </span>
+                  )}
+                  {an.inn.length > 0 && kindShown("int") && (
+                    <span>
+                      <b style={{ color: color.int }}>ℓ dalam</b> ={" "}
+                      {fmt(an.lenInt)}
+                    </span>
+                  )}
+                </p>
               )}
             </div>
 
-            <div className="tc-tools" role="group" aria-label="Tampilan">
+            <div className="tc-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFull}
-                aria-label={isFull ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFull ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFull ? (
-                  <Minimize2 size={15} aria-hidden="true" />
+                {isFs ? (
+                  <Minimize2 size={16} aria-hidden="true" />
                 ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
+                  <Maximize2 size={16} aria-hidden="true" />
                 )}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={resetView}
-                aria-label="Kembali ke tampilan awal"
-                title="Kembali ke tampilan awal"
+                onClick={center}
+                aria-label="Pusatkan tampilan"
+                title="Pusatkan tampilan"
               >
-                <Crosshair size={15} aria-hidden="true" />
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFull && (
+              {isFs && step > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goStep(-1)}
+                    disabled={step <= 1}
+                    aria-label="Langkah sebelumnya"
+                    title="Langkah sebelumnya"
+                  >
+                    <ChevronLeft size={17} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goStep(1)}
+                    disabled={step >= STEP_COUNT}
+                    aria-label="Langkah berikutnya"
+                    title="Langkah berikutnya"
+                  >
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                </>
+              )}
+              {isFs && (
                 <button
                   type="button"
-                  className="tc-toolbar-toggle"
-                  onClick={() => setPanelOpen((open) => !open)}
+                  className="tc-toggle"
+                  onClick={() => setPanelOpen((o) => !o)}
                   aria-pressed={panelOpen}
-                  aria-controls={`tc-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`tc-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
 
-          {step > 0 && (
-            <div
-              className="tc-stepbar"
-              role="group"
-              aria-label="Langkah penjelasan"
-            >
-              <button
-                type="button"
-                onClick={() => goStep(-1)}
-                disabled={step <= 1}
-                aria-label="Langkah sebelumnya"
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </button>
-              <p aria-live="polite">
-                <b>
-                  {step}/{STEP_COUNT}
-                  {target ? ` · ${procSteps[step - 1].title}` : ""}
-                </b>
-                <span>
-                  {target
-                    ? procSteps[step - 1].caption
-                    : "Tidak ada garis singgung yang bisa dijelaskan pada posisi ini."}
-                </span>
-              </p>
-              <button
-                type="button"
-                onClick={() => goStep(1)}
-                disabled={step >= STEP_COUNT}
-                aria-label="Langkah berikutnya"
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(0)}
-                aria-label="Tutup mode proses"
-                title="Tutup mode proses"
-              >
-                <X size={14} aria-hidden="true" />
-              </button>
-            </div>
-          )}
-
-          <div className="tc-legend" aria-label="Legenda grafik">
-            <span>
-              <i style={{ borderTopColor: COLOR_C1 }} /> lingkaran 1
-            </span>
-            <span>
-              <i style={{ borderTopColor: COLOR_C2 }} /> lingkaran 2
-            </span>
-            {opts.ext && (
-              <span>
-                <i className="line-ext" /> singgung luar
-              </span>
+          <ul className="tc-legend" aria-label="Legenda grafik">
+            <li>
+              <i style={{ borderColor: color.c1 }} /> lingkaran 1
+            </li>
+            <li>
+              <i style={{ borderColor: color.c2 }} /> lingkaran 2
+            </li>
+            {kindShown("ext") && (
+              <li>
+                <i style={{ borderColor: color.ext }} /> singgung luar
+              </li>
             )}
-            {opts.int && (
-              <span>
-                <i className="line-int" /> singgung dalam
-              </span>
+            {kindShown("int") && (
+              <li>
+                <i style={{ borderColor: color.int }} /> singgung dalam
+              </li>
             )}
             {opts.points && (
-              <span>
-                <b className="dot-touch" /> titik singgung
-              </span>
+              <li>
+                <b style={{ background: color.touch }} /> titik singgung
+              </li>
             )}
             {opts.centerline && (
-              <span>
-                <i className="line-center" /> garis hubung pusat
-              </span>
-            )}
-            {(opts.rightAngle || step > 0) && (
-              <span>
-                <i className="sq-right" /> siku-siku (90°)
-              </span>
+              <li>
+                <i className="dash" style={{ borderColor: color.guide }} /> garis pusat
+              </li>
             )}
             {step >= 2 && (
-              <span>
-                <i className="line-help" /> garis bantu O₁P
-              </span>
+              <li>
+                <i style={{ borderColor: color.help }} /> garis bantu
+              </li>
             )}
-            {(opts.extRadius || step >= 2) && (
-              <span>
-                <i className="line-guide" /> perpanjangan jari-jari
-              </span>
-            )}
-            {(opts.parLine || step >= 2) && (
-              <span>
-                <i className="line-par" /> garis lewat O₂ ∥ singgung
-              </span>
-            )}
-          </div>
-          <p className="tc-hint">
-            Tahan klik kiri pada latar lalu seret untuk menggeser · roda mouse
-            untuk zoom · seret titik pusat O₁ atau O₂ untuk memindahkan
-            lingkaran.
-          </p>
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`tc-column-${baseId}`}
-          className={`tc-column${isFull ? " is-floating" : ""}${
-            isFull && panelOpen ? " is-open" : ""
-          }`}
-          data-tab={tab}
+        {/* ───── Pengatur ───── */}
+        <section
+          id={`tc-panel-${baseId}`}
+          className={`tc-panel${isFs ? " is-floating" : ""}${isFs && panelOpen ? " is-open" : ""}`}
+          aria-label="Pengatur dua lingkaran"
         >
           <div className="tc-tabs" role="group" aria-label="Bagian panel">
-            {panelTabs.map((item) => (
-              <button
-                key={item.tab}
-                type="button"
-                aria-pressed={tab === item.tab}
-                onClick={() => setTab(item.tab)}
-              >
-                {item.label}
-              </button>
-            ))}
+            <button type="button" aria-pressed={tab === "set"} onClick={() => setTab("set")}>
+              Atur
+            </button>
+            <button type="button" aria-pressed={tab === "proc"} onClick={() => setTab("proc")}>
+              Proses
+            </button>
+            <button type="button" aria-pressed={tab === "res"} onClick={() => setTab("res")}>
+              Hasil
+            </button>
           </div>
 
-          <section className="tc-controls" aria-label="Pengaturan">
-            <div className="tc-pane" data-pane="par">
-              <div
-                className="tc-kinds"
-                role="group"
-                aria-label="Posisi dua lingkaran"
-              >
+          {tab === "set" && (
+            <>
+              <div className="tc-presets" role="group" aria-label="Posisi dua lingkaran">
                 {PRESETS.map((item) => (
                   <button
                     key={item.label}
                     type="button"
-                    title={item.title}
-                    aria-label={item.title}
                     aria-pressed={sameParams(params, item.params)}
                     style={{ "--kc": item.color } as CSSProperties}
                     onClick={() => setParam(item.params)}
@@ -1895,432 +1635,289 @@ export function TwoCircleTangentSimulation() {
                 ))}
               </div>
 
-              {focusPicker}
-
-              <div className="tc-params">
-                <p className="tc-group" style={{ color: COLOR_C1 }}>
-                  Lingkaran 1
+              <div className="tc-focus" role="group" aria-label="Garis singgung yang ditampilkan">
+                {FOCUS_OPTIONS.map((item) => {
+                  const exists = item.key === "all" || !!resolveTarget(an, item.key);
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      aria-pressed={focus === item.key}
+                      disabled={!exists && focus !== item.key}
+                      style={{ "--kc": item.color } as CSSProperties}
+                      onClick={() => setFocus(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {focusMissing && (
+                <p className="tc-note" role="status">
+                  {FOCUS_NAME[focus]} tidak ada pada posisi ini. Ubah d atau
+                  jari-jari, atau pilih garis lain.
                 </p>
+              )}
+
+              <div className="tc-sliders">
                 <ParamRow
-                  id={`tc-x1-${baseId}`}
-                  label="x₁"
-                  title="absis pusat lingkaran 1"
-                  value={params.x1}
-                  min={-X_LIM}
-                  max={X_LIM}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={2}
-                  bipolar
-                  tone={COLOR_C1}
-                  onChange={(v) => setParam({ x1: v })}
-                />
-                <ParamRow
-                  id={`tc-y1-${baseId}`}
-                  label="y₁"
-                  title="ordinat pusat lingkaran 1"
-                  value={params.y1}
-                  min={-Y_LIM}
-                  max={Y_LIM}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={2}
-                  bipolar
-                  tone={COLOR_C1}
-                  onChange={(v) => setParam({ y1: v })}
-                />
-                <ParamRow
-                  id={`tc-r1-${baseId}`}
+                  id={`tc-${baseId}-r1`}
                   label="r₁"
                   title="jari-jari lingkaran 1"
                   value={params.r1}
                   min={R_MIN}
                   max={R_MAX}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={1}
-                  tone={COLOR_C1}
+                  tone={color.c1}
                   onChange={(v) => setParam({ r1: v })}
                 />
-
-                <p className="tc-group" style={{ color: COLOR_C2 }}>
-                  Lingkaran 2
-                </p>
                 <ParamRow
-                  id={`tc-x2-${baseId}`}
-                  label="x₂"
-                  title="absis pusat lingkaran 2"
-                  value={params.x2}
-                  min={-X_LIM}
-                  max={X_LIM}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={2}
-                  bipolar
-                  tone={COLOR_C2}
-                  onChange={(v) => setParam({ x2: v })}
-                />
-                <ParamRow
-                  id={`tc-y2-${baseId}`}
-                  label="y₂"
-                  title="ordinat pusat lingkaran 2"
-                  value={params.y2}
-                  min={-Y_LIM}
-                  max={Y_LIM}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={2}
-                  bipolar
-                  tone={COLOR_C2}
-                  onChange={(v) => setParam({ y2: v })}
-                />
-                <ParamRow
-                  id={`tc-r2-${baseId}`}
+                  id={`tc-${baseId}-r2`}
                   label="r₂"
                   title="jari-jari lingkaran 2"
                   value={params.r2}
                   min={R_MIN}
                   max={R_MAX}
-                  step={0.1}
-                  nudge={0.1}
-                  digits={1}
-                  tone={COLOR_C2}
+                  tone={color.c2}
                   onChange={(v) => setParam({ r2: v })}
                 />
-
-                <p className="tc-group" style={{ color: COLOR_TOUCH }}>
-                  Jarak kedua pusat
-                </p>
                 <ParamRow
-                  id={`tc-d-${baseId}`}
+                  id={`tc-${baseId}-d`}
                   label="d"
-                  title="jarak antarpusat d (O₂ bergeser sepanjang garis O₁O₂)"
-                  value={Math.round(an.d * 100) / 100}
+                  title="jarak kedua pusat"
+                  value={an.d}
                   min={0}
                   max={dMax}
-                  step={0.05}
-                  nudge={0.1}
-                  digits={2}
-                  tone={COLOR_TOUCH}
+                  tone={color.d}
                   playing={anim === "d"}
                   onChange={setDistance}
                   onPlay={() => setAnim(anim === "d" ? null : "d")}
                 />
               </div>
 
+              <details className="tc-more">
+                <summary>Posisi pusat</summary>
+                <div className="tc-sliders">
+                  <ParamRow
+                    id={`tc-${baseId}-x1`}
+                    label="x₁"
+                    title="absis pusat lingkaran 1"
+                    value={params.x1}
+                    min={-X_LIM}
+                    max={X_LIM}
+                    digits={2}
+                    bipolar
+                    tone={color.c1}
+                    onChange={(v) => setParam({ x1: v })}
+                  />
+                  <ParamRow
+                    id={`tc-${baseId}-y1`}
+                    label="y₁"
+                    title="ordinat pusat lingkaran 1"
+                    value={params.y1}
+                    min={-Y_LIM}
+                    max={Y_LIM}
+                    digits={2}
+                    bipolar
+                    tone={color.c1}
+                    onChange={(v) => setParam({ y1: v })}
+                  />
+                  <ParamRow
+                    id={`tc-${baseId}-x2`}
+                    label="x₂"
+                    title="absis pusat lingkaran 2"
+                    value={params.x2}
+                    min={-X_LIM}
+                    max={X_LIM}
+                    digits={2}
+                    bipolar
+                    tone={color.c2}
+                    onChange={(v) => setParam({ x2: v })}
+                  />
+                  <ParamRow
+                    id={`tc-${baseId}-y2`}
+                    label="y₂"
+                    title="ordinat pusat lingkaran 2"
+                    value={params.y2}
+                    min={-Y_LIM}
+                    max={Y_LIM}
+                    digits={2}
+                    bipolar
+                    tone={color.c2}
+                    onChange={(v) => setParam({ y2: v })}
+                  />
+                </div>
+              </details>
+
+              <div className="tc-chips" role="group" aria-label="Tampilkan di grafik">
+                {optionRows.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    aria-pressed={opts[row.key]}
+                    onClick={() => setOpt(row.key)}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
+
               <button type="button" className="tc-reset" onClick={reset}>
                 <RotateCcw size={13} aria-hidden="true" />
                 <span>Atur ulang</span>
               </button>
-            </div>
+            </>
+          )}
 
-            <div className="tc-pane" data-pane="opt">
-              <div className="tc-options">
-                {optionRows.map((row) => (
-                  <label key={row.key}>
-                    <input
-                      type="checkbox"
-                      checked={opts[row.key]}
-                      onChange={(event) =>
-                        setOpt(row.key, event.currentTarget.checked)
-                      }
-                    />
-                    {row.label}
-                  </label>
-                ))}
-              </div>
-              <GraphAppearanceControls
-                appearance={appearance}
-                onStep={onStep}
-              />
-            </div>
-          </section>
-
-          <div className="tc-results">
-            <div className="tc-pane" data-pane="proc">
-              {tabbed && focusPicker}
+          {tab === "proc" && (
+            <>
               {step === 0 ? (
-                <section className="tc-card" aria-label="Mulai penjelasan">
-                  <h4 style={{ color: COLOR_HELP }}>
-                    Cara mencari panjang garis singgung
-                  </h4>
-                  <p>
-                    Ikuti 4 langkah: jari-jari tegak lurus garis singgung, garis
-                    bantu dari O₂, segitiga siku-siku O₁PO₂, lalu teorema
-                    Pythagoras. Setiap langkah digambar langsung di grafik dan
-                    ikut berubah saat lingkaran digeser.
+                <>
+                  <p className="tc-note">
+                    Cari panjang ruas singgung ℓ lewat segitiga siku-siku bantu
+                    O₁PO₂, dalam 4 langkah. Garis yang dijelaskan: {targetName}.
                   </p>
                   <button
                     type="button"
-                    className="tc-primary"
+                    className="tc-reset"
                     onClick={startProcess}
                     disabled={!target}
                   >
-                    Mulai dengan {targetName}
+                    <Play size={13} aria-hidden="true" />
+                    <span>Mulai proses</span>
                   </button>
                   {!target && (
-                    <p className="tc-eq-note">
-                      Belum ada garis singgung yang bisa dijelaskan. Jauhkan
-                      kedua lingkaran atau pilih garis lain.
+                    <p className="tc-note" role="status">
+                      Tidak ada garis singgung pada posisi ini. Jauhkan kedua
+                      lingkaran atau pilih garis lain di tab Atur.
                     </p>
                   )}
-                </section>
+                </>
               ) : target ? (
                 <>
-                  <p className="tc-proc-target">
-                    Menjelaskan: <b>{targetName}</b>
-                  </p>
-                  <ol className="tc-steps" aria-label="Langkah penjelasan">
-                    {procSteps.map((item, idx) => {
-                      const n = idx + 1;
-                      const state =
-                        n === step ? "now" : n < step ? "done" : "todo";
-                      return (
-                        <li key={item.title} data-state={state}>
-                          <button
-                            type="button"
-                            aria-current={n === step ? "step" : undefined}
-                            onClick={() => setStep(n)}
-                          >
-                            <span aria-hidden="true">{n}</span>
-                            {item.title}
-                          </button>
-                          {n === step && <p>{item.body}</p>}
-                        </li>
-                      );
-                    })}
+                  <ol className="tc-steps">
+                    {procSteps.map((s, i) => (
+                      <li
+                        key={s.title}
+                        aria-current={step === i + 1 ? "step" : undefined}
+                        data-done={step > i + 1 ? "true" : undefined}
+                      >
+                        <button type="button" onClick={() => setStep(i + 1)}>
+                          <b>{i + 1}</b>
+                          <span>{s.title}</span>
+                        </button>
+                        {step === i + 1 && <p>{s.body}</p>}
+                      </li>
+                    ))}
                   </ol>
                   {step === STEP_COUNT && (
-                    <section className="tc-card" aria-label="Perhitungan">
-                      <h4 style={{ color: COLOR_HELP }}>Perhitungan</h4>
-                      <p className="tc-eq">d² = ({legAbs})² + ℓ²</p>
-                      <p className="tc-eq">ℓ = √(d² − ({legAbs})²)</p>
-                      <p className="tc-eq">
-                        ℓ = √({fmt(an.d)}² − {fmt(leg)}²)
-                      </p>
-                      <p className="tc-eq">
-                        ℓ = √{fmt(Math.max(0, an.d * an.d - leg * leg))} ={" "}
-                        {fmt(tLen)}
-                      </p>
-                      {tLen < 1e-3 && (
-                        <p className="tc-eq-note">
-                          ℓ = 0 karena kedua lingkaran bersinggungan: T₁ dan T₂
-                          berimpit.
-                        </p>
+                    <dl className="tc-readouts">
+                      {cell("d² = (" + legAbs + ")² + ℓ²", `${fmt(an.d)}² = ${fmt(leg)}² + ℓ²`, color.touch, true)}
+                      {cell(
+                        "ℓ = √(d² − (" + legAbs + ")²)",
+                        `√${fmt(Math.max(0, an.d * an.d - leg * leg))} = ${fmt(tLen)}`,
+                        color.ext,
+                        true,
                       )}
-                    </section>
+                      {tLen < 1e-3 &&
+                        cell("Catatan", "ℓ = 0: kedua lingkaran bersinggungan, T₁ dan T₂ berimpit.", undefined, true)}
+                    </dl>
                   )}
-                  <div className="tc-stepnav">
-                    <button
-                      type="button"
-                      onClick={() => goStep(-1)}
-                      disabled={step <= 1}
-                    >
+                  <div className="tc-nav">
+                    <button type="button" onClick={() => goStep(-1)} disabled={step <= 1}>
                       <ChevronLeft size={14} aria-hidden="true" />
-                      Sebelumnya
+                      Kembali
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => goStep(1)}
-                      disabled={step >= STEP_COUNT}
-                    >
-                      Berikutnya
+                    <button type="button" onClick={() => goStep(1)} disabled={step >= STEP_COUNT}>
+                      Lanjut
                       <ChevronRight size={14} aria-hidden="true" />
                     </button>
                     <button type="button" onClick={() => setStep(0)}>
+                      <X size={14} aria-hidden="true" />
                       Selesai
                     </button>
                   </div>
                 </>
               ) : (
-                <section className="tc-card" aria-label="Tidak ada garis">
-                  <p>
+                <>
+                  <p className="tc-note" role="status">
                     Garis singgung yang dipilih tidak ada pada posisi ini. Ubah
                     posisi lingkaran atau pilih garis lain.
                   </p>
-                  <div className="tc-stepnav">
-                    <button type="button" onClick={() => setStep(0)}>
-                      Tutup
-                    </button>
-                  </div>
-                </section>
+                  <button type="button" className="tc-reset" onClick={() => setStep(0)}>
+                    <X size={13} aria-hidden="true" />
+                    <span>Tutup</span>
+                  </button>
+                </>
               )}
-            </div>
+            </>
+          )}
 
-            <div className="tc-pane" data-pane="res">
-              <section
-                className="tc-card tc-card-kind"
-                aria-label="Hubungan kedua lingkaran"
-              >
-                <h3 style={{ color: COLOR_EXT }}>{an.relation}</h3>
-                <p>
-                  d = {fmt(an.d)} · r₁ + r₂ = {fmt(an.sum)} · |r₁ − r₂| ={" "}
-                  {fmt(an.diff)}
-                </p>
-                <p>
-                  Garis singgung persekutuan luar: {extText}; dalam: {intText}.
-                </p>
-              </section>
+          {tab === "res" && (
+            <>
+              <dl className="tc-readouts" aria-live="polite">
+                {cell("Hubungan", an.relation, color.ext, true)}
+                {cell("d", fmt(an.d))}
+                {cell("r₁ + r₂", fmt(an.sum))}
+                {cell("|r₁ − r₂|", fmt(an.diff), undefined, true)}
+                {cell("Lingkaran 1", circleEq(params.x1, params.y1, params.r1), color.c1, true)}
+                {cell("Lingkaran 2", circleEq(params.x2, params.y2, params.r2), color.c2, true)}
+              </dl>
 
-              <section className="tc-card" aria-label="Persamaan lingkaran">
-                <h4>Persamaan kedua lingkaran</h4>
-                <p className="tc-eq">
-                  {circleEq(params.x1, params.y1, params.r1)}
-                </p>
-                <p className="tc-eq-note">
-                  lingkaran 1, pusat O₁ {fmtPt(params.x1, params.y1)}
-                </p>
-                <p className="tc-eq">
-                  {circleEq(params.x2, params.y2, params.r2)}
-                </p>
-                <p className="tc-eq-note">
-                  lingkaran 2, pusat O₂ {fmtPt(params.x2, params.y2)}
-                </p>
-              </section>
-
-              <section
-                className="tc-card"
-                aria-label="Garis singgung persekutuan luar"
-              >
-                <h4 style={{ color: COLOR_EXT }}>
-                  Garis singgung persekutuan luar
-                </h4>
-                {an.ext.length > 0 ? (
-                  <>
-                    <p className="tc-eq">ℓ = √(d² − (r₁ − r₂)²)</p>
-                    <p className="tc-eq-note">
-                      √({fmt(an.d)}² − {fmt(an.diff)}²) = {fmt(an.lenExt)}
-                    </p>
-                    {an.ext.map((t, i) => (
-                      <div key={`ext-${i}`}>
-                        <p className="tc-eq">{lineEq(t)}</p>
-                        <p className="tc-eq-note">
-                          menyinggung di {fmtPt(t.t1[0], t.t1[1])} dan{" "}
-                          {fmtPt(t.t2[0], t.t2[1])}
-                        </p>
-                      </div>
-                    ))}
-                    {Number.isFinite(an.E[0]) &&
-                      kv("Titik potong E", fmtPt(an.E[0], an.E[1]))}
-                  </>
-                ) : (
-                  <p className="tc-eq-note">
-                    Tidak ada: salah satu lingkaran berada di dalam lingkaran
-                    lain (d &lt; |r₁ − r₂|).
-                  </p>
+              <dl className="tc-readouts" aria-live="polite">
+                {cell(
+                  "Singgung luar",
+                  an.ext.length ? `${an.ext.length} garis` : "tidak ada (d < |r₁ − r₂|)",
+                  color.ext,
+                  true,
                 )}
-              </section>
-
-              <section
-                className="tc-card"
-                aria-label="Garis singgung persekutuan dalam"
-              >
-                <h4 style={{ color: COLOR_INT }}>
-                  Garis singgung persekutuan dalam
-                </h4>
-                {an.inn.length > 0 ? (
-                  <>
-                    <p className="tc-eq">ℓ = √(d² − (r₁ + r₂)²)</p>
-                    <p className="tc-eq-note">
-                      √({fmt(an.d)}² − {fmt(an.sum)}²) = {fmt(an.lenInt)}
-                    </p>
-                    {an.inn.map((t, i) => (
-                      <div key={`int-${i}`}>
-                        <p className="tc-eq">{lineEq(t)}</p>
-                        <p className="tc-eq-note">
-                          menyinggung di {fmtPt(t.t1[0], t.t1[1])} dan{" "}
-                          {fmtPt(t.t2[0], t.t2[1])}
-                        </p>
-                      </div>
-                    ))}
-                    {Number.isFinite(an.I[0]) &&
-                      kv("Titik potong I", fmtPt(an.I[0], an.I[1]))}
-                  </>
-                ) : (
-                  <p className="tc-eq-note">
-                    Tidak ada: kedua lingkaran berpotongan, bersinggungan dalam,
-                    atau saling di dalam (d &lt; r₁ + r₂).
-                  </p>
+                {an.ext.length > 0 &&
+                  cell(
+                    "ℓ = √(d² − (r₁ − r₂)²)",
+                    `√(${fmt(an.d)}² − ${fmt(an.diff)}²) = ${fmt(an.lenExt)}`,
+                    color.ext,
+                    true,
+                  )}
+                {an.ext.map((t, i) =>
+                  cell(
+                    `Luar ${i + 1}`,
+                    `${lineEq(t)} · ${fmtPt(t.t1[0], t.t1[1])} dan ${fmtPt(t.t2[0], t.t2[1])}`,
+                    undefined,
+                    true,
+                  ),
                 )}
-              </section>
-            </div>
+                {Number.isFinite(an.E[0]) && cell("Titik potong E", fmtPt(an.E[0], an.E[1]), color.ext, true)}
+              </dl>
 
-            <div className="tc-pane" data-pane="info">
-              <table className="tc-info-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Hubungan</th>
-                    <th scope="col">Syarat</th>
-                    <th scope="col">Luar</th>
-                    <th scope="col">Dalam</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Terpisah</td>
-                    <td>d &gt; r₁ + r₂</td>
-                    <td>2</td>
-                    <td>2</td>
-                  </tr>
-                  <tr>
-                    <td>Singgung luar</td>
-                    <td>d = r₁ + r₂</td>
-                    <td>2</td>
-                    <td>1</td>
-                  </tr>
-                  <tr>
-                    <td>Berpotongan</td>
-                    <td>|r₁ − r₂| &lt; d &lt; r₁ + r₂</td>
-                    <td>2</td>
-                    <td>0</td>
-                  </tr>
-                  <tr>
-                    <td>Singgung dalam</td>
-                    <td>d = |r₁ − r₂|</td>
-                    <td>1</td>
-                    <td>0</td>
-                  </tr>
-                  <tr>
-                    <td>Saling di dalam</td>
-                    <td>d &lt; |r₁ − r₂|</td>
-                    <td>0</td>
-                    <td>0</td>
-                  </tr>
-                </tbody>
-              </table>
-              <ul className="tc-insights">
-                <li>
-                  <strong style={{ color: COLOR_TOUCH }}>
-                    Jari-jari ⟂ singgung:
-                  </strong>{" "}
-                  jari-jari ke titik singgung selalu tegak lurus garis singgung,
-                  sehingga O₁T₁ dan O₂T₂ sejajar. Dari sini terbentuk segitiga
-                  siku-siku dengan sisi miring d.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_EXT }}>Singgung luar:</strong>{" "}
-                  selisih jari-jari menjadi salah satu sisi siku-siku, sehingga
-                  ℓ = √(d² − (r₁ − r₂)²). Bila r₁ = r₂, kedua garis sejajar O₁O₂
-                  dan tidak berpotongan.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_INT }}>Singgung dalam:</strong>{" "}
-                  jumlah jari-jari menjadi sisi siku-siku, sehingga ℓ = √(d² −
-                  (r₁ + r₂)²). Kedua garisnya berpotongan di titik I pada ruas
-                  O₁O₂ yang membagi O₁O₂ dengan perbandingan r₁ : r₂.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_C2 }}>Titik E:</strong> garis
-                  singgung luar berpotongan di E pada perpanjangan O₁O₂ dengan
-                  EO₁ : EO₂ = r₁ : r₂. Coba animasikan d untuk melihat garis
-                  singgung muncul dan hilang saat posisi kedua lingkaran
-                  berubah.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+              <dl className="tc-readouts" aria-live="polite">
+                {cell(
+                  "Singgung dalam",
+                  an.inn.length ? `${an.inn.length} garis` : "tidak ada (d < r₁ + r₂)",
+                  color.int,
+                  true,
+                )}
+                {an.inn.length > 0 &&
+                  cell(
+                    "ℓ = √(d² − (r₁ + r₂)²)",
+                    `√(${fmt(an.d)}² − ${fmt(an.sum)}²) = ${fmt(an.lenInt)}`,
+                    color.int,
+                    true,
+                  )}
+                {an.inn.map((t, i) =>
+                  cell(
+                    `Dalam ${i + 1}`,
+                    `${lineEq(t)} · ${fmtPt(t.t1[0], t.t1[1])} dan ${fmtPt(t.t2[0], t.t2[1])}`,
+                    undefined,
+                    true,
+                  ),
+                )}
+                {Number.isFinite(an.I[0]) && cell("Titik potong I", fmtPt(an.I[0], an.I[1]), color.int, true)}
+              </dl>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );
 }
+
+export default TwoCircleTangentSimulation;

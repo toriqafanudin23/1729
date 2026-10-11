@@ -1,91 +1,90 @@
-/* Simulasi irisan kerucut.
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. Token --cs-* sengaja tidak memakai nama --line/--paper
-   agar GraphAppearanceControls tetap memakai variabel situsnya sendiri. */
+/* Simulasi irisan kerucut — tema slate landing page 1729.
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-.conic-simulation,
-.conic-simulation *,
-.conic-simulation *::before,
-.conic-simulation *::after {
+.cs,
+.cs *,
+.cs *::before,
+.cs *::after {
   box-sizing: border-box;
 }
 
-.conic-simulation {
-  --cs-accent: #087f8c;
-  --cs-ink: var(--sim-ink, #18313d);
-  --cs-muted: var(--sim-muted, #62727d);
-  --cs-line: var(--sim-line, #d5e0e4);
-  --cs-paper: var(--sim-paper, #f3f7f5);
+.cs {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
   --track: 3px;
-  --thumb: 13px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--cs-paper);
-  color: var(--cs-ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.conic-simulation button {
-  font-family: inherit;
+.cs button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.conic-simulation button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.conic-simulation button:focus-visible,
-.conic-simulation input:focus-visible {
-  outline: 2px solid var(--cs-accent);
+.cs button:focus-visible,
+.cs input:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.cs-orientation-hint {
+.cs-hint {
   display: none;
 }
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.conic-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.cs-boards {
+.cs-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.cs-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.cs-board-panel {
+.cs-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--cs-line);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
@@ -96,367 +95,300 @@
 }
 
 .cs-board {
-  /* !important: JSXGraph menulis position: relative pada elemen papan
-     (gaya inline) sehingga bisa membatalkan position: absolute dari CSS. */
-  position: absolute !important;
-  inset: 0 !important;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
 .cs-board:active {
   cursor: grabbing;
 }
 
-.cs-board:focus-visible {
-  outline: 2px solid var(--cs-accent);
-  outline-offset: -2px;
-}
-
-.cs-board .JXGtext {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-}
-
-/* Jenis kurva dan e: melayang di kiri atas */
-.cs-chip {
+/* Chip jenis kurva dan info titik P, kiri atas */
+.cs-hud {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 2;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  max-width: calc(100% - 50px);
-  margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid var(--cs-accent);
-  background: rgba(255, 255, 255, 0.92);
-  font-size: 12px;
-  pointer-events: none;
-}
-
-.cs-chip b {
-  font-size: 14px;
-}
-
-.cs-chip span {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-}
-
-/* Titik P dan jaraknya: melayang di kiri bawah */
-.cs-pinfo {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px 10px;
-  max-width: calc(100% - 50px);
-  padding: 3px 8px;
-  border-left: 3px solid #183e54;
-  background: rgba(255, 255, 255, 0.92);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 11.5px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-/* Alat tampilan melayang di kanan atas */
-.cs-tools {
-  position: absolute;
-  top: 6px;
-  right: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
   display: grid;
-  gap: 3px;
+  justify-items: start;
+  gap: 4px;
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
+  pointer-events: none;
+}
+
+.cs-chip,
+.cs-pinfo {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+}
+
+.cs-chip {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 3px 10px;
+  border-left: 3px solid var(--line-strong);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.cs-chip span {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cs-pinfo {
+  padding: 2px 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.cs-pinfo b {
+  color: #2563eb;
+}
+
+/* Toolbar mengambang, kanan atas */
+.cs-tools {
+  position: absolute;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
+  display: grid;
+  gap: 4px;
 }
 
 .cs-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
-  color: var(--cs-ink);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--ink);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-
 .cs-tools button:hover {
-  border-color: var(--cs-accent);
-  background: #e8f3f1;
+  border-color: var(--ink);
+}
+.cs-tools .cs-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
+/* Legenda */
 .cs-legend {
   display: flex;
   gap: 4px 12px;
-  padding: 3px 8px;
-  border-top: 1px solid var(--cs-line);
-  color: var(--cs-muted);
+  margin: 0;
+  padding: 4px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
   font-size: 10px;
+  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
-
 .cs-legend::-webkit-scrollbar {
   display: none;
 }
-
-.cs-legend span {
+.cs-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
 .cs-legend i {
   width: 14px;
   height: 0;
-  border: 0 solid #183e54;
-  border-top-width: 3px;
+  border-top: 3px solid;
 }
-
-.cs-legend i.line-dir {
-  border-color: #8a6d00;
+.cs-legend i.dash {
+  border-top-width: 2px;
   border-top-style: dashed;
-  border-top-width: 2px;
 }
-
-.cs-legend i.line-tan {
-  border-color: #2f6bd0;
-  border-top-width: 2px;
-}
-
 .cs-legend b {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.cs-legend .dot-focus {
-  background: #183e54;
-}
+/* ───────── Pengatur ───────── */
 
-.cs-legend .legend-ghost {
-  opacity: 0.85;
-}
-
-/* Petunjuk panjang hanya di desktop */
-.cs-hint {
-  display: none;
-}
-
-/* ───────── Tab panel kanan ───────── */
-
-.cs-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.cs-tabs button {
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--cs-ink);
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cs-tabs button:first-child {
-  margin-left: 0;
-}
-
-.cs-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--cs-accent);
-  background: var(--cs-accent);
-  color: #fff;
-}
-
-/* Isi panel: satu kartu putih yang bisa digulir */
-.conic-simulation.is-tabbed .cs-controls,
-.conic-simulation.is-tabbed .cs-results {
+.cs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--cs-line);
-  background: #fff;
+  padding: 10px;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
   scrollbar-width: thin;
 }
 
-.cs-pane {
+/* Tab: Atur | Hasil */
+.cs-tabs {
   display: grid;
-  align-content: start;
-  gap: 8px;
-  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
 }
-
-/* Hanya panel pada tab aktif yang tampil */
-.conic-simulation.is-tabbed .cs-column[data-tab="par"] .cs-results,
-.conic-simulation.is-tabbed .cs-column[data-tab="opt"] .cs-results,
-.conic-simulation.is-tabbed .cs-column[data-tab="res"] .cs-controls,
-.conic-simulation.is-tabbed .cs-column[data-tab="info"] .cs-controls,
-.conic-simulation.is-tabbed
-  .cs-column[data-tab="par"]
-  [data-pane]:not([data-pane="par"]),
-.conic-simulation.is-tabbed
-  .cs-column[data-tab="opt"]
-  [data-pane]:not([data-pane="opt"]),
-.conic-simulation.is-tabbed
-  .cs-column[data-tab="res"]
-  [data-pane]:not([data-pane="res"]),
-.conic-simulation.is-tabbed
-  .cs-column[data-tab="info"]
-  [data-pane]:not([data-pane="info"]) {
-  display: none;
-}
-
-/* ───────── Jenis dan parameter ───────── */
-
-.cs-kinds {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 3px;
-}
-
-.cs-kinds button {
-  min-width: 0;
-  height: 28px;
-  padding: 0 1px;
-  border: 1px solid #aebdc2;
-  border-bottom: 3px solid var(--kc);
-  background: #fff;
-  color: var(--cs-ink);
-  font-size: 9.5px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: nowrap;
+.cs-tabs button {
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-
-.cs-kinds button:hover {
-  background: #f1f6f5;
-}
-
-.cs-kinds button[aria-pressed="true"] {
-  border-color: var(--kc);
-  background: var(--kc);
+.cs-tabs button[aria-pressed="true"] {
+  background: var(--ink);
   color: #fff;
 }
 
-.cs-params {
+/* Jenis kurva: 2 × 2, setiap jenis punya warna sendiri */
+.cs-kinds {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 0 auto;
+  gap: 4px;
 }
-
-/* Satu baris: e  −  ──●──  +  [0,6]  ▶ */
-.cs-param {
-  --tone: var(--cs-accent);
-  display: grid;
-  grid-template-columns: 16px 20px minmax(0, 1fr) 20px 46px 22px;
-  align-items: center;
-  column-gap: 4px;
-  min-width: 0;
-}
-
-.cs-param label {
-  color: var(--tone);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-  font-style: italic;
-  font-weight: 800;
-  text-align: center;
-}
-
-.cs-nudge {
+.cs-kinds button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  gap: 6px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cs-kinds button::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kc);
+}
+.cs-kinds button:hover {
+  border-color: var(--kc);
+}
+.cs-kinds button[aria-pressed="true"] {
+  border-color: var(--kc);
+  background: color-mix(in srgb, var(--kc) 10%, #fff);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.cs-sliders {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+/* satu baris:  e  −  ────●────  +  0,6  ▶ */
+.cs-slider {
+  display: grid;
+  grid-template-columns: 14px var(--step) minmax(0, 1fr) var(--step) 38px var(--step);
+  align-items: center;
+  column-gap: 4px;
+}
+
+.cs-slider label {
+  color: var(--sc);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.cs-slider output {
+  color: var(--sc);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cs-step {
+  display: inline-grid;
+  place-items: center;
+  width: var(--step);
+  height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
-  color: var(--cs-ink);
+  color: var(--ink);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.cs-nudge:hover {
-  border-color: var(--tone);
-  background: #f1f6f5;
+.cs-step:hover:not(:disabled) {
+  border-color: var(--sc);
+}
+.cs-step:active:not(:disabled) {
+  background: var(--line);
+}
+.cs-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.cs-play[aria-pressed="true"] {
+  border-color: var(--sc);
+  background: var(--sc);
+  color: #fff;
 }
 
-.cs-nudge:active {
-  background: #e0ecea;
-}
-
-.cs-num {
-  width: 100%;
-  min-width: 0;
-  height: 24px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fff;
-  color: var(--tone);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.cs-num::-webkit-outer-spin-button,
-.cs-num::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
-}
-
-.cs-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--cs-muted);
-  cursor: pointer;
-}
-
-.cs-icon-btn:hover {
-  border-color: #aebdc2;
-  background: var(--cs-paper);
-}
-
-.cs-icon-btn[aria-pressed="true"] {
-  border-color: var(--tone);
-  color: var(--tone);
-}
-
-/* Area sentuh 28px, tampilan visual hanya 3px. */
+/* area sentuh 28px, tampilan hanya garis tipis.
+   --lo / --hi: bagian yang diwarnai (θ dari tengah, e dan ℓ dari kiri) */
 .cs-range {
   --lo: 0%;
   --hi: 50%;
@@ -469,660 +401,387 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
 .cs-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--cs-line) 0,
-    var(--cs-line) var(--lo),
-    var(--tone) var(--lo),
-    var(--tone) var(--hi),
-    var(--cs-line) var(--hi),
-    var(--cs-line) 100%
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
 .cs-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .cs-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--cs-line);
+  background: linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
+  );
 }
-
-.cs-range::-moz-range-progress {
-  height: var(--track);
-  border-radius: 999px;
-  background: transparent;
-}
-
 .cs-range::-moz-range-thumb {
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .cs-range:focus-visible {
   outline: none;
 }
-
 .cs-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
-
 .cs-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
 @media (pointer: coarse) {
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .cs-num {
-    height: 28px;
-    font-size: 16px;
-  }
-
-  .cs-param {
-    grid-template-columns: 16px 22px minmax(0, 1fr) 22px 50px 22px;
-  }
-
-  .cs-nudge {
-    width: 22px;
-    height: 22px;
+  .cs {
+    --step: 26px;
   }
 }
 
-.cs-check,
-.cs-options label {
+/* Pilihan tampilan: chip hidup/mati */
+.cs-chips {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  color: var(--cs-ink);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cs-chips button {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--mute);
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.cs-chips button:hover {
+  border-color: var(--ink);
+}
+.cs-chips button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Hasil */
+.cs-readouts {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+.cs-readouts > div {
+  min-width: 0;
+  padding: 4px 8px;
+  background: #fff;
+}
+.cs-readouts > .cs-wide {
+  grid-column: 1 / -1;
+}
+.cs-readouts dt {
+  color: var(--mute);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.cs-readouts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
-  cursor: pointer;
-}
-
-.cs-check input,
-.cs-options input {
-  flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--cs-accent);
-}
-
-.cs-options {
-  display: grid;
-  gap: 2px;
+  overflow-wrap: anywhere;
 }
 
 .cs-reset {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  flex: 0 0 auto;
   gap: 6px;
-  justify-self: start;
   height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
-  color: var(--cs-ink);
+  color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.15s ease;
 }
-
 .cs-reset:hover {
-  border-color: var(--cs-accent);
-  background: #e8f3f1;
+  border-color: var(--ink);
 }
 
-/* ───────── Hasil ───────── */
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-.cs-card {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--cs-line);
-  background: var(--cs-paper);
-}
-
-.cs-card h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.cs-card h4 {
-  margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.cs-card p {
-  margin: 0;
-  color: var(--cs-muted);
-  font-size: 11px;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.cs-card .cs-eq {
-  color: #183e54;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.cs-card .cs-eq-note {
-  margin-bottom: 4px;
-  font-size: 10px;
-}
-
-.cs-kvs {
-  display: grid;
-  gap: 1px;
-}
-
-.cs-kv {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  align-items: baseline;
-  gap: 8px;
-  padding: 2px 0;
-  border-top: 1px solid var(--cs-line);
-}
-
-.cs-kv:first-child {
-  border-top: 0;
-}
-
-.cs-kv span {
-  color: var(--cs-muted);
-  font-size: 10px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.cs-kv b {
-  color: #183e54;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-/* ───────── Info ───────── */
-
-.cs-info-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 10.5px;
-}
-
-.cs-info-table th,
-.cs-info-table td {
-  padding: 4px 6px;
-  border-top: 1px solid var(--cs-line);
-  text-align: left;
-  vertical-align: top;
-}
-
-.cs-info-table thead th {
-  border-top: 0;
-  color: var(--cs-muted);
-  font-weight: 700;
-}
-
-.cs-info-table td:first-child {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.cs-insights {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--cs-muted);
-  font-size: 10.5px;
-  line-height: 1.45;
-}
-
-.cs-insights li {
-  padding-left: 8px;
-  border-left: 3px solid var(--cs-line);
-}
-
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .conic-simulation.is-tabbed {
+  .cs {
     gap: 4px;
     padding: 4px;
   }
-
-  .conic-simulation.is-tabbed .cs-boards {
+  .cs-layout {
     gap: 4px;
   }
-
-  .conic-simulation.is-tabbed .cs-controls,
-  .conic-simulation.is-tabbed .cs-results {
-    padding: 6px;
+  .cs-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
   .cs-range {
     height: 24px;
   }
+  .cs-readouts > div {
+    padding: 2px 7px;
+  }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .cs {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .cs-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .cs-chip {
+    padding: 4px 14px;
+    font-size: clamp(20px, 2vw, 26px);
+  }
+  .cs-chip span {
+    font-size: 14px;
+  }
+  .cs-pinfo {
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+  .cs-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .cs-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+  .cs-tabs button {
+    height: 30px;
+    font-size: 13px;
+  }
+  .cs-kinds {
+    gap: 6px;
+  }
+  .cs-kinds button {
+    height: 34px;
+    font-size: 13px;
+  }
+  .cs-sliders {
+    gap: 8px;
+  }
+  .cs-slider {
+    grid-template-columns: 18px var(--step) minmax(0, 1fr) var(--step) 46px var(--step);
+  }
+  .cs-slider label {
+    font-size: 22px;
+  }
+  .cs-slider output {
+    font-size: 13px;
+  }
+  .cs-range {
+    height: 32px;
+  }
+  .cs-chips button {
+    height: 30px;
+    font-size: 12px;
+  }
+  .cs-readouts > div {
+    padding: 8px 12px;
+  }
+  .cs-readouts dt {
+    font-size: 11px;
+  }
+  .cs-readouts dd {
+    font-size: 14px;
+  }
+  .cs-reset {
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .conic-simulation.is-tabbed:not(.is-fullscreen) {
+  .cs {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .conic-simulation.is-tabbed:not(.is-fullscreen) .cs-orientation-hint {
+  .cs-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--cs-accent);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .cs-orientation-hint svg {
+  .cs-hint svg {
     flex: 0 0 auto;
-    color: var(--cs-accent);
+    color: var(--mute);
   }
-
-  .conic-simulation.is-tabbed:not(.is-fullscreen) .cs-boards {
+  .cs-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .conic-simulation.is-tabbed:not(.is-fullscreen) .cs-board-panel {
-    height: clamp(260px, 48dvh, 440px);
+  .cs-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .conic-simulation.is-tabbed:not(.is-fullscreen) .cs-controls,
-  .conic-simulation.is-tabbed:not(.is-fullscreen) .cs-results {
+  .cs-panel {
     overflow: visible;
   }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, chip jenis kurva, legenda, dan panel
+   pengatur mengambang di atasnya. Diletakkan paling akhir agar menimpa
+   aturan potret dan desktop. */
 
-.conic-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  gap: 12px;
-  padding: 14px;
-  font-size: 13px;
-}
+.cs.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.conic-simulation:not(.is-tabbed) .cs-boards {
-  grid-template-rows: clamp(520px, 76vh, 760px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-column {
-  display: contents;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-tabs {
-  display: none;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-controls {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 16px;
-  min-width: 0;
-  min-height: 0;
-  padding: 14px;
-  border: 1px solid var(--cs-line);
-  background: #fff;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-/* Hasil di bawah: lagi-lagi 2 : 1 (hasil | info) */
-.conic-simulation:not(.is-tabbed) .cs-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  min-width: 0;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-pane {
-  gap: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-pane[data-pane="res"] {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  align-items: start;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-chip {
-  top: 10px;
-  left: 10px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: 13px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-chip b {
-  font-size: 18px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-pinfo {
-  left: 10px;
-  bottom: 10px;
-  padding: 5px 12px;
-  font-size: 14px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-hint {
-  display: block;
-  margin: 0;
-  padding: 0 14px 8px;
-  color: var(--cs-muted);
-  font-size: 10px;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-kinds {
-  gap: 5px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-kinds button {
-  height: 36px;
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-params {
-  gap: 6px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-param {
-  grid-template-columns: 22px 24px minmax(0, 1fr) 24px 58px 26px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-param label {
-  font-size: 19px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-nudge {
-  width: 24px;
-  height: 24px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-num {
-  height: 30px;
-  font-size: 13px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-range {
-  height: 30px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-check,
-.conic-simulation:not(.is-tabbed) .cs-options label {
-  min-height: 30px;
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-reset {
-  height: 32px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card {
-  gap: 5px;
-  padding: 12px 14px;
-  background: #fff;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card h3 {
-  font-size: 20px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card h4 {
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card p {
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card .cs-eq {
-  font-size: 15px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-card .cs-eq-note {
-  font-size: 10px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-kv {
-  padding: 4px 0;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-kv span {
-  font-size: 11px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-kv b {
-  font-size: 14px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-info-table {
-  font-size: 12px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-info-table th,
-.conic-simulation:not(.is-tabbed) .cs-info-table td {
-  padding: 6px 8px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-insights {
-  gap: 6px;
-  font-size: 11.5px;
-}
-
-.conic-simulation:not(.is-tabbed) .cs-insights li {
-  padding-left: 10px;
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.conic-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
-  width: auto;
-  height: auto;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  display: block;
+  width: 100vw;
+  height: 100dvh;
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.conic-simulation.is-fullscreen .cs-orientation-hint {
+.cs.is-fs .cs-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .conic-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    font-size: 13px;
-  }
-
-  .conic-simulation.is-fullscreen .cs-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-
-  .conic-simulation.is-fullscreen .cs-kinds button {
-    height: 32px;
-    font-size: 11px;
-  }
-
-  .conic-simulation.is-fullscreen .cs-pinfo {
-    font-size: 14px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .conic-simulation.is-fullscreen .cs-boards {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .conic-simulation.is-fullscreen .cs-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, panel input (tab + isi) tersembunyi dan muncul
-   mengambang di atas grafik lewat tombol toolbar di bawah tombol pusatkan
-   tampilan. Ditaruh setelah aturan potret agar menimpanya. */
-.conic-simulation.is-fullscreen .cs-boards {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.conic-simulation.is-fullscreen .cs-board-panel {
+.cs.is-fs .cs-layout {
+  display: block;
   height: 100%;
 }
 
-.conic-simulation.is-fullscreen .cs-stage {
+.cs.is-fs .cs-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.cs.is-fs .cs-stage {
   height: 100%;
 }
 
-.conic-simulation.is-fullscreen .cs-column.is-floating {
+/* legenda: chip kecil di kiri bawah */
+.cs.is-fs .cs-legend {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  flex-wrap: wrap;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.cs.is-fs .cs-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  width: min(360px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(320px, 56vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
 }
-
-.conic-simulation.is-fullscreen .cs-column.is-floating.is-open {
-  display: grid;
-}
-
-.cs-tools .cs-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--cs-accent);
-  background: #d6ebe8;
-  color: var(--cs-accent);
-}
-
-/* Netralkan gaya bawaan .simulation-fullscreen-frame (mis. aspect-ratio atau
-   batas ukuran) agar elemen benar-benar memenuhi layar, baik pada layar
-   penuh asli maupun layar penuh CSS. */
-.conic-simulation:fullscreen.simulation-fullscreen-frame {
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  overflow: hidden !important;
-}
-
-.conic-simulation.simulation-fullscreen-frame.is-fullscreen:not(:fullscreen) {
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  transform: none !important;
+.cs.is-fs .cs-panel.is-floating.is-open {
+  display: flex;
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .conic-simulation.is-fullscreen .cs-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(400px, calc(100% - 70px));
+  .cs.is-fs .cs-panel.is-floating {
+    width: min(380px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .conic-simulation * {
+  .cs * {
     transition: none !important;
+    animation: none !important;
   }
 }

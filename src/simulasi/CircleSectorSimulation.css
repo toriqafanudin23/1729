@@ -1,91 +1,90 @@
-/* Simulasi busur, juring, tali busur, dan garis singgung lingkaran.
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. Token --sc-* sengaja tidak memakai nama --line/--paper
-   agar GraphAppearanceControls tetap memakai variabel situsnya sendiri. */
+/* Simulasi sektor lingkaran (juring) — tema slate landing page 1729.
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-.sector-simulation,
-.sector-simulation *,
-.sector-simulation *::before,
-.sector-simulation *::after {
+.sc,
+.sc *,
+.sc *::before,
+.sc *::after {
   box-sizing: border-box;
 }
 
-.sector-simulation {
-  --sc-accent: #087f8c;
-  --sc-ink: var(--sim-ink, #18313d);
-  --sc-muted: var(--sim-muted, #62727d);
-  --sc-line: var(--sim-line, #d5e0e4);
-  --sc-paper: var(--sim-paper, #f3f7f5);
+.sc {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
   --track: 3px;
-  --thumb: 13px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--sc-paper);
-  color: var(--sc-ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.sector-simulation button {
-  font-family: inherit;
+.sc button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.sector-simulation button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.sector-simulation button:focus-visible,
-.sector-simulation input:focus-visible {
-  outline: 2px solid var(--sc-accent);
+.sc button:focus-visible,
+.sc input:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.sc-orientation-hint {
+.sc-hint {
   display: none;
 }
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.sector-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.sc-boards {
+.sc-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.sc-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.sc-board-panel {
+.sc-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--sc-line);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
@@ -96,367 +95,298 @@
 }
 
 .sc-board {
-  /* !important: JSXGraph menulis position: relative pada elemen papan
-     (gaya inline) sehingga bisa membatalkan position: absolute dari CSS. */
-  position: absolute !important;
-  inset: 0 !important;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
 .sc-board:active {
   cursor: grabbing;
 }
 
-.sc-board:focus-visible {
-  outline: 2px solid var(--sc-accent);
-  outline-offset: -2px;
-}
-
-.sc-board .JXGtext {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-}
-
-/* Jenis kurva dan e: melayang di kiri atas */
-.sc-chip {
+/* Chip jenis kurva dan info titik P, kiri atas */
+.sc-hud {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 2;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  max-width: calc(100% - 50px);
-  margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid var(--sc-accent);
-  background: rgba(255, 255, 255, 0.92);
-  font-size: 12px;
-  pointer-events: none;
-}
-
-.sc-chip b {
-  font-size: 14px;
-}
-
-.sc-chip span {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-}
-
-/* Titik P dan jaraknya: melayang di kiri bawah */
-.sc-pinfo {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px 10px;
-  max-width: calc(100% - 50px);
-  padding: 3px 8px;
-  border-left: 3px solid #183e54;
-  background: rgba(255, 255, 255, 0.92);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 11.5px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-/* Alat tampilan melayang di kanan atas */
-.sc-tools {
-  position: absolute;
-  top: 6px;
-  right: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
   display: grid;
-  gap: 3px;
+  justify-items: start;
+  gap: 4px;
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
+  pointer-events: none;
+}
+
+.sc-chip,
+.sc-pinfo {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+}
+
+.sc-chip {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 3px 10px;
+  border-left: 3px solid #0d9488;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.sc-chip b {
+  color: #0d9488;
+}
+.sc-chip span {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sc-pinfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 2px 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.sc-pinfo b {
+  color: var(--ink);
+}
+
+/* Toolbar mengambang, kanan atas */
+.sc-tools {
+  position: absolute;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
+  display: grid;
+  gap: 4px;
 }
 
 .sc-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
-  color: var(--sc-ink);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--ink);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-
 .sc-tools button:hover {
-  border-color: var(--sc-accent);
-  background: #e8f3f1;
+  border-color: var(--ink);
+}
+.sc-tools .sc-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
+/* Legenda */
 .sc-legend {
   display: flex;
   gap: 4px 12px;
-  padding: 3px 8px;
-  border-top: 1px solid var(--sc-line);
-  color: var(--sc-muted);
+  margin: 0;
+  padding: 4px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
   font-size: 10px;
+  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
-
 .sc-legend::-webkit-scrollbar {
   display: none;
 }
-
-.sc-legend span {
+.sc-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
 .sc-legend i {
   width: 14px;
   height: 0;
-  border: 0 solid #183e54;
-  border-top-width: 3px;
+  border-top: 3px solid;
 }
-
-.sc-legend i.line-dir {
-  border-color: #8a6d00;
+.sc-legend i.dash {
+  border-top-width: 2px;
   border-top-style: dashed;
-  border-top-width: 2px;
 }
-
-.sc-legend i.line-tan {
-  border-color: #2f6bd0;
-  border-top-width: 2px;
-}
-
 .sc-legend b {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.sc-legend .dot-focus {
-  background: #183e54;
-}
+/* ───────── Pengatur ───────── */
 
-.sc-legend .legend-ghost {
-  opacity: 0.85;
-}
-
-/* Petunjuk panjang hanya di desktop */
-.sc-hint {
-  display: none;
-}
-
-/* ───────── Tab panel kanan ───────── */
-
-.sc-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.sc-tabs button {
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--sc-ink);
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.sc-tabs button:first-child {
-  margin-left: 0;
-}
-
-.sc-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--sc-accent);
-  background: var(--sc-accent);
-  color: #fff;
-}
-
-/* Isi panel: satu kartu putih yang bisa digulir */
-.sector-simulation.is-tabbed .sc-controls,
-.sector-simulation.is-tabbed .sc-results {
+.sc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--sc-line);
-  background: #fff;
+  padding: 10px;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
   scrollbar-width: thin;
 }
 
-.sc-pane {
+/* Tab: Atur | Hasil */
+.sc-tabs {
   display: grid;
-  align-content: start;
-  gap: 8px;
-  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
 }
-
-/* Hanya panel pada tab aktif yang tampil */
-.sector-simulation.is-tabbed .sc-column[data-tab="par"] .sc-results,
-.sector-simulation.is-tabbed .sc-column[data-tab="opt"] .sc-results,
-.sector-simulation.is-tabbed .sc-column[data-tab="res"] .sc-controls,
-.sector-simulation.is-tabbed .sc-column[data-tab="info"] .sc-controls,
-.sector-simulation.is-tabbed
-  .sc-column[data-tab="par"]
-  [data-pane]:not([data-pane="par"]),
-.sector-simulation.is-tabbed
-  .sc-column[data-tab="opt"]
-  [data-pane]:not([data-pane="opt"]),
-.sector-simulation.is-tabbed
-  .sc-column[data-tab="res"]
-  [data-pane]:not([data-pane="res"]),
-.sector-simulation.is-tabbed
-  .sc-column[data-tab="info"]
-  [data-pane]:not([data-pane="info"]) {
-  display: none;
-}
-
-/* ───────── Jenis dan parameter ───────── */
-
-.sc-kinds {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 3px;
-}
-
-.sc-kinds button {
-  min-width: 0;
-  height: 28px;
-  padding: 0 1px;
-  border: 1px solid #aebdc2;
-  border-bottom: 3px solid var(--kc);
-  background: #fff;
-  color: var(--sc-ink);
-  font-size: 9.5px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: nowrap;
+.sc-tabs button {
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-
-.sc-kinds button:hover {
-  background: #f1f6f5;
-}
-
-.sc-kinds button[aria-pressed="true"] {
-  border-color: var(--kc);
-  background: var(--kc);
+.sc-tabs button[aria-pressed="true"] {
+  background: var(--ink);
   color: #fff;
 }
 
-.sc-params {
+/* Sudut istimewa: 4 tombol sebaris, masing-masing berwarna */
+.sc-presets {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 0 0 auto;
+  gap: 4px;
 }
-
-/* Satu baris: e  −  ──●──  +  [0,6]  ▶ */
-.sc-param {
-  --tone: var(--sc-accent);
-  display: grid;
-  grid-template-columns: 16px 20px minmax(0, 1fr) 20px 46px 22px;
-  align-items: center;
-  column-gap: 4px;
-  min-width: 0;
-}
-
-.sc-param label {
-  color: var(--tone);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-  font-style: italic;
-  font-weight: 800;
-  text-align: center;
-}
-
-.sc-nudge {
+.sc-presets button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  gap: 6px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.sc-presets button:hover {
+  border-color: var(--kc);
+}
+.sc-presets button[aria-pressed="true"] {
+  border-color: var(--kc);
+  background: color-mix(in srgb, var(--kc) 10%, #fff);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.sc-sliders {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+/* satu baris:  e  −  ────●────  +  0,6  ▶ */
+.sc-slider {
+  display: grid;
+  grid-template-columns: 14px var(--step) minmax(0, 1fr) var(--step) 44px var(--step);
+  align-items: center;
+  column-gap: 4px;
+}
+
+.sc-slider label {
+  color: var(--sc);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.sc-slider output {
+  color: var(--sc);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sc-step {
+  display: inline-grid;
+  place-items: center;
+  width: var(--step);
+  height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
-  color: var(--sc-ink);
+  color: var(--ink);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.sc-nudge:hover {
-  border-color: var(--tone);
-  background: #f1f6f5;
+.sc-step:hover:not(:disabled) {
+  border-color: var(--sc);
+}
+.sc-step:active:not(:disabled) {
+  background: var(--line);
+}
+.sc-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.sc-play[aria-pressed="true"] {
+  border-color: var(--sc);
+  background: var(--sc);
+  color: #fff;
 }
 
-.sc-nudge:active {
-  background: #e0ecea;
-}
-
-.sc-num {
-  width: 100%;
-  min-width: 0;
-  height: 24px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fff;
-  color: var(--tone);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.sc-num::-webkit-outer-spin-button,
-.sc-num::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
-}
-
-.sc-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--sc-muted);
-  cursor: pointer;
-}
-
-.sc-icon-btn:hover {
-  border-color: #aebdc2;
-  background: var(--sc-paper);
-}
-
-.sc-icon-btn[aria-pressed="true"] {
-  border-color: var(--tone);
-  color: var(--tone);
-}
-
-/* Area sentuh 28px, tampilan visual hanya 3px. */
+/* area sentuh 28px, tampilan hanya garis tipis.
+   --lo / --hi: bagian yang diwarnai (θ dari tengah, e dan ℓ dari kiri) */
 .sc-range {
   --lo: 0%;
   --hi: 50%;
@@ -469,700 +399,387 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
 .sc-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--sc-line) 0,
-    var(--sc-line) var(--lo),
-    var(--tone) var(--lo),
-    var(--tone) var(--hi),
-    var(--sc-line) var(--hi),
-    var(--sc-line) 100%
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
 .sc-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .sc-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--sc-line);
+  background: linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
+  );
 }
-
-.sc-range::-moz-range-progress {
-  height: var(--track);
-  border-radius: 999px;
-  background: transparent;
-}
-
 .sc-range::-moz-range-thumb {
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .sc-range:focus-visible {
   outline: none;
 }
-
 .sc-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
-
 .sc-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
 @media (pointer: coarse) {
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .sc-num {
-    height: 28px;
-    font-size: 16px;
-  }
-
-  .sc-param {
-    grid-template-columns: 16px 22px minmax(0, 1fr) 22px 50px 22px;
-  }
-
-  .sc-nudge {
-    width: 22px;
-    height: 22px;
+  .sc {
+    --step: 26px;
   }
 }
 
-.sc-check,
-.sc-options label {
+/* Pilihan tampilan: chip hidup/mati */
+.sc-chips {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  color: var(--sc-ink);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sc-chips button {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--mute);
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.sc-chips button:hover {
+  border-color: var(--ink);
+}
+.sc-chips button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Hasil */
+.sc-readouts {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+.sc-readouts > div {
+  min-width: 0;
+  padding: 4px 8px;
+  background: #fff;
+}
+.sc-readouts > .sc-wide {
+  grid-column: 1 / -1;
+}
+.sc-readouts dt {
+  color: var(--mute);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.sc-readouts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
-  cursor: pointer;
-}
-
-.sc-check input,
-.sc-options input {
-  flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--sc-accent);
-}
-
-.sc-options {
-  display: grid;
-  gap: 2px;
+  overflow-wrap: anywhere;
 }
 
 .sc-reset {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  flex: 0 0 auto;
   gap: 6px;
-  justify-self: start;
   height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
-  color: var(--sc-ink);
+  color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.15s ease;
 }
-
 .sc-reset:hover {
-  border-color: var(--sc-accent);
-  background: #e8f3f1;
+  border-color: var(--ink);
 }
 
-/* ───────── Hasil ───────── */
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-.sc-card {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--sc-line);
-  background: var(--sc-paper);
-}
-
-.sc-card h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.sc-card h4 {
-  margin: 0 0 2px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.sc-card p {
-  margin: 0;
-  color: var(--sc-muted);
-  font-size: 11px;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.sc-card .sc-eq {
-  color: #183e54;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.sc-card .sc-eq-note {
-  margin-bottom: 4px;
-  font-size: 10px;
-}
-
-.sc-kvs {
-  display: grid;
-  gap: 1px;
-}
-
-.sc-kv {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  align-items: baseline;
-  gap: 8px;
-  padding: 2px 0;
-  border-top: 1px solid var(--sc-line);
-}
-
-.sc-kv:first-child {
-  border-top: 0;
-}
-
-.sc-kv span {
-  color: var(--sc-muted);
-  font-size: 10px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.sc-kv b {
-  color: #183e54;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-/* ───────── Info ───────── */
-
-.sc-info-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 10.5px;
-}
-
-.sc-info-table th,
-.sc-info-table td {
-  padding: 4px 6px;
-  border-top: 1px solid var(--sc-line);
-  text-align: left;
-  vertical-align: top;
-}
-
-.sc-info-table thead th {
-  border-top: 0;
-  color: var(--sc-muted);
-  font-weight: 700;
-}
-
-.sc-info-table td:first-child {
-  font-family: "Cambria Math", Georgia, serif;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.sc-insights {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--sc-muted);
-  font-size: 10.5px;
-  line-height: 1.45;
-}
-
-.sc-insights li {
-  padding-left: 8px;
-  border-left: 3px solid var(--sc-line);
-}
-
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .sector-simulation.is-tabbed {
+  .sc {
     gap: 4px;
     padding: 4px;
   }
-
-  .sector-simulation.is-tabbed .sc-boards {
+  .sc-layout {
     gap: 4px;
   }
-
-  .sector-simulation.is-tabbed .sc-controls,
-  .sector-simulation.is-tabbed .sc-results {
-    padding: 6px;
+  .sc-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
   .sc-range {
     height: 24px;
   }
+  .sc-readouts > div {
+    padding: 2px 7px;
+  }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .sc {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .sc-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .sc-chip {
+    padding: 4px 14px;
+    font-size: clamp(20px, 2vw, 26px);
+  }
+  .sc-chip span {
+    font-size: 14px;
+  }
+  .sc-pinfo {
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+  .sc-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .sc-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+  .sc-tabs button {
+    height: 30px;
+    font-size: 13px;
+  }
+  .sc-presets {
+    gap: 6px;
+  }
+  .sc-presets button {
+    height: 34px;
+    font-size: 13px;
+  }
+  .sc-sliders {
+    gap: 8px;
+  }
+  .sc-slider {
+    grid-template-columns: 18px var(--step) minmax(0, 1fr) var(--step) 52px var(--step);
+  }
+  .sc-slider label {
+    font-size: 22px;
+  }
+  .sc-slider output {
+    font-size: 13px;
+  }
+  .sc-range {
+    height: 32px;
+  }
+  .sc-chips button {
+    height: 30px;
+    font-size: 12px;
+  }
+  .sc-readouts > div {
+    padding: 8px 12px;
+  }
+  .sc-readouts dt {
+    font-size: 11px;
+  }
+  .sc-readouts dd {
+    font-size: 14px;
+  }
+  .sc-reset {
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .sector-simulation.is-tabbed:not(.is-fullscreen) {
+  .sc {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .sector-simulation.is-tabbed:not(.is-fullscreen) .sc-orientation-hint {
+  .sc-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--sc-accent);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .sc-orientation-hint svg {
+  .sc-hint svg {
     flex: 0 0 auto;
-    color: var(--sc-accent);
+    color: var(--mute);
   }
-
-  .sector-simulation.is-tabbed:not(.is-fullscreen) .sc-boards {
+  .sc-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .sector-simulation.is-tabbed:not(.is-fullscreen) .sc-board-panel {
-    height: clamp(260px, 48dvh, 440px);
+  .sc-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .sector-simulation.is-tabbed:not(.is-fullscreen) .sc-controls,
-  .sector-simulation.is-tabbed:not(.is-fullscreen) .sc-results {
+  .sc-panel {
     overflow: visible;
   }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, chip jenis kurva, legenda, dan panel
+   pengatur mengambang di atasnya. Diletakkan paling akhir agar menimpa
+   aturan potret dan desktop. */
 
-.sector-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  gap: 12px;
-  padding: 14px;
-  font-size: 13px;
-}
+.sc.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.sector-simulation:not(.is-tabbed) .sc-boards {
-  grid-template-rows: clamp(520px, 76vh, 760px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-column {
-  display: contents;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-tabs {
-  display: none;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-controls {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 16px;
-  min-width: 0;
-  min-height: 0;
-  padding: 14px;
-  border: 1px solid var(--sc-line);
-  background: #fff;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-/* Hasil di bawah: lagi-lagi 2 : 1 (hasil | info) */
-.sector-simulation:not(.is-tabbed) .sc-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  min-width: 0;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-pane {
-  gap: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-pane[data-pane="res"] {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  align-items: start;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-chip {
-  top: 10px;
-  left: 10px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: 13px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-chip b {
-  font-size: 18px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-pinfo {
-  left: 10px;
-  bottom: 10px;
-  padding: 5px 12px;
-  font-size: 14px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-hint {
-  display: block;
-  margin: 0;
-  padding: 0 14px 8px;
-  color: var(--sc-muted);
-  font-size: 10px;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-kinds {
-  gap: 5px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-kinds button {
-  height: 36px;
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-params {
-  gap: 6px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-param {
-  grid-template-columns: 22px 24px minmax(0, 1fr) 24px 58px 26px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-param label {
-  font-size: 19px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-nudge {
-  width: 24px;
-  height: 24px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-num {
-  height: 30px;
-  font-size: 13px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-range {
-  height: 30px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-check,
-.sector-simulation:not(.is-tabbed) .sc-options label {
-  min-height: 30px;
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-reset {
-  height: 32px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card {
-  gap: 5px;
-  padding: 12px 14px;
-  background: #fff;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card h3 {
-  font-size: 20px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card h4 {
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card p {
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card .sc-eq {
-  font-size: 15px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-card .sc-eq-note {
-  font-size: 10px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-kv {
-  padding: 4px 0;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-kv span {
-  font-size: 11px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-kv b {
-  font-size: 14px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-info-table {
-  font-size: 12px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-info-table th,
-.sector-simulation:not(.is-tabbed) .sc-info-table td {
-  padding: 6px 8px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-insights {
-  gap: 6px;
-  font-size: 11.5px;
-}
-
-.sector-simulation:not(.is-tabbed) .sc-insights li {
-  padding-left: 10px;
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.sector-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
-  width: auto;
-  height: auto;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  display: block;
+  width: 100vw;
+  height: 100dvh;
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.sector-simulation.is-fullscreen .sc-orientation-hint {
+.sc.is-fs .sc-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .sector-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    font-size: 13px;
-  }
-
-  .sector-simulation.is-fullscreen .sc-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-
-  .sector-simulation.is-fullscreen .sc-kinds button {
-    height: 32px;
-    font-size: 11px;
-  }
-
-  .sector-simulation.is-fullscreen .sc-pinfo {
-    font-size: 14px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .sector-simulation.is-fullscreen .sc-boards {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .sector-simulation.is-fullscreen .sc-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, panel input (tab + isi) tersembunyi dan muncul
-   mengambang di atas grafik lewat tombol toolbar di bawah tombol pusatkan
-   tampilan. Ditaruh setelah aturan potret agar menimpanya. */
-.sector-simulation.is-fullscreen .sc-boards {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.sector-simulation.is-fullscreen .sc-board-panel {
+.sc.is-fs .sc-layout {
+  display: block;
   height: 100%;
 }
 
-.sector-simulation.is-fullscreen .sc-stage {
+.sc.is-fs .sc-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.sc.is-fs .sc-stage {
   height: 100%;
 }
 
-.sector-simulation.is-fullscreen .sc-column.is-floating {
+/* legenda: chip kecil di kiri bawah */
+.sc.is-fs .sc-legend {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  flex-wrap: wrap;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.sc.is-fs .sc-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  width: min(360px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(320px, 56vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
 }
-
-.sector-simulation.is-fullscreen .sc-column.is-floating.is-open {
-  display: grid;
-}
-
-.sc-tools .sc-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--sc-accent);
-  background: #d6ebe8;
-  color: var(--sc-accent);
-}
-
-/* Netralkan gaya bawaan .simulation-fullscreen-frame (mis. aspect-ratio atau
-   batas ukuran) agar elemen benar-benar memenuhi layar, baik pada layar
-   penuh asli maupun layar penuh CSS. */
-.sector-simulation:fullscreen.simulation-fullscreen-frame {
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  overflow: hidden !important;
-}
-
-.sector-simulation.simulation-fullscreen-frame.is-fullscreen:not(:fullscreen) {
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  transform: none !important;
+.sc.is-fs .sc-panel.is-floating.is-open {
+  display: flex;
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .sector-simulation.is-fullscreen .sc-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(400px, calc(100% - 70px));
+  .sc.is-fs .sc-panel.is-floating {
+    width: min(380px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sector-simulation * {
+  .sc * {
     transition: none !important;
+    animation: none !important;
   }
-}
-
-/* ───────── Tambahan legenda untuk simulasi lingkaran ───────── */
-
-.sc-legend i.line-chord {
-  border-color: #b23a48;
-  border-top-width: 2px;
-}
-
-.sc-legend i.line-apo {
-  border-color: #63727d;
-  border-top-style: dashed;
-  border-top-width: 2px;
-}
-
-.sc-legend i.line-radius {
-  border-color: #183e54;
-  border-top-width: 2px;
-}
-
-.sc-legend i.line-circle {
-  border-color: #9fb3ba;
-  border-top-width: 2px;
-}
-
-.sc-legend .sw-sector,
-.sc-legend .sw-segment {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-
-.sc-legend .sw-sector {
-  background: rgba(8, 127, 140, 0.28);
-  border: 1px solid #087f8c;
-}
-
-.sc-legend .sw-segment {
-  background: rgba(209, 107, 54, 0.3);
-  border: 1px solid #d16b36;
 }

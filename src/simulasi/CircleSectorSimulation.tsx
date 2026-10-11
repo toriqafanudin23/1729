@@ -7,20 +7,27 @@ import {
   Play,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { flushSync } from "react-dom";
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./CircleSectorSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi busur, juring, tali busur, dan garis singgung lingkaran.
+/* Simulasi sektor lingkaran (juring) — tema slate seperti landing page 1729.
+   Urutan desain: ponsel lanskap → desktop → ponsel potret.
+   Layar penuh: grafik 100% layar, toolbar dan panel pengatur mengambang.
+
    Lingkaran berpusat di O(0, 0) dengan jari-jari r. Titik A berada pada arah φ
    dari sumbu x positif dan titik B pada arah φ + θ, dengan θ = sudut pusat.
 
@@ -29,12 +36,9 @@ import { useStoredSimulationState } from "./useStoredSimulationState";
        tali busur      c = 2r sin(θ/2)
        apotema         d = r cos(θ/2)
        luas tembereng  ½ r² (θ − sin θ)      (θ dalam radian)
-       garis singgung  di A:  x·xA + y·yA = r²   (tegak lurus OA)
+       garis singgung  di A:  x·xA + y·yA = r²   (tegak lurus OA) */
 
-   Tata letak: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1. */
-
-/* ---------- Tipe ---------- */
+/* ───────── Tipe ───────── */
 
 type Vec = [number, number];
 type Params = { r: number; t: number; p: number };
@@ -48,17 +52,16 @@ type Opts = {
   tpoint: boolean;
   angle: boolean;
 };
-type PanelTab = "par" | "opt" | "res" | "info";
+type Tab = "set" | "res";
 type Anim = "t" | "p" | null;
 type Board = ReturnType<typeof JXG.JSXGraph.initBoard>;
 type DataCurve = {
   dataX: number[];
   dataY: number[];
   updateDataArray: () => void;
-  setAttribute: (attributes: Record<string, unknown>) => void;
 };
 
-/* ---------- Konstanta ---------- */
+/* ───────── Konstanta ───────── */
 
 const DEG = Math.PI / 180;
 const R_MIN = 1;
@@ -68,8 +71,6 @@ const T_MAX = 360;
 const HOME_BOX: [number, number, number, number] = [-14, 10, 14, -10];
 /** Sudut pusat di atas ini: garis singgung hampir sejajar, titik T disembunyikan. */
 const T_POINT_MAX = 175;
-/** Layar kecil atau pendek memakai panel kanan bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
 
 const DEFAULT_PARAMS: Params = { r: 5, t: 60, p: 30 };
 const DEFAULT_OPTS: Opts = {
@@ -83,40 +84,37 @@ const DEFAULT_OPTS: Opts = {
   angle: true,
 };
 
-const COLOR_ARC = "#087f8c";
-const COLOR_RADIUS = "#183e54";
-const COLOR_CHORD = "#b23a48";
-const COLOR_SEGMENT = "#d16b36";
-const COLOR_TAN = "#2f6bd0";
-const COLOR_ANGLE = "#6b4e9b";
-const COLOR_GUIDE = "#63727d";
-const COLOR_CIRCLE = "#9fb3ba";
+/* Warna grafik: dipakai juga oleh legenda, slider, dan hasil di panel. */
+const color = {
+  arc: "#0d9488",
+  radius: "#0f172a",
+  chord: "#e11d48",
+  segment: "#ea580c",
+  tan: "#2563eb",
+  angle: "#7c3aed",
+  guide: "#94a3b8",
+  circle: "#94a3b8",
+};
 
 const PRESETS: { t: number; color: string }[] = [
-  { t: 60, color: COLOR_ARC },
-  { t: 90, color: COLOR_ANGLE },
-  { t: 120, color: COLOR_SEGMENT },
-  { t: 180, color: COLOR_CHORD },
-];
-
-const panelTabs: { tab: PanelTab; label: string }[] = [
-  { tab: "par", label: "Parameter" },
-  { tab: "opt", label: "Tampilan" },
-  { tab: "res", label: "Hasil" },
-  { tab: "info", label: "Info" },
+  { t: 60, color: color.arc },
+  { t: 90, color: color.angle },
+  { t: 120, color: color.segment },
+  { t: 180, color: color.chord },
 ];
 
 const optionRows: { key: keyof Opts; label: string }[] = [
-  { key: "sector", label: "Juring (daerah berwarna)" },
-  { key: "segment", label: "Tembereng (daerah antara tali busur dan busur)" },
-  { key: "chord", label: "Tali busur AB" },
-  { key: "apothem", label: "Apotema (jarak pusat ke tali busur)" },
-  { key: "tangent", label: "Garis singgung di A dan di B" },
-  { key: "tpoint", label: "Titik potong garis singgung T" },
-  { key: "angle", label: "Sudut pusat θ" },
+  { key: "circle", label: "Lingkaran" },
+  { key: "sector", label: "Juring" },
+  { key: "segment", label: "Tembereng" },
+  { key: "chord", label: "Tali busur" },
+  { key: "apothem", label: "Apotema" },
+  { key: "tangent", label: "Garis singgung" },
+  { key: "tpoint", label: "Titik T" },
+  { key: "angle", label: "Sudut θ" },
 ];
 
-/* ---------- Matematika ---------- */
+/* ───────── Matematika ───────── */
 
 function analyze(r: number, tDeg: number, pDeg: number) {
   const th = tDeg * DEG;
@@ -137,7 +135,6 @@ function analyze(r: number, tDeg: number, pDeg: number) {
     : [Number.NaN, Number.NaN];
 
   const arc = r * th;
-  const sector = 0.5 * r * r * th;
   return {
     r,
     tDeg,
@@ -153,14 +150,13 @@ function analyze(r: number, tDeg: number, pDeg: number) {
     tLen,
     ot,
     arc,
-    sector,
+    sector: 0.5 * r * r * th,
     chord: 2 * r * Math.sin(half),
     apothem,
     segment: 0.5 * r * r * (th - Math.sin(th)),
     circumference: 2 * Math.PI * r,
     area: Math.PI * r * r,
     perimeter: 2 * r + arc,
-    fraction: tDeg / 360,
     // garis singgung di A dan B: x·x0 + y·y0 = r²
     slopeA: Math.abs(A[1]) > 1e-9 ? -A[0] / A[1] : null,
     slopeB: Math.abs(B[1]) > 1e-9 ? -B[0] / B[1] : null,
@@ -180,9 +176,9 @@ function arcPoints(radius: number, a0Deg: number, spanDeg: number): Vec[] {
   return out;
 }
 
-/* ---------- Format ---------- */
+/* ───────── Format ───────── */
 
-function fmt(value: number, digits = 3) {
+function fmt(value: number, digits = 2) {
   if (!Number.isFinite(value)) return "—";
   if (Math.abs(value) < Math.pow(10, -digits) / 2) return "0";
   return new Intl.NumberFormat("id-ID", {
@@ -195,14 +191,14 @@ function fmt(value: number, digits = 3) {
 
 const fmtPt = (x: number, y: number) => `(${fmt(x)}; ${fmt(y)})`;
 
-/** Menyusun suku-suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
+/** Menyusun suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
 function poly(terms: [number, string][]) {
   let out = "";
   terms.forEach(([coef, symbol]) => {
-    if (Math.abs(coef) < 5e-4) return;
+    if (Math.abs(coef) < 5e-3) return;
     const abs = Math.abs(coef);
     const body =
-      symbol !== "" && Math.abs(abs - 1) < 5e-4
+      symbol !== "" && Math.abs(abs - 1) < 5e-3
         ? symbol
         : `${fmt(abs)}${symbol}`;
     if (out === "") out = coef < 0 ? `−${body}` : body;
@@ -211,23 +207,12 @@ function poly(terms: [number, string][]) {
   return out === "" ? "0" : out;
 }
 
-/* ---------- Hook & komponen kecil ---------- */
+const slopeText = (s: number | null) =>
+  s === null ? "tegak lurus sumbu x" : fmt(s);
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
+/* ───────── Baris pengatur ───────── */
 
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
+/** Tombol − / + yang bisa ditahan untuk mengubah nilai terus-menerus. */
 function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
   const stepRef = useRef(onStep);
   stepRef.current = onStep;
@@ -239,17 +224,11 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     timers.current = {};
   };
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timers.current.delay);
-      window.clearInterval(timers.current.repeat);
-    },
-    [],
-  );
+  useEffect(() => stop, []);
 
   return (direction: 1 | -1) => ({
     type: "button" as const,
-    className: "sc-nudge",
+    className: "sc-step",
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       stop();
@@ -257,7 +236,7 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
       timers.current.delay = window.setTimeout(() => {
         timers.current.repeat = window.setInterval(
           () => stepRef.current(direction),
-          70,
+          60,
         );
       }, 400);
     },
@@ -267,14 +246,14 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     onBlur: stop,
     onContextMenu: (event: { preventDefault: () => void }) =>
       event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
+    // detail === 0 → aktivasi lewat keyboard
     onClick: (event: { detail: number }) => {
       if (event.detail === 0) stepRef.current(direction);
     },
   });
 }
 
-/** Satu baris: r  −  ──●──  +  [5]  ▶ */
+/** Satu baris:  r  −  ────●────  +  5  ▶ */
 function ParamRow({
   id,
   label,
@@ -283,8 +262,8 @@ function ParamRow({
   min,
   max,
   step,
-  nudge,
   digits,
+  unit,
   bipolar,
   tone,
   playing,
@@ -298,8 +277,8 @@ function ParamRow({
   min: number;
   max: number;
   step: number;
-  nudge: number;
   digits: number;
+  unit?: string;
   bipolar?: boolean;
   tone: string;
   playing?: boolean;
@@ -311,55 +290,55 @@ function ParamRow({
     return Math.round(v * f) / f;
   };
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  const nudge = unit ? 1 : 0.1;
   const bind = useHoldRepeat((d) => onChange(round(clamp(value + d * nudge))));
   const pct = ((clamp(value) - min) / (max - min)) * 100;
-  const rangeStyle = {
+  const style = {
     "--lo": bipolar ? `${Math.min(50, pct)}%` : "0%",
     "--hi": bipolar ? `${Math.max(50, pct)}%` : `${pct}%`,
-    "--tone": tone,
+    "--sc": tone,
   } as CSSProperties;
 
   return (
-    <div className="sc-param" style={{ "--tone": tone } as CSSProperties}>
+    <div className="sc-slider" style={style}>
       <label htmlFor={id} title={title}>
         {label}
       </label>
-      <button {...bind(-1)} aria-label={`Kurangi ${title}`}>
-        <Minus size={12} aria-hidden="true" />
+      <button
+        {...bind(-1)}
+        disabled={value <= min}
+        aria-label={`Kurangi ${title}`}
+      >
+        <Minus size={14} aria-hidden="true" />
       </button>
       <input
+        id={id}
         className="sc-range"
         type="range"
         min={min}
         max={max}
         step={step}
         value={clamp(value)}
-        style={rangeStyle}
-        aria-label={`Penggeser ${title}`}
+        aria-valuetext={`${title} sama dengan ${fmt(value, digits)}${unit ?? ""}`}
         onChange={(event) =>
           onChange(round(clamp(Number(event.currentTarget.value))))
         }
       />
-      <button {...bind(1)} aria-label={`Tambah ${title}`}>
-        <Plus size={12} aria-hidden="true" />
+      <button
+        {...bind(1)}
+        disabled={value >= max}
+        aria-label={`Tambah ${title}`}
+      >
+        <Plus size={14} aria-hidden="true" />
       </button>
-      <input
-        id={id}
-        className="sc-num"
-        type="number"
-        inputMode="decimal"
-        step={step}
-        value={value}
-        aria-label={`Nilai ${title}`}
-        onChange={(event) => {
-          const v = parseFloat(event.currentTarget.value);
-          if (Number.isFinite(v)) onChange(round(clamp(v)));
-        }}
-      />
+      <output htmlFor={id} aria-live="off">
+        {fmt(value, digits)}
+        {unit ?? ""}
+      </output>
       {onPlay ? (
         <button
           type="button"
-          className="sc-icon-btn"
+          className="sc-step sc-play"
           aria-pressed={!!playing}
           aria-label={
             playing ? `Hentikan animasi ${title}` : `Animasikan ${title}`
@@ -380,24 +359,24 @@ function ParamRow({
   );
 }
 
-const kv = (key: string, value: string) => (
-  <div className="sc-kv" key={key}>
-    <span>{key}</span>
-    <b>{value}</b>
+const cell = (key: string, value: string, tone?: string, wide?: boolean) => (
+  <div key={key} className={wide ? "sc-wide" : undefined}>
+    <dt>{key}</dt>
+    <dd style={tone ? { color: tone } : undefined}>{value}</dd>
   </div>
 );
 
-/* ---------- Komponen utama ---------- */
+/* ───────── Komponen utama ───────── */
 
 export function CircleSectorSimulation() {
   const baseId = useId().replace(/:/g, "");
   const boardId = `sc-board-${baseId}`;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const boardRef = useRef<Board | null>(null);
   const nativeFsRef = useRef(false);
-  const syncSizeRef = useRef<(() => void) | null>(null);
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
 
   const [params, setParams] = useStoredSimulationState<Params>(
     "sector.params",
@@ -408,13 +387,9 @@ export function CircleSectorSimulation() {
     DEFAULT_OPTS,
   );
   const [anim, setAnim] = useState<Anim>(null);
-  const [tab, setTab] = useState<PanelTab>("par");
-  const [isFull, setIsFull] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
+  const [tab, setTab] = useState<Tab>("set");
+  const [isFs, setIsFs] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  // Layar kecil / pendek dan layar penuh memakai panel kanan bertab.
-  const tabbed = smallScreen || isFull;
 
   // data yang dibaca papan JSXGraph (selalu lewat ref agar tidak basi)
   const pRef = useRef(params);
@@ -429,13 +404,15 @@ export function CircleSectorSimulation() {
 
   const an = analyze(params.r, params.t, params.p);
 
+  /* ───────── Parameter ───────── */
+
   const setParam = (patch: Partial<Params>) => {
     setAnim(null);
     setParams((prev) => ({ ...prev, ...patch }));
   };
 
-  const setOpt = (key: keyof Opts, value: boolean) =>
-    setOpts((prev) => ({ ...prev, [key]: value }));
+  const setOpt = (key: keyof Opts) =>
+    setOpts((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const reset = () => {
     setAnim(null);
@@ -444,16 +421,16 @@ export function CircleSectorSimulation() {
     boardRef.current?.setBoundingBox(HOME_BOX, true);
   };
 
-  /* Tampilan: zoom, pusatkan */
+  /* ───────── Tampilan ───────── */
+
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
 
-  /* Layar penuh */
-  const toggleFullscreen = async () => {
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (isFull || document.fullscreenElement === el) {
+    if (isFs || document.fullscreenElement === el) {
       if (document.fullscreenElement === el) {
         try {
           await document.exitFullscreen();
@@ -462,41 +439,62 @@ export function CircleSectorSimulation() {
         }
       }
       nativeFsRef.current = false;
-      setIsFull(false);
+      setIsFs(false);
       return;
     }
-
-    // flushSync memastikan kelas .is-fullscreen/.is-tabbed sudah ada di DOM
-    // SEBELUM requestFullscreen dipanggil (tanpa ini, React baru menerapkannya
-    // sesudahnya, sehingga transisi pertama memakai tata letak desktop).
+    // Pasang tata letak layar penuh lebih dulu (flushSync), baru minta layar
+    // penuh asli, agar ukuran grafik langsung benar.
     flushSync(() => {
       setPanelOpen(false);
-      setIsFull(true);
+      setIsFs(true);
     });
     if (el.requestFullscreen) {
       try {
         await el.requestFullscreen();
         nativeFsRef.current = true;
       } catch {
-        // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
+        /* tetap pakai layar penuh CSS */
       }
     }
   };
 
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
+  useEffect(() => {
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
+      screen as unknown as {
+        orientation?: {
+          lock?: (m: "landscape") => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).orientation;
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
+    return () => {
+      try {
+        o.unlock?.();
+      } catch {
+        /* abaikan */
+      }
+    };
+  }, [isFs]);
+
+  // Sinkron saat keluar lewat Esc / gestur sistem.
   useEffect(() => {
     const onChange = () => {
       if (!document.fullscreenElement && nativeFsRef.current) {
         nativeFsRef.current = false;
-        setIsFull(false);
+        setIsFs(false);
       }
     };
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (
-        event.key === "Escape" &&
+        e.key === "Escape" &&
         !document.fullscreenElement &&
         !nativeFsRef.current
       ) {
-        setIsFull(false);
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -507,33 +505,11 @@ export function CircleSectorSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
-  useEffect(() => {
-    if (!isFull) return undefined;
-    if (!window.matchMedia("(pointer: coarse)").matches) return undefined;
-    const orientation = (
-      screen as unknown as {
-        orientation?: {
-          lock?: (mode: "landscape") => Promise<void>;
-          unlock?: () => void;
-        };
-      }
-    ).orientation;
-    if (typeof orientation?.lock !== "function") return undefined;
-    orientation.lock("landscape").catch(() => undefined);
-    return () => {
-      try {
-        orientation.unlock?.();
-      } catch {
-        /* abaikan */
-      }
-    };
-  }, [isFull]);
+  /* ───────── Papan JSXGraph ───────── */
 
-  /* Papan JSXGraph */
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
+    const el = hostRef.current;
+    if (!el) return;
 
     const board = JXG.JSXGraph.initBoard(boardId, {
       boundingbox: HOME_BOX,
@@ -541,11 +517,9 @@ export function CircleSectorSimulation() {
       showCopyright: false,
       showNavigation: false,
       keepAspectRatio: true, // lingkaran harus tetap terlihat bulat
-      // Ukuran papan diatur sepenuhnya oleh syncSize di bawah. Pengamat ukuran
-      // bawaan JSXGraph (throttle + setTimeout) bisa berebut dan meninggalkan
-      // tinggi kanvas yang basi saat masuk layar penuh.
+      // Ukuran papan diatur oleh sync di bawah; pengamat bawaan dimatikan
+      // agar tidak berebut saat masuk layar penuh.
       resize: { enabled: false, throttle: 100 },
-      // geser dengan tahan klik kiri atau satu jari (papan memakai touch-action: none)
       pan: { enabled: true, needShift: false, needTwoFingers: false },
       zoom: {
         wheel: true,
@@ -559,39 +533,29 @@ export function CircleSectorSimulation() {
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
-    });
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
       highlight: false,
-    };
+    });
+
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
+    const axis = {
+      strokeColor: "#94a3b8",
+      strokeWidth: 1.25,
+      highlight: false,
+      ticks,
+    };
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
     // analisis dihitung sekali per perubahan parameter
     let cache: { p: Params; v: Analysis } | null = null;
@@ -609,17 +573,15 @@ export function CircleSectorSimulation() {
 
     /* Kurva berdasarkan daftar titik; null menyembunyikannya */
     const makeCurve = (
-      color: string,
+      stroke: string,
       width: number,
       dash: number,
-      opacity: number,
       build: () => Vec[] | null,
       fill?: { color: string; opacity: number },
     ) => {
       const curve = board.create("curve", [[0], [0]], {
-        strokeColor: color,
+        strokeColor: stroke,
         strokeWidth: width,
-        strokeOpacity: opacity,
         fillColor: fill ? fill.color : "none",
         fillOpacity: fill ? fill.opacity : 0,
         dash,
@@ -646,41 +608,39 @@ export function CircleSectorSimulation() {
     const O: Vec = [0, 0];
 
     // lingkaran penuh (tipis)
-    makeCurve(COLOR_CIRCLE, 1.8, 0, 1, () =>
+    makeCurve(color.circle, 1.5, 0, () =>
       show("circle") ? arcPoints(A().r, 0, 360) : null,
     );
 
     // juring: O → A → busur → B → O
     makeCurve(
-      COLOR_ARC,
+      color.arc,
       0,
       0,
-      1,
       () => {
         if (!show("sector")) return null;
         const a = A();
         return [O, ...arcPoints(a.r, a.pDeg, a.tDeg), O];
       },
-      { color: COLOR_ARC, opacity: 0.22 },
+      { color: color.arc, opacity: 0.2 },
     );
 
     // tembereng: busur lalu kembali ke A lewat tali busur
     makeCurve(
-      COLOR_SEGMENT,
+      color.segment,
       0,
       0,
-      1,
       () => {
         if (!show("segment")) return null;
         const a = A();
         return [...arcPoints(a.r, a.pDeg, a.tDeg), a.A];
       },
-      { color: COLOR_SEGMENT, opacity: 0.32 },
+      { color: color.segment, opacity: 0.32 },
     );
 
     // garis singgung di A dan B (tegak lurus jari-jari)
     ([0, 1] as const).forEach((k) => {
-      makeCurve(COLOR_TAN, 2.2, 0, 1, () => {
+      makeCurve(color.tan, 2.25, 0, () => {
         if (!show("tangent")) return null;
         const a = A();
         const pt = k === 0 ? a.A : a.B;
@@ -695,35 +655,35 @@ export function CircleSectorSimulation() {
     });
 
     // OT (sumbu simetri layang-layang OATB)
-    makeCurve(COLOR_GUIDE, 1.5, 2, 1, () => {
+    makeCurve(color.guide, 1.5, 2, () => {
       const a = A();
       return show("tpoint") && show("tangent") && a.tValid ? [O, a.T] : null;
     });
 
     // jari-jari OA dan OB
-    makeCurve(COLOR_RADIUS, 2, 0, 1, () => [O, A().A]);
-    makeCurve(COLOR_RADIUS, 2, 0, 1, () => [O, A().B]);
+    makeCurve(color.radius, 2, 0, () => [O, A().A]);
+    makeCurve(color.radius, 2, 0, () => [O, A().B]);
 
     // tali busur dan apotema
-    makeCurve(COLOR_CHORD, 2.8, 0, 1, () => {
+    makeCurve(color.chord, 2.75, 0, () => {
       const a = A();
       return show("chord") ? [a.A, a.B] : null;
     });
-    makeCurve(COLOR_GUIDE, 1.6, 2, 1, () => {
+    makeCurve(color.guide, 1.5, 2, () => {
       const a = A();
       return show("apothem") ? [O, a.M] : null;
     });
 
     // busur kecil penanda sudut pusat θ
-    makeCurve(COLOR_ANGLE, 2.5, 0, 1, () => {
+    const angleRadius = () => Math.min(2, Math.max(0.7, A().r * 0.25));
+    makeCurve(color.angle, 2.5, 0, () => {
       if (!show("angle")) return null;
       const a = A();
-      const rr = Math.min(2, Math.max(0.7, a.r * 0.25));
-      return arcPoints(rr, a.pDeg, a.tDeg);
+      return arcPoints(angleRadius(), a.pDeg, a.tDeg);
     });
 
     // busur AB (utama)
-    makeCurve(COLOR_ARC, 4.5, 0, 1, () => {
+    makeCurve(color.arc, 4.5, 0, () => {
       const a = A();
       return arcPoints(a.r, a.pDeg, a.tDeg);
     });
@@ -732,18 +692,15 @@ export function CircleSectorSimulation() {
     const dot = (
       x: () => number,
       y: () => number,
-      color: string,
+      fill: string,
       size: number,
-      face = "o",
-      fill = color,
     ) =>
       board.create("point", [x, y], {
         name: "",
         withLabel: false,
         size,
-        face,
         fillColor: fill,
-        strokeColor: color === fill ? "#ffffff" : color,
+        strokeColor: "#ffffff",
         strokeWidth: 1.5,
         fixed: true,
         highlight: false,
@@ -752,7 +709,7 @@ export function CircleSectorSimulation() {
       x: () => number,
       y: () => number,
       text: string | (() => string),
-      color: string,
+      tone: string,
       offset: [number, number] = [8, 8],
     ) =>
       board.create(
@@ -763,106 +720,50 @@ export function CircleSectorSimulation() {
           text,
         ],
         {
-          fontSize: 14,
-          strokeColor: color,
+          fontSize: 13,
+          strokeColor: tone,
           offset,
           highlight: false,
           fixed: true,
         },
       );
 
-    dot(
-      () => 0,
-      () => 0,
-      COLOR_RADIUS,
-      4.5,
-    );
-    dot(
-      () => A().A[0],
-      () => A().A[1],
-      COLOR_ARC,
-      5.5,
-    );
-    dot(
-      () => A().B[0],
-      () => A().B[1],
-      COLOR_ARC,
-      5.5,
-    );
-    dot(
-      () => (show("tpoint") && show("tangent") ? A().T[0] : Number.NaN),
-      () => A().T[1],
-      COLOR_TAN,
-      5,
-    );
-    dot(
-      () => (show("apothem") || show("chord") ? A().M[0] : Number.NaN),
-      () => A().M[1],
-      COLOR_GUIDE,
-      3.5,
-    );
+    const tOn = () => show("tpoint") && show("tangent");
+    const mOn = () => show("apothem") || show("chord");
 
-    label(
-      () => 0,
-      () => 0,
-      "O",
-      COLOR_RADIUS,
-      [-16, -16],
-    );
-    label(
-      () => A().A[0],
-      () => A().A[1],
-      "A",
-      COLOR_RADIUS,
-    );
-    label(
-      () => A().B[0],
-      () => A().B[1],
-      "B",
-      COLOR_RADIUS,
-    );
-    label(
-      () => (show("tpoint") && show("tangent") ? A().T[0] : Number.NaN),
-      () => A().T[1],
-      "T",
-      COLOR_TAN,
-    );
+    dot(() => 0, () => 0, color.radius, 5);
+    dot(() => A().A[0], () => A().A[1], color.arc, 6);
+    dot(() => A().B[0], () => A().B[1], color.arc, 6);
+    dot(() => (tOn() ? A().T[0] : Number.NaN), () => A().T[1], color.tan, 5);
+    dot(() => (mOn() ? A().M[0] : Number.NaN), () => A().M[1], color.guide, 4);
+
+    label(() => 0, () => 0, "O", color.radius, [-16, -16]);
+    label(() => A().A[0], () => A().A[1], "A", color.radius);
+    label(() => A().B[0], () => A().B[1], "B", color.radius);
+    label(() => (tOn() ? A().T[0] : Number.NaN), () => A().T[1], "T", color.tan);
+
     // θ di dalam busur kecil
     label(
-      () => {
-        const a = A();
-        const rr = Math.min(2, Math.max(0.7, a.r * 0.25)) * 1.7;
-        return show("angle") ? rr * Math.cos(a.mid) : Number.NaN;
-      },
-      () => {
-        const a = A();
-        const rr = Math.min(2, Math.max(0.7, a.r * 0.25)) * 1.7;
-        return rr * Math.sin(a.mid);
-      },
+      () => (show("angle") ? angleRadius() * 1.7 * Math.cos(A().mid) : Number.NaN),
+      () => angleRadius() * 1.7 * Math.sin(A().mid),
       () => `θ = ${fmt(pRef.current.t, 1)}°`,
-      COLOR_ANGLE,
+      color.angle,
       [-14, -8],
     );
     // r pada OA, c pada tali busur, d pada apotema
-    label(
-      () => (A().A[0] * 0.5),
-      () => (A().A[1] * 0.5),
-      "r",
-      COLOR_RADIUS,
-      [-4, 6],
-    );
+    label(() => A().A[0] * 0.5, () => A().A[1] * 0.5, "r", color.radius, [-4, 6]);
     label(
       () => (show("chord") && A().chord > 0.3 ? A().M[0] : Number.NaN),
       () => A().M[1],
       "c",
-      COLOR_CHORD,
+      color.chord,
       [8, -14],
     );
     label(
       () => (show("apothem") ? A().M[0] * 0.5 : Number.NaN),
       () => A().M[1] * 0.5,
       "d",
-      COLOR_GUIDE,
+      color.guide,
       [-14, 4],
     );
 
@@ -894,40 +795,22 @@ export function CircleSectorSimulation() {
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointerup", onUp);
 
-    // Selaraskan ukuran papan dengan kotaknya. Pembanding utamanya adalah ukuran
-    // yang DIKETAHUI JSXGraph (canvasWidth/Height), sehingga papan yang
-    // tertinggal selalu terkoreksi. Skala dan titik tengah dipertahankan.
-    const syncSize = () => {
+    // Saat ukuran berubah (layar penuh / putar layar): pertahankan skala
+    // dan titik tengah agar grafik tidak melompat.
+    let last = { w: el.clientWidth, h: el.clientHeight };
+    const sync = (force = false) => {
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (w <= 0 || h <= 0) return;
-      const sized = board as unknown as {
-        canvasWidth: number;
-        canvasHeight: number;
-        fullUpdate?: () => void;
-      };
-      const oldW = sized.canvasWidth;
-      const oldH = sized.canvasHeight;
-      // Selain canvasWidth/Height, cocokkan juga dengan ukuran SVG yang benar-
-      // benar tergambar, karena nilai internal JSXGraph bisa sudah "benar"
-      // sementara SVG-nya masih berukuran lama.
-      const svg = el.querySelector("svg");
-      const svgW = svg ? Math.round(svg.getBoundingClientRect().width) : w;
-      const svgH = svg ? Math.round(svg.getBoundingClientRect().height) : h;
-      if (w === oldW && h === oldH && svgW === w && svgH === h) return;
+      if (!force && w === last.w && h === last.h) return;
+
       const bb = board.getBoundingBox();
       const spanX = bb[2] - bb[0];
       const spanY = bb[1] - bb[3];
       board.resizeContainer(w, h, true, true);
-      if (w === oldW && h === oldH) {
-        // Hanya SVG yang tertinggal: ukuran logis sama, cukup gambar ulang.
-        sized.fullUpdate?.();
-        board.update();
-        return;
-      }
-      if (oldW > 0 && oldH > 0 && spanX > 0 && spanY > 0) {
-        const ux = oldW / spanX;
-        const uy = oldH / spanY;
+      if (last.w > 0 && last.h > 0 && spanX > 0 && spanY > 0) {
+        const ux = last.w / spanX;
+        const uy = last.h / spanY;
         const cx = (bb[0] + bb[2]) / 2;
         const cy = (bb[1] + bb[3]) / 2;
         board.setBoundingBox(
@@ -935,17 +818,16 @@ export function CircleSectorSimulation() {
           true,
         );
       }
-      sized.fullUpdate?.();
+      last = { w, h };
       board.update();
     };
-    syncSizeRef.current = syncSize;
-    const observer = new ResizeObserver(syncSize);
+    syncRef.current = sync;
+    const observer = new ResizeObserver(() => sync());
     observer.observe(el);
-    if (el.parentElement) observer.observe(el.parentElement);
 
     return () => {
+      syncRef.current = null;
       observer.disconnect();
-      syncSizeRef.current = null;
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointerup", onUp);
       JXG.JSXGraph.freeBoard(board);
@@ -953,47 +835,32 @@ export function CircleSectorSimulation() {
     };
   }, [boardId]);
 
-  // Perbarui papan setiap parameter atau pilihan berubah
+  // Gambar ulang saat parameter atau pilihan tampilan berubah.
   useEffect(() => {
     boardRef.current?.update();
   }, [params, opts]);
 
-  // Masuk/keluar layar penuh atau ganti mode panel mengubah ukuran papan
+  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi.
   useEffect(() => {
-    // Browser menyelesaikan transisi layar penuh asli dengan waktu yang tidak
-    // pasti (animasi bilah browser, perubahan viewport). Selama ~2 detik papan
-    // dicocokkan dengan kotaknya setiap frame; syncSize murah karena langsung
-    // keluar bila ukurannya sudah sama.
-    let raf = 0;
-    const started = performance.now();
-    const tick = () => {
-      syncSizeRef.current?.();
-      if (performance.now() - started < 2000) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [isFull, tabbed]);
-
-  useEffect(() => {
-    let timer = 0;
-    const sync = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => syncSizeRef.current?.(), 120);
-    };
-    window.addEventListener("resize", sync);
-    document.addEventListener("fullscreenchange", sync);
-    window.visualViewport?.addEventListener("resize", sync);
+    const run = () => syncRef.current?.(true);
+    const raf = requestAnimationFrame(() => requestAnimationFrame(run));
+    const t1 = window.setTimeout(run, 150);
+    const t2 = window.setTimeout(run, 450);
+    document.addEventListener("fullscreenchange", run);
+    window.addEventListener("resize", run);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("resize", sync);
-      document.removeEventListener("fullscreenchange", sync);
-      window.visualViewport?.removeEventListener("resize", sync);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.removeEventListener("fullscreenchange", run);
+      window.removeEventListener("resize", run);
     };
-  }, []);
+  }, [isFs]);
 
   // Animasi: θ bolak-balik 1° ↔ 360°, atau seluruh juring berputar (φ)
   useEffect(() => {
-    if (!anim) return undefined;
+    if (!anim) return;
     let raf = 0;
     let last = performance.now();
     let dir = 1;
@@ -1026,206 +893,176 @@ export function CircleSectorSimulation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anim]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Nilai turunan ───────── */
 
   const tStr = fmt(params.t, 1);
   const rStr = fmt(params.r, 2);
+  const r2 = fmt(params.r * params.r);
+  const isMajor = params.t > 180;
+  const kindLabel = isMajor
+    ? "Busur besar"
+    : params.t === 180
+      ? "Setengah lingkaran"
+      : "Busur kecil";
   const tangentA = `${poly([
     [an.A[0], "x"],
     [an.A[1], "y"],
-  ])} = ${fmt(params.r * params.r)}`;
+  ])} = ${r2}`;
   const tangentB = `${poly([
     [an.B[0], "x"],
     [an.B[1], "y"],
-  ])} = ${fmt(params.r * params.r)}`;
-  const isMajor = params.t > 180;
-  const slopeText = (s: number | null) =>
-    s === null ? "tegak lurus sumbu x" : fmt(s);
+  ])} = ${r2}`;
 
   return (
-    <div
-      ref={rootRef}
-      className={`sector-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFull ? " is-fullscreen" : ""}`}
-    >
-      <p className="sc-orientation-hint">
+    <div ref={rootRef} className={`sc${isFs ? " is-fs" : ""}`}>
+      <p className="sc-hint">
         <Smartphone size={14} aria-hidden="true" />
         <span>
-          Miringkan ponsel ke mode lanskap agar grafik dan panel isian tampil
-          berdampingan.
+          Miringkan ponsel ke mode lanskap agar grafik dan pengatur nyaman
+          dipakai.
         </span>
       </p>
 
-      <div className="sc-boards">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="sc-board-panel" aria-label="Grafik lingkaran">
+      <div className="sc-layout">
+        {/* ───── Grafik ───── */}
+        <section className="sc-graph" aria-label="Grafik sektor lingkaran">
           <div className="sc-stage">
             <div
-              className="sc-board"
               id={boardId}
-              ref={containerRef}
-              tabIndex={0}
-              aria-label="Grafik lingkaran dengan pusat di titik asal. Seret untuk menggeser, roda mouse atau cubit untuk zoom, klik atau ketuk lingkaran untuk memindahkan titik B."
+              ref={hostRef}
+              className="sc-board"
+              aria-label="Grafik lingkaran dengan pusat di titik asal. Seret untuk menggeser, gulir atau cubit untuk memperbesar, ketuk lingkaran untuk memindahkan titik B."
             />
 
-            <p
-              className="sc-chip"
-              style={{ borderLeftColor: COLOR_ARC }}
-              aria-live="polite"
-            >
-              <b style={{ color: COLOR_ARC }}>
-                {isMajor ? "Busur besar" : params.t === 180 ? "Setengah lingkaran" : "Busur kecil"}
-              </b>
-              <span>
-                r = {rStr} · θ = {tStr}°
-              </span>
-            </p>
-
-            <div className="sc-pinfo" aria-live="off">
-              <span>
-                <b>s</b> = {fmt(an.arc, 2)}
-              </span>
-              <span>
-                <b>L</b> = {fmt(an.sector, 2)}
-              </span>
-              {opts.chord && (
+            <div className="sc-hud">
+              <p className="sc-chip" aria-live="polite">
+                <b>{kindLabel}</b>
                 <span>
-                  <b>c</b> = {fmt(an.chord, 2)}
+                  r = {rStr} · θ = {tStr}°
                 </span>
-              )}
-              {opts.tangent && opts.tpoint && an.tValid && (
+              </p>
+              <p className="sc-pinfo">
                 <span>
-                  <b>AT</b> = {fmt(an.tLen, 2)}
+                  <b>s</b> = {fmt(an.arc)}
                 </span>
-              )}
+                <span>
+                  <b>L</b> = {fmt(an.sector)}
+                </span>
+                {opts.chord && (
+                  <span>
+                    <b>c</b> = {fmt(an.chord)}
+                  </span>
+                )}
+                {opts.tangent && opts.tpoint && an.tValid && (
+                  <span>
+                    <b>AT</b> = {fmt(an.tLen)}
+                  </span>
+                )}
+              </p>
             </div>
 
-            <div className="sc-tools" role="group" aria-label="Tampilan">
+            <div className="sc-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFull}
-                aria-label={isFull ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFull ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFull ? (
-                  <Minimize2 size={15} aria-hidden="true" />
+                {isFs ? (
+                  <Minimize2 size={16} aria-hidden="true" />
                 ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
+                  <Maximize2 size={16} aria-hidden="true" />
                 )}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={resetView}
-                aria-label="Kembali ke tampilan awal"
-                title="Kembali ke tampilan awal"
+                onClick={center}
+                aria-label="Pusatkan tampilan"
+                title="Pusatkan tampilan"
               >
-                <Crosshair size={15} aria-hidden="true" />
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFull && (
+              {isFs && (
                 <button
                   type="button"
-                  className="sc-toolbar-toggle"
-                  onClick={() => setPanelOpen((open) => !open)}
+                  className="sc-toggle"
+                  onClick={() => setPanelOpen((o) => !o)}
                   aria-pressed={panelOpen}
-                  aria-controls={`sc-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`sc-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="sc-legend" aria-label="Legenda grafik">
-            <span>
-              <i style={{ borderTopColor: COLOR_ARC }} /> busur AB
-            </span>
-            <span>
-              <i className="line-radius" /> jari-jari
-            </span>
-            {opts.circle && (
-              <span>
-                <i className="line-circle" /> lingkaran
-              </span>
-            )}
+          <ul className="sc-legend" aria-label="Legenda grafik">
+            <li>
+              <i style={{ borderColor: color.arc }} /> busur AB
+            </li>
+            <li>
+              <i style={{ borderColor: color.radius }} /> jari-jari
+            </li>
             {opts.sector && (
-              <span>
-                <b className="sw-sector" /> juring
-              </span>
+              <li>
+                <b style={{ background: color.arc, opacity: 0.4 }} /> juring
+              </li>
             )}
             {opts.segment && (
-              <span>
-                <b className="sw-segment" /> tembereng
-              </span>
+              <li>
+                <b style={{ background: color.segment, opacity: 0.6 }} /> tembereng
+              </li>
             )}
             {opts.chord && (
-              <span>
-                <i className="line-chord" /> tali busur
-              </span>
+              <li>
+                <i style={{ borderColor: color.chord }} /> tali busur
+              </li>
             )}
             {opts.apothem && (
-              <span>
-                <i className="line-apo" /> apotema
-              </span>
+              <li>
+                <i className="dash" style={{ borderColor: color.guide }} /> apotema
+              </li>
             )}
             {opts.tangent && (
-              <span>
-                <i className="line-tan" /> garis singgung
-              </span>
+              <li>
+                <i style={{ borderColor: color.tan }} /> garis singgung
+              </li>
             )}
             {opts.angle && (
-              <span>
-                <i style={{ borderTopColor: COLOR_ANGLE }} /> sudut pusat
-              </span>
+              <li>
+                <i style={{ borderColor: color.angle }} /> sudut pusat
+              </li>
             )}
-          </div>
-          <p className="sc-hint">
-            Tahan klik kiri lalu seret untuk menggeser · roda mouse untuk zoom ·
-            klik pada lingkaran untuk memindahkan titik B.
-          </p>
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`sc-column-${baseId}`}
-          className={`sc-column${isFull ? " is-floating" : ""}${
-            isFull && panelOpen ? " is-open" : ""
-          }`}
-          data-tab={tab}
+        {/* ───── Pengatur ───── */}
+        <section
+          id={`sc-panel-${baseId}`}
+          className={`sc-panel${isFs ? " is-floating" : ""}${isFs && panelOpen ? " is-open" : ""}`}
+          aria-label="Pengatur sektor lingkaran"
         >
           <div className="sc-tabs" role="group" aria-label="Bagian panel">
-            {panelTabs.map((item) => (
-              <button
-                key={item.tab}
-                type="button"
-                aria-pressed={tab === item.tab}
-                onClick={() => setTab(item.tab)}
-              >
-                {item.label}
-              </button>
-            ))}
+            <button type="button" aria-pressed={tab === "set"} onClick={() => setTab("set")}>
+              Atur
+            </button>
+            <button type="button" aria-pressed={tab === "res"} onClick={() => setTab("res")}>
+              Hasil
+            </button>
           </div>
 
-          <section className="sc-controls" aria-label="Pengaturan">
-            <div className="sc-pane" data-pane="par">
-              <div
-                className="sc-kinds"
-                role="group"
-                aria-label="Sudut pusat istimewa"
-              >
+          {tab === "set" ? (
+            <>
+              <div className="sc-presets" role="group" aria-label="Sudut pusat istimewa">
                 {PRESETS.map((item) => (
                   <button
                     key={item.t}
@@ -1239,247 +1076,126 @@ export function CircleSectorSimulation() {
                 ))}
               </div>
 
-              <div className="sc-params">
+              <div className="sc-sliders">
                 <ParamRow
-                  id={`sc-r-${baseId}`}
+                  id={`sc-${baseId}-r`}
                   label="r"
                   title="jari-jari lingkaran r"
                   value={params.r}
                   min={R_MIN}
                   max={R_MAX}
                   step={0.1}
-                  nudge={0.1}
                   digits={1}
-                  tone={COLOR_RADIUS}
+                  tone={color.radius}
                   onChange={(v) => setParam({ r: v })}
                 />
                 <ParamRow
-                  id={`sc-t-${baseId}`}
+                  id={`sc-${baseId}-t`}
                   label="θ"
                   title="sudut pusat θ (derajat)"
                   value={params.t}
                   min={T_MIN}
                   max={T_MAX}
                   step={0.5}
-                  nudge={1}
                   digits={1}
-                  tone={COLOR_ARC}
+                  unit="°"
+                  tone={color.angle}
                   playing={anim === "t"}
                   onChange={(v) => setParam({ t: v })}
                   onPlay={() => setAnim(anim === "t" ? null : "t")}
                 />
                 <ParamRow
-                  id={`sc-p-${baseId}`}
+                  id={`sc-${baseId}-p`}
                   label="φ"
                   title="arah titik A dari sumbu x (derajat)"
                   value={params.p}
                   min={-180}
                   max={180}
                   step={0.5}
-                  nudge={1}
                   digits={1}
+                  unit="°"
                   bipolar
-                  tone={COLOR_TAN}
+                  tone={color.tan}
                   playing={anim === "p"}
                   onChange={(v) => setParam({ p: v })}
                   onPlay={() => setAnim(anim === "p" ? null : "p")}
                 />
               </div>
 
-              <label className="sc-check">
-                <input
-                  type="checkbox"
-                  checked={opts.circle}
-                  onChange={(event) =>
-                    setOpt("circle", event.currentTarget.checked)
-                  }
-                />
-                Tampilkan lingkaran penuh
-              </label>
+              <div className="sc-chips" role="group" aria-label="Tampilkan di grafik">
+                {optionRows.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    aria-pressed={opts[row.key]}
+                    onClick={() => setOpt(row.key)}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
 
               <button type="button" className="sc-reset" onClick={reset}>
                 <RotateCcw size={13} aria-hidden="true" />
                 <span>Atur ulang</span>
               </button>
-            </div>
+            </>
+          ) : (
+            <>
+              <dl className="sc-readouts" aria-live="polite">
+                {cell(
+                  "Bagian lingkaran",
+                  `${fmt(params.t / 360, 3)} (${fmt((params.t / 360) * 100, 1)}%)${
+                    params.t === 180 ? " · tali busur = diameter" : ""
+                  }${isMajor ? " · apotema di sisi lain" : ""}`,
+                  color.arc,
+                  true,
+                )}
+                {cell("Busur s = θ/360° × 2πr", `${tStr}/360 × 2π × ${rStr} = ${fmt(an.arc)}`, color.arc, true)}
+                {cell("Juring L = θ/360° × πr²", `${tStr}/360 × π × ${rStr}² = ${fmt(an.sector)}`, color.arc, true)}
+                {cell("Keliling juring 2r + s", fmt(an.perimeter))}
+                {cell("Luas lingkaran πr²", fmt(an.area))}
+              </dl>
 
-            <div className="sc-pane" data-pane="opt">
-              <div className="sc-options">
-                {optionRows.map((row) => (
-                  <label key={row.key}>
-                    <input
-                      type="checkbox"
-                      checked={opts[row.key]}
-                      onChange={(event) =>
-                        setOpt(row.key, event.currentTarget.checked)
-                      }
-                    />
-                    {row.label}
-                  </label>
-                ))}
-              </div>
-              <GraphAppearanceControls
-                appearance={appearance}
-                onStep={onStep}
-              />
-            </div>
-          </section>
+              <dl className="sc-readouts" aria-live="polite">
+                {cell("Tali busur c = 2r sin(θ/2)", fmt(an.chord), color.chord)}
+                {cell("Apotema d = r cos(θ/2)", fmt(an.apothem), color.guide)}
+                {cell("Tembereng ½r²(θ − sin θ)", fmt(an.segment), color.segment, true)}
+                {cell("Titik A", fmtPt(an.A[0], an.A[1]))}
+                {cell("Titik B", fmtPt(an.B[0], an.B[1]))}
+                {cell("Titik tengah AB", fmtPt(an.M[0], an.M[1]), undefined, true)}
+              </dl>
 
-          <div className="sc-results">
-            <div className="sc-pane" data-pane="res">
-              <section
-                className="sc-card sc-card-kind"
-                aria-label="Ringkasan juring"
-              >
-                <h3 style={{ color: COLOR_ARC }}>
-                  θ = {tStr}° · r = {rStr}
-                </h3>
-                <p>
-                  {fmt(params.t / 360, 3)} bagian lingkaran (
-                  {fmt((params.t / 360) * 100, 1)}%)
-                  {params.t === 180 && " — tali busur menjadi diameter"}
-                  {isMajor && " — busur besar, apotema berada di sisi lain"}
-                </p>
-              </section>
-
-              <section className="sc-card" aria-label="Busur dan juring">
-                <h4>Panjang busur dan luas juring</h4>
-                <p className="sc-eq">s = θ/360° × 2πr</p>
-                <p className="sc-eq-note">
-                  {tStr}/360 × 2π × {rStr} = {fmt(an.arc)}
-                </p>
-                <p className="sc-eq">L = θ/360° × πr²</p>
-                <p className="sc-eq-note">
-                  {tStr}/360 × π × {rStr}² = {fmt(an.sector)}
-                </p>
-                <div className="sc-kvs">
-                  {kv("Keliling juring 2r + s", fmt(an.perimeter))}
-                  {kv("Keliling lingkaran 2πr", fmt(an.circumference))}
-                  {kv("Luas lingkaran πr²", fmt(an.area))}
-                </div>
-              </section>
-
-              <section className="sc-card" aria-label="Tali busur dan tembereng">
-                <h4>Tali busur dan tembereng</h4>
-                <p className="sc-eq">c = 2r sin(θ/2)</p>
-                <p className="sc-eq-note">
-                  2 × {rStr} × sin({fmt(params.t / 2, 2)}°) = {fmt(an.chord)}
-                </p>
-                <p className="sc-eq">d = r cos(θ/2)</p>
-                <p className="sc-eq-note">
-                  {rStr} × cos({fmt(params.t / 2, 2)}°) = {fmt(an.apothem)}
-                </p>
-                <p className="sc-eq">L tembereng = ½r²(θ − sin θ)</p>
-                <p className="sc-eq-note">
-                  juring − segitiga OAB = {fmt(an.segment)}
-                </p>
-                <div className="sc-kvs">
-                  {kv("Titik A", fmtPt(an.A[0], an.A[1]))}
-                  {kv("Titik B", fmtPt(an.B[0], an.B[1]))}
-                  {kv("Titik tengah tali busur", fmtPt(an.M[0], an.M[1]))}
-                </div>
-              </section>
-
-              <section className="sc-card" aria-label="Garis singgung">
-                <h4>Garis singgung di A dan B</h4>
-                <p className="sc-eq">{tangentA}</p>
-                <p className="sc-eq-note">
-                  singgung di A, gradien {slopeText(an.slopeA)}
-                </p>
-                <p className="sc-eq">{tangentB}</p>
-                <p className="sc-eq-note">
-                  singgung di B, gradien {slopeText(an.slopeB)}
-                </p>
-                <div className="sc-kvs">
-                  {kv("Sudut tali busur–singgung θ/2", `${fmt(params.t / 2, 2)}°`)}
-                  {an.tValid ? (
-                    <>
-                      {kv("Titik T", fmtPt(an.T[0], an.T[1]))}
-                      {kv("AT = BT = r tan(θ/2)", fmt(an.tLen))}
-                      {kv("OT = r / cos(θ/2)", fmt(an.ot))}
-                      {kv("∠ATB = 180° − θ", `${fmt(180 - params.t, 2)}°`)}
-                    </>
-                  ) : (
-                    kv(
-                      "Titik T",
-                      params.t === 180
-                        ? "tidak ada (kedua singgung sejajar)"
-                        : "terlalu jauh / di sisi lain",
-                    )
-                  )}
-                </div>
-              </section>
-            </div>
-
-            <div className="sc-pane" data-pane="info">
-              <table className="sc-info-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Besaran</th>
-                    <th scope="col">Rumus</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Panjang busur</td>
-                    <td>s = θ/360° × 2πr</td>
-                  </tr>
-                  <tr>
-                    <td>Luas juring</td>
-                    <td>L = θ/360° × πr²</td>
-                  </tr>
-                  <tr>
-                    <td>Tali busur</td>
-                    <td>c = 2r sin(θ/2)</td>
-                  </tr>
-                  <tr>
-                    <td>Apotema</td>
-                    <td>d = r cos(θ/2)</td>
-                  </tr>
-                  <tr>
-                    <td>Luas tembereng</td>
-                    <td>juring − segitiga OAB</td>
-                  </tr>
-                  <tr>
-                    <td>Garis singgung</td>
-                    <td>⊥ jari-jari di titik singgung</td>
-                  </tr>
-                </tbody>
-              </table>
-              <ul className="sc-insights">
-                <li>
-                  <strong style={{ color: COLOR_ARC }}>
-                    Busur dan juring:
-                  </strong>{" "}
-                  panjang busur dan luas juring sebanding dengan sudut pusat.
-                  Jika θ dilipatgandakan, s dan L ikut berlipat dua; jika r
-                  dilipatgandakan, s berlipat dua tetapi L berlipat empat.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_CHORD }}>Tali busur:</strong>{" "}
-                  tali busur selalu lebih pendek daripada busurnya. Pada θ = 180°
-                  tali busur menjadi diameter (c = 2r) dan apotema d = 0. Pada
-                  θ kecil, c hampir sama dengan s.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_SEGMENT }}>Apotema:</strong>{" "}
-                  garis dari pusat yang tegak lurus tali busur selalu membagi
-                  tali busur dan sudut pusat menjadi dua sama besar. Untuk
-                  θ &gt; 180° nilai d menjadi negatif, artinya pusat berada di
-                  sisi lain tali busur.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_TAN }}>Garis singgung:</strong>{" "}
-                  garis singgung di A dan B tegak lurus OA dan OB, sehingga
-                  OATB berbentuk layang-layang dan AT = BT. Sudut antara tali
-                  busur dan garis singgung sama dengan setengah sudut pusat
-                  (θ/2).
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+              <dl className="sc-readouts" aria-live="polite">
+                {cell("Singgung di A", tangentA, color.tan, true)}
+                {cell("Gradien di A", slopeText(an.slopeA))}
+                {cell("Singgung di B", tangentB, color.tan, true)}
+                {cell("Gradien di B", slopeText(an.slopeB))}
+                {cell("Sudut tali busur–singgung θ/2", `${fmt(params.t / 2, 2)}°`, undefined, true)}
+                {an.tValid ? (
+                  <>
+                    {cell("Titik T", fmtPt(an.T[0], an.T[1]), color.tan)}
+                    {cell("AT = BT = r tan(θ/2)", fmt(an.tLen), color.tan)}
+                    {cell("OT = r / cos(θ/2)", fmt(an.ot))}
+                    {cell("∠ATB = 180° − θ", `${fmt(180 - params.t, 2)}°`)}
+                  </>
+                ) : (
+                  cell(
+                    "Titik T",
+                    params.t === 180
+                      ? "tidak ada (kedua singgung sejajar)"
+                      : "terlalu jauh / di sisi lain",
+                    undefined,
+                    true,
+                  )
+                )}
+              </dl>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );
 }
+
+export default CircleSectorSimulation;

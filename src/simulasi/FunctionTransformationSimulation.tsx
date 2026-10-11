@@ -5,8 +5,9 @@ import {
   Minus,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
+  X,
 } from "lucide-react";
 import {
   useEffect,
@@ -17,66 +18,160 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { flushSync } from "react-dom";
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./FunctionTransformationSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi transformasi fungsi (disusun ulang, mengikuti simulasi vektor).
-   Prioritas: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1.
-   - Layar kecil / layar penuh: panel kanan bertab (Fungsi, Ubah, Lainnya,
-     Hasil) agar semuanya muat tanpa gulir panjang.
-   - Desktop: panel input bertumpuk di kanan, hasil di bawah.
-   Fungsi awal f(x) dapat diketik sendiri (mis. x^2 − 3, sin(x), 1/x). */
+/* Simulasi transformasi fungsi — tema slate seperti landing page 1729.
+   Urutan desain: ponsel lanskap → desktop → ponsel potret. Layar penuh:
+   grafik 100% layar, toolbar dan panel pengatur mengambang.
 
-/* ---------- Tipe ---------- */
+   Grafik hasil:  g(x) = a · f(b(x − h)) + k
+   - h : geser mendatar (kanan jika positif)
+   - k : geser tegak (atas jika positif)
+   - a : regang tegak, a < 0 mencerminkan terhadap garis y = k
+   - b : regang mendatar (lebar menjadi 1/|b| kali), b < 0 mencerminkan
+         terhadap garis x = h
+
+   Titik (x, y) pada f dipetakan ke (h + x/b, a·y + k) pada g.
+   Fungsi awal f(x) bisa diketik sendiri (mis. x^2 − 3, sin(x), 1/x). */
+
+/* ───────── Tipe ───────── */
 
 type Vec = [number, number];
 type Fn = (x: number) => number;
-type ParamKey = "h" | "k" | "a" | "b" | "x0";
-type PanelTab = "function" | "transform" | "more" | "result";
-
-/** g(x) = a · f(b(x − h)) + k */
 type Params = { h: number; k: number; a: number; b: number; x0: number };
-
-const panelTabs: { tab: PanelTab; label: string }[] = [
-  { tab: "function", label: "Fungsi" },
-  { tab: "transform", label: "Ubah" },
-  { tab: "more", label: "Lainnya" },
-  { tab: "result", label: "Hasil" },
-];
-
+type Opts = {
+  original: boolean;
+  key: boolean;
+  guide: boolean;
+  probe: boolean;
+};
+type Tab = "set" | "fn" | "res";
+type Board = ReturnType<typeof JXG.JSXGraph.initBoard>;
 type DataCurve = {
   dataX: number[];
   dataY: number[];
   updateDataArray: () => void;
 };
-
-/* ---------- Konstanta ---------- */
-
-const SAMPLES = 1000;
-const Y_LIMIT = 1000;
-const INITIAL_BOX: [number, number, number, number] = [-10, 10, 10, -10];
-/** Layar kecil atau pendek memakai panel bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
-
-const keyLetters = ["A", "B", "C", "D", "E"];
-const KEY_CANDIDATES = [-2, -1, 0, 1, 2, 3, 0.5, 4, -3, -0.5, 8];
-
-const colors = {
-  original: "#087f8c",
-  image: "#d16b36",
-  guide: "#183e54",
+/** Titik uji P yang bisa diseret sepanjang grafik f. */
+type DragPoint = {
+  X: () => number;
+  Y: () => number;
+  setPosition: (method: number, coords: number[]) => unknown;
+  showElement: () => unknown;
+  hideElement: () => unknown;
+  on: (event: string, handler: () => void) => unknown;
+};
+type RowDef = {
+  key: keyof Params;
+  label: string;
+  title: string;
+  min: number;
+  max: number;
+  step: number;
+  digits: number;
+  tone: string;
+  /** a dan b tidak boleh 0: grafik akan menjadi garis datar / tidak terdefinisi */
+  nonZero?: boolean;
+  /** tampilkan tombol ± (balik tanda = cermin) */
+  flip?: boolean;
 };
 
-const DEFAULT_EXPRESSION = "x^2";
-const defaultParams: Params = { h: 2, k: 1, a: 2, b: 1, x0: 1 };
-const identityParams: Params = { h: 0, k: 0, a: 1, b: 1, x0: 1 };
+/* ───────── Konstanta ───────── */
 
-const presets: { label: string; expr: string }[] = [
+/** JXG.COORDS_BY_USER */
+const COORDS_BY_USER = 1;
+const HOME_BOX: [number, number, number, number] = [-12, 9, 12, -9];
+const SAMPLES = 900;
+const X0_LIM = 8;
+
+const DEFAULT_EXPRESSION = "x^2";
+const DEFAULT_PARAMS: Params = { h: 2, k: 1, a: 2, b: 1, x0: 1 };
+const IDENTITY: Params = { h: 0, k: 0, a: 1, b: 1, x0: 0 };
+const DEFAULT_OPTS: Opts = {
+  original: true,
+  key: true,
+  guide: true,
+  probe: true,
+};
+
+/* Warna grafik: dipakai juga oleh legenda, penggeser, dan hasil di panel. */
+const color = {
+  f: "#2563eb",
+  g: "#e11d48",
+  shift: "#0d9488",
+  stretch: "#7c3aed",
+  probe: "#ca8a04",
+  guide: "#94a3b8",
+  ink: "#0f172a",
+};
+
+const KEY_LETTERS = ["A", "B", "C", "D", "E"];
+const KEY_CANDIDATES = [-2, -1, 0, 1, 2, 3, 0.5, 4, -3, -0.5, 8];
+
+const SHIFT_ROWS: RowDef[] = [
+  {
+    key: "h",
+    label: "h",
+    title: "geser mendatar",
+    min: -8,
+    max: 8,
+    step: 0.5,
+    digits: 1,
+    tone: color.shift,
+  },
+  {
+    key: "k",
+    label: "k",
+    title: "geser tegak",
+    min: -8,
+    max: 8,
+    step: 0.5,
+    digits: 1,
+    tone: color.shift,
+  },
+];
+const STRETCH_ROWS: RowDef[] = [
+  {
+    key: "a",
+    label: "a",
+    title: "regang tegak",
+    min: -4,
+    max: 4,
+    step: 0.25,
+    digits: 2,
+    tone: color.stretch,
+    nonZero: true,
+    flip: true,
+  },
+  {
+    key: "b",
+    label: "b",
+    title: "regang mendatar",
+    min: -4,
+    max: 4,
+    step: 0.25,
+    digits: 2,
+    tone: color.stretch,
+    nonZero: true,
+    flip: true,
+  },
+];
+const PROBE_ROW: RowDef = {
+  key: "x0",
+  label: "x₀",
+  title: "absis titik uji P",
+  min: -X0_LIM,
+  max: X0_LIM,
+  step: 0.1,
+  digits: 1,
+  tone: color.probe,
+};
+
+const PRESETS: { label: string; expr: string }[] = [
   { label: "x", expr: "x" },
   { label: "x²", expr: "x^2" },
   { label: "x³", expr: "x^3" },
@@ -88,70 +183,60 @@ const presets: { label: string; expr: string }[] = [
   { label: "ln x", expr: "ln(x)" },
 ];
 
-const paramRows: {
-  key: ParamKey;
-  label: string;
-  sub: string;
-  tone: "shift" | "stretch";
-  min: number;
-  max: number;
-  step: number;
-  nonZero: boolean;
-}[] = [
-  {
-    key: "h",
-    label: "h",
-    sub: "geser x",
-    tone: "shift",
-    min: -8,
-    max: 8,
-    step: 0.5,
-    nonZero: false,
-  },
-  {
-    key: "k",
-    label: "k",
-    sub: "geser y",
-    tone: "shift",
-    min: -8,
-    max: 8,
-    step: 0.5,
-    nonZero: false,
-  },
-  {
-    key: "a",
-    label: "a",
-    sub: "regang y",
-    tone: "stretch",
-    min: -4,
-    max: 4,
-    step: 0.25,
-    nonZero: true,
-  },
-  {
-    key: "b",
-    label: "b",
-    sub: "regang x",
-    tone: "stretch",
-    min: -4,
-    max: 4,
-    step: 0.25,
-    nonZero: true,
-  },
+const OPTION_ROWS: { key: keyof Opts; label: string }[] = [
+  { key: "original", label: "Grafik f(x)" },
+  { key: "key", label: "Titik kunci" },
+  { key: "guide", label: "Garis x = h, y = k" },
+  { key: "probe", label: "Titik uji P" },
 ];
 
-const probeRow = {
-  key: "x0" as ParamKey,
-  label: "x₀",
-  sub: "titik P",
-  tone: "probe" as const,
-  min: -8,
-  max: 8,
-  step: 0.25,
-  nonZero: false,
-};
+const TABS: { key: Tab; label: string }[] = [
+  { key: "set", label: "Ubah" },
+  { key: "fn", label: "Fungsi" },
+  { key: "res", label: "Hasil" },
+];
 
-/* ---------- Pengurai ekspresi (tanpa eval) ---------- */
+/* ───────── Format ───────── */
+
+function fmt(value: number, digits = 2) {
+  if (!Number.isFinite(value)) return "—";
+  if (Math.abs(value) < Math.pow(10, -digits) / 2) return "0";
+  return new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: digits,
+    useGrouping: false,
+  })
+    .format(value)
+    .replace("-", "−");
+}
+
+const fmtPt = ([x, y]: Vec) => `(${fmt(x)}; ${fmt(y)})`;
+
+/** Parameter dari penyimpanan: angka terhingga, a dan b tidak nol. */
+function cleanParams(raw: Partial<Params> | undefined): Params {
+  const num = (v: unknown, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  const nonZero = (v: unknown, fallback: number) => {
+    const n = num(v, fallback);
+    return Math.abs(n) < 1e-9 ? fallback : n;
+  };
+  return {
+    h: num(raw?.h, DEFAULT_PARAMS.h),
+    k: num(raw?.k, DEFAULT_PARAMS.k),
+    a: nonZero(raw?.a, DEFAULT_PARAMS.a),
+    b: nonZero(raw?.b, DEFAULT_PARAMS.b),
+    x0: num(raw?.x0, DEFAULT_PARAMS.x0),
+  };
+}
+
+/* ───────── Pengurai rumus (tanpa eval) ───────── */
+
+type Node =
+  | { t: "num"; v: number }
+  | { t: "x" }
+  | { t: "const"; name: "e" | "pi" }
+  | { t: "neg"; a: Node }
+  | { t: "bin"; op: "+" | "-" | "*" | "/" | "^"; l: Node; r: Node }
+  | { t: "call"; name: string; a: Node };
 
 const FUNCS: Record<string, Fn> = {
   sin: Math.sin,
@@ -163,16 +248,19 @@ const FUNCS: Record<string, Fn> = {
   log: (u) => (u > 0 ? Math.log10(u) : Number.NaN),
   exp: Math.exp,
 };
-const NAMES = ["sqrt", "sin", "cos", "tan", "abs", "exp", "log", "ln", "pi"];
+const NAMES = [...Object.keys(FUNCS), "pi"];
 
 type Tok =
-  { t: "num"; v: number } | { t: "id"; v: string } | { t: "op"; v: string };
+  | { k: "num"; v: number }
+  | { k: "id"; v: string }
+  | { k: "op"; v: string };
 
 function tokenize(src: string): Tok[] | null {
   const s = src
     .toLowerCase()
-    .replace(/[−–]/g, "-")
-    .replace(/[×·]/g, "*")
+    .replace(/[−–—]/g, "-")
+    .replace(/[×·∙]/g, "*")
+    .replace(/÷/g, "/")
     .replace(/²/g, "^2")
     .replace(/³/g, "^3")
     .replace(/ˣ/g, "^x")
@@ -189,21 +277,21 @@ function tokenize(src: string): Tok[] | null {
       while (j < s.length && /[0-9.]/.test(s[j])) j += 1;
       const text = s.slice(i, j);
       if (!/^(\d+\.?\d*|\.\d+)$/.test(text)) return null;
-      out.push({ t: "num", v: Number(text) });
+      out.push({ k: "num", v: Number(text) });
       i = j;
     } else if (/[a-z]/.test(c)) {
       const name = NAMES.find((n) => s.startsWith(n, i));
       if (name) {
-        out.push({ t: "id", v: name });
+        out.push({ k: "id", v: name });
         i += name.length;
       } else if (c === "x" || c === "e") {
-        out.push({ t: "id", v: c });
+        out.push({ k: "id", v: c });
         i += 1;
       } else {
         return null;
       }
     } else if ("+-*/^()".includes(c)) {
-      out.push({ t: "op", v: c });
+      out.push({ k: "op", v: c });
       i += 1;
     } else {
       return null;
@@ -214,172 +302,345 @@ function tokenize(src: string): Tok[] | null {
 
 class ParseError extends Error {}
 
-function compileExpression(
-  src: string,
-): { fn: Fn; error?: undefined } | { fn?: undefined; error: string } {
+const SYNTAX_HINT = "Contoh: x^2 − 3, sin(x), 1/x, sqrt(x), abs(x), e^x, ln(x).";
+
+function parseExpression(src: string): { node: Node } | { error: string } {
   const tokens = tokenize(src);
   if (!tokens || tokens.length === 0) {
-    return { error: "Tulis fungsi dalam x, mis. x^2 − 3 atau sin(x)." };
+    return { error: `Tulis fungsi dalam x. ${SYNTAX_HINT}` };
   }
   let pos = 0;
   const peek = () => tokens[pos];
   const isOp = (v: string) => {
     const tk = peek();
-    return tk !== undefined && tk.t === "op" && tk.v === v;
+    return tk !== undefined && tk.k === "op" && tk.v === v;
   };
-  const startsFactor = () => {
+  // perkalian tersirat: 2x, x(x + 1), sin(x)cos(x); angka tidak ikut (x2 ditolak)
+  const startsImplicit = () => {
     const tk = peek();
-    return (
-      tk !== undefined &&
-      (tk.t === "id" || (tk.t === "op" && tk.v === "(") || tk.t === "num")
-    );
+    return tk !== undefined && (tk.k === "id" || (tk.k === "op" && tk.v === "("));
   };
 
-  const parseExpr = (): Fn => {
-    let left = parseTerm();
+  const expr = (): Node => {
+    let left = term();
     while (isOp("+") || isOp("-")) {
-      const plus = isOp("+");
+      const op = isOp("+") ? "+" : "-";
       pos += 1;
-      const l = left;
-      const r = parseTerm();
-      left = plus ? (x) => l(x) + r(x) : (x) => l(x) - r(x);
+      left = { t: "bin", op, l: left, r: term() };
     }
     return left;
   };
-
-  const parseTerm = (): Fn => {
-    let left = parseUnary();
+  const term = (): Node => {
+    let left = unary();
     for (;;) {
       if (isOp("*") || isOp("/")) {
-        const times = isOp("*");
+        const op = isOp("*") ? "*" : "/";
         pos += 1;
-        const l = left;
-        const r = parseUnary();
-        left = times ? (x) => l(x) * r(x) : (x) => l(x) / r(x);
-      } else if (startsFactor() && peek()?.t !== "num") {
-        const l = left;
-        const r = parseUnary();
-        left = (x) => l(x) * r(x);
+        left = { t: "bin", op, l: left, r: unary() };
+      } else if (startsImplicit()) {
+        left = { t: "bin", op: "*", l: left, r: unary() };
       } else {
         return left;
       }
     }
   };
-
-  const parseUnary = (): Fn => {
+  const unary = (): Node => {
     if (isOp("-")) {
       pos += 1;
-      const inner = parseUnary();
-      return (x) => -inner(x);
+      return { t: "neg", a: unary() };
     }
     if (isOp("+")) {
       pos += 1;
-      return parseUnary();
+      return unary();
     }
-    return parsePower();
+    return power();
   };
-
-  const parsePower = (): Fn => {
-    const base = parseAtom();
+  const power = (): Node => {
+    const base = atom();
     if (isOp("^")) {
       pos += 1;
-      const exponent = parseUnary();
-      return (x) => Math.pow(base(x), exponent(x));
+      return { t: "bin", op: "^", l: base, r: unary() };
     }
     return base;
   };
-
-  const parseAtom = (): Fn => {
+  const atom = (): Node => {
     const tk = peek();
     if (!tk) throw new ParseError("Ekspresi belum lengkap.");
-    if (tk.t === "num") {
+    if (tk.k === "num") {
       pos += 1;
-      const v = tk.v;
-      return () => v;
+      return { t: "num", v: tk.v };
     }
-    if (tk.t === "op" && tk.v === "(") {
+    if (tk.k === "op" && tk.v === "(") {
       pos += 1;
-      const inner = parseExpr();
+      const inner = expr();
       if (!isOp(")")) throw new ParseError("Tanda kurung belum ditutup.");
       pos += 1;
       return inner;
     }
-    if (tk.t === "id") {
+    if (tk.k === "id") {
       pos += 1;
-      if (tk.v === "x") return (x) => x;
-      if (tk.v === "e") return () => Math.E;
-      if (tk.v === "pi") return () => Math.PI;
-      const f = FUNCS[tk.v];
-      const arg = isOp("(") ? parseAtom() : parsePower();
-      return (x) => f(arg(x));
+      if (tk.v === "x") return { t: "x" };
+      if (tk.v === "e" || tk.v === "pi") {
+        return { t: "const", name: tk.v === "e" ? "e" : "pi" };
+      }
+      // sin(x) atau sin x^2 (tanpa kurung: argumennya satu pangkat)
+      const arg = isOp("(") ? atom() : power();
+      return { t: "call", name: tk.v, a: arg };
     }
     throw new ParseError("Ada tanda yang tidak dikenali.");
   };
 
   try {
-    const fn = parseExpr();
-    if (pos < tokens.length)
+    const node = expr();
+    if (pos < tokens.length) {
       throw new ParseError("Ada bagian yang tidak dikenali.");
-    return { fn };
+    }
+    return { node };
   } catch (error) {
     return {
       error:
         error instanceof ParseError
-          ? `${error.message} Contoh: x^2 − 3, sin(x), 1/x, sqrt(x), abs(x), e^x, ln(x).`
+          ? `${error.message} ${SYNTAX_HINT}`
           : "Ekspresi tidak dapat dibaca.",
     };
   }
 }
+
+/** Pangkat; akar ganjil bilangan negatif tetap terdefinisi (mis. x^(1/3)). */
+function pow(base: number, exponent: number) {
+  if (base < 0 && Number.isFinite(exponent) && !Number.isInteger(exponent)) {
+    const inverse = 1 / exponent;
+    if (Number.isInteger(inverse) && Math.abs(inverse % 2) === 1) {
+      return -Math.pow(-base, exponent);
+    }
+  }
+  return Math.pow(base, exponent);
+}
+
+function compileNode(node: Node): Fn {
+  switch (node.t) {
+    case "num": {
+      const v = node.v;
+      return () => v;
+    }
+    case "x":
+      return (x) => x;
+    case "const": {
+      const v = node.name === "e" ? Math.E : Math.PI;
+      return () => v;
+    }
+    case "neg": {
+      const inner = compileNode(node.a);
+      return (x) => -inner(x);
+    }
+    case "call": {
+      const inner = compileNode(node.a);
+      const f = FUNCS[node.name];
+      return (x) => f(inner(x));
+    }
+    case "bin": {
+      const l = compileNode(node.l);
+      const r = compileNode(node.r);
+      switch (node.op) {
+        case "+":
+          return (x) => l(x) + r(x);
+        case "-":
+          return (x) => l(x) - r(x);
+        case "*":
+          return (x) => l(x) * r(x);
+        case "/":
+          return (x) => l(x) / r(x);
+        default:
+          return (x) => pow(l(x), r(x));
+      }
+    }
+  }
+}
+
+const DEFAULT_NODE = (
+  parseExpression(DEFAULT_EXPRESSION) as { node: Node }
+).node;
+
+/* ───────── Teks rumus ───────── */
+
+/** Potongan teks beserta tingkat ikatannya:
+    1 jumlah · 2 perkalian · 3 minus depan · 4 pangkat · 5 atom. */
+type Piece = { s: string; p: number };
+
+const wrap = (piece: Piece, min: number) =>
+  piece.p >= min ? piece.s : `(${piece.s})`;
+const isSimple = (text: string) => /^[\wπ,]+$/.test(text);
+
+function renderNode(node: Node, arg: Piece): Piece {
+  switch (node.t) {
+    case "num":
+      return { s: fmt(node.v, 3), p: 5 };
+    case "x":
+      return arg;
+    case "const":
+      return { s: node.name === "e" ? "e" : "π", p: 5 };
+    case "neg":
+      return { s: `−${wrap(renderNode(node.a, arg), 4)}`, p: 3 };
+    case "call": {
+      const inner = renderNode(node.a, arg);
+      if (node.name === "abs") return { s: `|${inner.s}|`, p: 5 };
+      if (node.name === "sqrt") {
+        return {
+          s: isSimple(inner.s) ? `√${inner.s}` : `√(${inner.s})`,
+          p: 5,
+        };
+      }
+      return { s: `${node.name}(${inner.s})`, p: 5 };
+    }
+    case "bin": {
+      const l = renderNode(node.l, arg);
+      const r = renderNode(node.r, arg);
+      switch (node.op) {
+        case "+":
+          if (node.r.t === "neg") {
+            const inner = renderNode(node.r.a, arg);
+            return { s: `${l.s} − ${wrap(inner, 2)}`, p: 1 };
+          }
+          return { s: `${l.s} + ${r.s}`, p: 1 };
+        case "-":
+          return {
+            s: `${l.s} − ${node.r.t === "neg" ? `(${r.s})` : wrap(r, 2)}`,
+            p: 1,
+          };
+        case "*": {
+          const left = wrap(l, 2);
+          const right = node.r.t === "neg" ? `(${r.s})` : wrap(r, 2);
+          // 2x, 3sin(x), 2(x − 1) tanpa titik; selain itu pakai ·
+          const joined =
+            node.l.t === "num" && /^[A-Za-zπ(√|]/.test(right)
+              ? `${left}${right}`
+              : `${left} · ${right}`;
+          return { s: joined, p: 2 };
+        }
+        case "/":
+          return { s: `${wrap(l, 2)} / ${wrap(r, 4)}`, p: 2 };
+        default: {
+          const base = wrap(l, 5);
+          if (node.r.t === "num" && (node.r.v === 2 || node.r.v === 3)) {
+            return { s: `${base}${node.r.v === 2 ? "²" : "³"}`, p: 4 };
+          }
+          const exponent = r.p >= 5 && isSimple(r.s) ? r.s : `(${r.s})`;
+          return { s: `${base}^${exponent}`, p: 4 };
+        }
+      }
+    }
+  }
+}
+
+/** Argumen b(x − h) sebagai teks. */
+function argPiece(h: number, b: number): Piece {
+  const inner =
+    h === 0 ? "x" : `x ${h > 0 ? "−" : "+"} ${fmt(Math.abs(h))}`;
+  if (b === 1) return { s: inner, p: h === 0 ? 5 : 1 };
+  if (b === -1) {
+    return h === 0 ? { s: "−x", p: 3 } : { s: `−(${inner})`, p: 3 };
+  }
+  const coef = fmt(b);
+  return h === 0
+    ? { s: `${coef}x`, p: 2 }
+    : { s: `${coef}(${inner})`, p: 2 };
+}
+
+/** Ruas kanan g(x) = a · f(b(x − h)) + k. */
+function transformedText(root: Node, p: Params) {
+  const body = renderNode(root, argPiece(p.h, p.b));
+  let main: string;
+  if (p.a === 1) {
+    main = body.s;
+  } else if (p.a === -1) {
+    main = `−${wrap(body, 4)}`;
+  } else {
+    const inner = wrap(body, 4);
+    main = /^[A-Za-zπ(√|]/.test(inner)
+      ? `${fmt(p.a)}${inner}`
+      : `${fmt(p.a)} · ${inner}`;
+  }
+  return p.k === 0
+    ? main
+    : `${main} ${p.k > 0 ? "+" : "−"} ${fmt(Math.abs(p.k))}`;
+}
+
+const originalText = (root: Node) =>
+  renderNode(root, { s: "x", p: 5 }).s;
+
+const plusConst = (text: string, c: number) =>
+  c === 0 ? text : `${text} ${c > 0 ? "+" : "−"} ${fmt(Math.abs(c))}`;
+
+/** Aturan titik (x; y) → (h + x/b; a·y + k) dengan angka saat ini. */
+function pointRule({ h, k, a, b }: Params) {
+  const xPart =
+    b === 1 ? "x" : b === -1 ? "−x" : b < 0 ? `x/(${fmt(b)})` : `x/${fmt(b)}`;
+  const yPart = a === 1 ? "y" : a === -1 ? "−y" : `${fmt(a)}y`;
+  return `(x; y) → (${plusConst(xPart, h)}; ${plusConst(yPart, k)})`;
+}
+
+function describeEffects({ h, k, a, b }: Params) {
+  const magA = Math.abs(a);
+  let vertical =
+    magA === 1
+      ? "tidak diregang"
+      : magA > 1
+        ? `diregang ×${fmt(magA)}`
+        : `dimampatkan ×${fmt(magA)}`;
+  if (a < 0) {
+    vertical += `, dicerminkan terhadap ${k === 0 ? "sumbu x" : `garis y = ${fmt(k)}`}`;
+  }
+
+  const magB = Math.abs(b);
+  let horizontal =
+    magB === 1
+      ? "tidak diregang"
+      : magB > 1
+        ? `dimampatkan ×${fmt(1 / magB)}`
+        : `diregang ×${fmt(1 / magB)}`;
+  if (b < 0) {
+    horizontal += `, dicerminkan terhadap ${h === 0 ? "sumbu y" : `garis x = ${fmt(h)}`}`;
+  }
+
+  return [
+    {
+      title: "Geser mendatar (h)",
+      text:
+        h === 0
+          ? "tidak bergeser"
+          : `${fmt(Math.abs(h))} satuan ke ${h > 0 ? "kanan" : "kiri"}`,
+      tone: color.shift,
+    },
+    {
+      title: "Geser tegak (k)",
+      text:
+        k === 0
+          ? "tidak bergeser"
+          : `${fmt(Math.abs(k))} satuan ke ${k > 0 ? "atas" : "bawah"}`,
+      tone: color.shift,
+    },
+    { title: "Regang tegak (a)", text: vertical, tone: color.stretch },
+    { title: "Regang mendatar (b)", text: horizontal, tone: color.stretch },
+  ];
+}
+
+/* ───────── Matematika ───────── */
+
+/** Titik (x, y) pada f menjadi (h + x/b, a·y + k) pada g. */
+const mapPoint = (p: Params, [x, y]: Vec): Vec => [p.h + x / p.b, p.a * y + p.k];
 
 /** Absis titik kunci: lima titik pertama yang terdefinisi pada f. */
 function computeKeys(fn: Fn) {
   const picked: number[] = [];
   for (const u of KEY_CANDIDATES) {
     const y = fn(u);
-    if (Number.isFinite(y) && Math.abs(y) <= 30 && !picked.includes(u)) {
+    if (Number.isFinite(y) && Math.abs(y) <= 30) {
       picked.push(u);
-      if (picked.length === keyLetters.length) break;
+      if (picked.length === KEY_LETTERS.length) break;
     }
   }
   return picked.sort((m, n) => m - n);
 }
-
-/* ---------- Format ---------- */
-
-function cleanNumber(value: number) {
-  const rounded = Math.round(value * 1000) / 1000;
-  return Math.abs(rounded) < 1e-9 ? 0 : rounded;
-}
-
-function formatValue(value: number) {
-  if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 3 })
-    .format(cleanNumber(value))
-    .replace("-", "−");
-}
-
-const formatCoord = ([x, y]: Vec) => `(${formatValue(x)}; ${formatValue(y)})`;
-
-const signed = (value: number) =>
-  value < 0 ? `− ${formatValue(-value)}` : `+ ${formatValue(value)}`;
-
-const toField = (value: number) => String(cleanNumber(value)).replace(".", ",");
-
-/** Teks angka valid → angka; selain itu null (mis. "−" yang belum selesai). */
-function parseNumber(text: string): number | null {
-  const normalized = text.trim().replace("−", "-").replace(",", ".");
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : null;
-}
-
-/* ---------- Matematika ---------- */
-
-/** Titik (x, y) pada f menjadi (h + x/b, a·y + k) pada g. */
-const mapPoint = (p: Params, [x, y]: Vec): Vec => [
-  p.h + x / p.b,
-  p.a * y + p.k,
-];
 
 function probeOf(fn: Fn, p: Params) {
   const y = fn(p.x0);
@@ -388,7 +649,8 @@ function probeOf(fn: Fn, p: Params) {
   return { base, image: mapPoint(p, base) };
 }
 
-/** Titik-titik kurva y = a·f(b(x − h)) + k; NaN memutus garis (asimtot, di luar daerah asal). */
+/** Titik-titik kurva y = a·f(b(x − h)) + k. NaN memutus garis
+    (asimtot tegak atau di luar daerah asal). */
 function sampleCurve(
   fn: Fn,
   p: Params,
@@ -400,166 +662,46 @@ function sampleCurve(
   for (let i = 0; i <= SAMPLES; i += 1) {
     nodes.push(xMin + (i / SAMPLES) * (xMax - xMin));
   }
-  if (p.h > xMin && p.h < xMax && !nodes.includes(p.h)) {
+  // x = h adalah tempat argumen bernilai 0 (mis. asimtot 1/x)
+  if (p.h > xMin && p.h < xMax) {
     nodes.push(p.h);
     nodes.sort((m, n) => m - n);
   }
 
+  const limit = Math.max(1000, ySpan * 20);
   const xs: number[] = [];
   const ys: number[] = [];
-  const gap = () => {
+  let prev: number | null = null;
+  const cut = () => {
     if (xs.length > 0 && !Number.isNaN(xs[xs.length - 1])) {
       xs.push(Number.NaN);
       ys.push(Number.NaN);
     }
+    prev = null;
   };
 
-  let previous: number | null = null;
   for (const x of nodes) {
     const y = p.a * fn(p.b * (x - p.h)) + p.k;
-    if (Number.isFinite(y) && Math.abs(y) <= Y_LIMIT) {
-      // Lompatan besar dengan tanda berganti = asimtot tegak.
-      if (
-        previous !== null &&
-        Math.abs(y - previous) > 2 * ySpan &&
-        y * previous < 0
-      ) {
-        gap();
-      }
-      xs.push(x);
-      ys.push(y);
-      previous = y;
-    } else {
-      gap();
-      previous = null;
+    if (!Number.isFinite(y) || Math.abs(y) > limit) {
+      cut();
+      continue;
     }
+    // lompatan besar dengan tanda berganti = asimtot tegak
+    if (prev !== null && Math.abs(y - prev) > 2 * ySpan && y * prev < 0) {
+      cut();
+    }
+    xs.push(x);
+    ys.push(y);
+    prev = y;
   }
 
-  if (xs.length === 0) {
-    xs.push(Number.NaN);
-    ys.push(Number.NaN);
-  }
+  if (xs.length === 0) return { xs: [Number.NaN], ys: [Number.NaN] };
   return { xs, ys };
 }
 
-/* ---------- Teks ---------- */
+/* ───────── Baris pengatur ───────── */
 
-/** Ekspresi ketikan → tampilan rapi (spasi, minus, pangkat, √, π). */
-function displayExpression(raw: string) {
-  return raw
-    .replace(/\s+/g, "")
-    .replace(/-/g, "−")
-    .replace(/([^\s(^*+−/])([+−])/g, "$1 $2 ")
-    .replace(/\^2(?!\d)/g, "²")
-    .replace(/\^3(?!\d)/g, "³")
-    .replace(/\bsqrt\b/g, "√")
-    .replace(/\bpi\b/g, "π")
-    .replace(/\*/g, "·");
-}
-
-/** Mengganti x pada ekspresi dengan argumen baru. */
-function substituteX(display: string, arg: string) {
-  return display.replace(/\bx\b/g, (_m, offset: number, whole: string) => {
-    if (arg === "x") return "x";
-    return whole[offset - 1] === "(" && whole[offset + 1] === ")"
-      ? arg
-      : `(${arg})`;
-  });
-}
-
-function hasTopLevelOperator(text: string) {
-  let depth = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    const c = text[i];
-    if (c === "(") depth += 1;
-    else if (c === ")") depth -= 1;
-    else if (
-      depth === 0 &&
-      (c === " " || c === "·" || (c === "−" && i === 0))
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function argumentText(h: number, b: number) {
-  const inner =
-    h === 0 ? "x" : `x ${h > 0 ? "−" : "+"} ${formatValue(Math.abs(h))}`;
-  if (b === 1) return inner;
-  const factor = b === -1 ? "−" : formatValue(b);
-  return h === 0 ? `${factor}x` : `${factor}(${inner})`;
-}
-
-function formulaText(expression: string, { h, k, a, b }: Params) {
-  const core = substituteX(displayExpression(expression), argumentText(h, b));
-  const wrapped = hasTopLevelOperator(core) ? `(${core})` : core;
-  let body: string;
-  if (a === 1) body = core;
-  else if (a === -1) body = `−${wrapped}`;
-  else body = `${formatValue(a)} · ${wrapped}`;
-  const shift =
-    k === 0 ? "" : ` ${k > 0 ? "+" : "−"} ${formatValue(Math.abs(k))}`;
-  return `g(x) = ${body}${shift}`;
-}
-
-function describeEffects({ h, k, a, b }: Params) {
-  const horizontalShift =
-    h === 0
-      ? "tidak bergeser."
-      : `bergeser ${formatValue(Math.abs(h))} satuan ke ${h > 0 ? "kanan" : "kiri"}.`;
-  const verticalShift =
-    k === 0
-      ? "tidak bergeser."
-      : `bergeser ${formatValue(Math.abs(k))} satuan ke ${k > 0 ? "atas" : "bawah"}.`;
-
-  const magA = Math.abs(a);
-  let vertical =
-    magA === 1
-      ? "tidak diregangkan"
-      : magA > 1
-        ? `diregangkan ke arah sumbu y dengan faktor ${formatValue(magA)}`
-        : `dimampatkan ke arah sumbu y dengan faktor ${formatValue(magA)}`;
-  if (a < 0) {
-    vertical += `, lalu dicerminkan terhadap ${k === 0 ? "sumbu x" : `garis y = ${formatValue(k)}`}`;
-  }
-
-  const magB = Math.abs(b);
-  let horizontal =
-    magB === 1
-      ? "tidak diregangkan"
-      : magB > 1
-        ? `dimampatkan ke arah sumbu x (lebarnya menjadi ${formatValue(1 / magB)} kali)`
-        : `diregangkan ke arah sumbu x dengan faktor ${formatValue(1 / magB)}`;
-  if (b < 0) {
-    horizontal += `, lalu dicerminkan terhadap ${h === 0 ? "sumbu y" : `garis x = ${formatValue(h)}`}`;
-  }
-
-  return [
-    { title: "Translasi horizontal (h)", text: `grafik ${horizontalShift}` },
-    { title: "Translasi vertikal (k)", text: `grafik ${verticalShift}` },
-    { title: "Peregangan vertikal (a)", text: `grafik ${vertical}.` },
-    { title: "Peregangan horizontal (b)", text: `grafik ${horizontal}.` },
-  ];
-}
-
-/* ---------- Hook & komponen kecil ---------- */
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
+/** Tombol − / + yang bisa ditahan untuk mengubah nilai terus-menerus. */
 function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
   const stepRef = useRef(onStep);
   stepRef.current = onStep;
@@ -571,27 +713,24 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     timers.current = {};
   };
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timers.current.delay);
-      window.clearInterval(timers.current.repeat);
-    },
-    [],
-  );
+  useEffect(() => stop, []);
 
   return (direction: 1 | -1) => ({
     type: "button" as const,
-    className: "ft-nudge-button",
+    className: "ft-step",
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       stop();
       stepRef.current(direction);
+      // jaga-jaga bila tombol sempat berubah status saat ditahan
+      window.addEventListener("pointerup", stop, { once: true });
+      window.addEventListener("pointercancel", stop, { once: true });
       timers.current.delay = window.setTimeout(() => {
         timers.current.repeat = window.setInterval(
           () => stepRef.current(direction),
-          80,
+          60,
         );
-      }, 450);
+      }, 400);
     },
     onPointerUp: stop,
     onPointerLeave: stop,
@@ -599,293 +738,282 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     onBlur: stop,
     onContextMenu: (event: { preventDefault: () => void }) =>
       event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
+    // detail === 0 → aktivasi lewat keyboard
     onClick: (event: { detail: number }) => {
       if (event.detail === 0) stepRef.current(direction);
     },
   });
 }
 
-/** Satu baris: h  −  ──●──  +  [ 2 ] */
-function SliderField({
-  label,
-  sub,
-  tone,
+/** Satu baris:  h  −  ────●────  +  2  ± */
+function ParamRow({
+  id,
+  def,
   value,
-  min,
-  max,
-  step,
-  nonZero,
   onChange,
-  onNudge,
+  onFlip,
 }: {
-  label: string;
-  sub: string;
-  tone: "shift" | "stretch" | "probe";
+  id: string;
+  def: RowDef;
   value: number;
-  min: number;
-  max: number;
-  step: number;
-  nonZero: boolean;
   onChange: (value: number) => void;
-  onNudge: (direction: 1 | -1) => void;
+  onFlip?: () => void;
 }) {
-  const inputId = `ft-field-${useId().replace(/:/g, "")}`;
-  const bind = useHoldRepeat(onNudge);
-  const [text, setText] = useState(() => toField(value));
-  const focused = useRef(false);
+  const { label, title, min, max, step, digits, tone, nonZero } = def;
+  const round = (v: number) => {
+    const f = Math.pow(10, digits);
+    return Math.round(v * f) / f;
+  };
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
 
-  useEffect(() => {
-    if (!focused.current) setText(toField(value));
-  }, [value]);
+  // Nilai 0 dilewati untuk a dan b: loncat ke sisi seberangnya.
+  const apply = (raw: number, direction?: 1 | -1) => {
+    let next = clamp(round(raw));
+    if (nonZero && Math.abs(next) < 1e-9) {
+      next = clamp((direction ?? (value > 0 ? -1 : 1)) * step);
+    }
+    onChange(next);
+  };
+  const bind = useHoldRepeat((d) => apply(value + d * step, d));
 
-  // Isi dari titik 0 menuju nilai, karena parameter bisa negatif.
-  const clamped = Math.min(max, Math.max(min, value));
   const span = max - min;
-  const pct = ((clamped - min) / span) * 100;
+  const pct = ((clamp(value) - min) / span) * 100;
   const zero = ((0 - min) / span) * 100;
-  const rangeStyle = {
+  const style = {
     "--lo": `${Math.min(zero, pct)}%`,
     "--hi": `${Math.max(zero, pct)}%`,
+    "--sc": tone,
   } as CSSProperties;
 
-  const onText = (next: string) => {
-    setText(next);
-    const parsed = parseNumber(next);
-    if (parsed === null) return;
-    if (nonZero && parsed === 0) return;
-    onChange(Math.min(max, Math.max(min, parsed)));
-  };
-
   return (
-    <div className={`ft-row ft-row-${tone}`}>
-      <label htmlFor={inputId} aria-label={`${label} (${sub})`}>
+    <div className="ft-slider" style={style}>
+      <label htmlFor={id} title={title}>
         {label}
-        <small>{sub}</small>
       </label>
-      <button {...bind(-1)} aria-label={`Kurangi ${label}`}>
-        <Minus size={13} aria-hidden="true" />
+      <button
+        {...bind(-1)}
+        aria-disabled={value <= min}
+        aria-label={`Kurangi ${title}`}
+      >
+        <Minus size={14} aria-hidden="true" />
       </button>
       <input
+        id={id}
         className="ft-range"
         type="range"
         min={min}
         max={max}
         step={step}
-        value={clamped}
-        style={rangeStyle}
-        aria-label={`Penggeser ${label}`}
-        aria-valuetext={`${label} sama dengan ${formatValue(value)}`}
-        onChange={(event) => onChange(Number(event.currentTarget.value))}
+        value={clamp(value)}
+        aria-valuetext={`${title} sama dengan ${fmt(value, digits)}`}
+        onChange={(event) => apply(Number(event.currentTarget.value))}
       />
-      <button {...bind(1)} aria-label={`Tambah ${label}`}>
-        <Plus size={13} aria-hidden="true" />
+      <button
+        {...bind(1)}
+        aria-disabled={value >= max}
+        aria-label={`Tambah ${title}`}
+      >
+        <Plus size={14} aria-hidden="true" />
       </button>
-      <input
-        id={inputId}
-        className="ft-num"
-        type="text"
-        inputMode="decimal"
-        autoComplete="off"
-        enterKeyHint="done"
-        value={text}
-        onChange={(event) => onText(event.currentTarget.value)}
-        onFocus={(event) => {
-          focused.current = true;
-          event.currentTarget.select();
-        }}
-        onBlur={() => {
-          focused.current = false;
-          setText(toField(value));
-        }}
-      />
+      <output htmlFor={id} aria-live="off">
+        {fmt(value, digits)}
+      </output>
+      {onFlip ? (
+        <button
+          type="button"
+          className="ft-step ft-flip"
+          aria-pressed={value < 0}
+          aria-label={`Balik tanda ${label} (cerminkan)`}
+          title="Balik tanda (cerminkan)"
+          onClick={onFlip}
+        >
+          ±
+        </button>
+      ) : (
+        <span aria-hidden="true" />
+      )}
     </div>
   );
 }
 
-/* ---------- Komponen utama ---------- */
+const cell = (key: string, value: string, tone?: string, wide?: boolean) => (
+  <div key={key} className={wide ? "ft-wide" : undefined}>
+    <dt>{key}</dt>
+    <dd style={tone ? { color: tone } : undefined}>{value}</dd>
+  </div>
+);
+
+/* ───────── Komponen utama ───────── */
 
 export function FunctionTransformationSimulation() {
   const baseId = useId().replace(/:/g, "");
   const boardId = `ft-board-${baseId}`;
-  const ruleTitleId = `ft-rule-title-${baseId}`;
-  const tableTitleId = `ft-table-title-${baseId}`;
-  const [tab, setTab] = useState<PanelTab>("function");
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const nativeFullscreenRef = useRef(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
-  const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  const tabbed = smallScreen || isFullscreen;
-  const boardRef = useRef<ReturnType<typeof JXG.JSXGraph.initBoard> | null>(
-    null,
-  );
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
-  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi oleh efek papan)
-  const syncSizeRef = useRef<((force?: boolean) => void) | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const boardRef = useRef<Board | null>(null);
+  const probeRef = useRef<DragPoint | null>(null);
+  const nativeFsRef = useRef(false);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
 
-  const [expression, setExpression] = useStoredSimulationState(
+  const [storedParams, setParams] = useStoredSimulationState<Params>(
+    "function-transformation.params",
+    DEFAULT_PARAMS,
+  );
+  const [storedOpts, setOpts] = useStoredSimulationState<Opts>(
+    "function-transformation.opts",
+    DEFAULT_OPTS,
+  );
+  const [expression, setExpression] = useStoredSimulationState<string>(
     "function-transformation.expression",
     DEFAULT_EXPRESSION,
   );
-  const [params, setParams] = useStoredSimulationState(
-    "function-transformation.params",
-    defaultParams,
-  );
-  const [showOriginal, setShowOriginal] = useStoredSimulationState(
-    "function-transformation.show-original",
-    true,
-  );
-  const [showKey, setShowKey] = useStoredSimulationState(
-    "function-transformation.show-key",
-    true,
-  );
-
-  const compiled = useMemo(
-    () =>
-      compileExpression(expression).fn ??
-      (compileExpression(DEFAULT_EXPRESSION).fn as Fn),
-    [expression],
-  );
-
+  const [tab, setTab] = useState<Tab>("set");
+  const [isFs, setIsFs] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [exprText, setExprText] = useState(expression);
   const [exprError, setExprError] = useState<string | null>(null);
 
-  const functionRef = useRef<Fn>(compiled);
-  const keysRef = useRef<number[]>(computeKeys(compiled));
-  const paramsRef = useRef<Params>(params);
-  const showOriginalRef = useRef(showOriginal);
-  const showKeyRef = useRef(showKey);
+  // gabungkan dengan nilai bawaan agar pengaturan lama tetap valid
+  const params = useMemo(() => cleanParams(storedParams), [storedParams]);
+  const opts = useMemo<Opts>(
+    () => ({ ...DEFAULT_OPTS, ...storedOpts }),
+    [storedOpts],
+  );
+  const parsed = useMemo(() => parseExpression(expression), [expression]);
+  const node = useMemo(
+    () => ("node" in parsed ? parsed.node : DEFAULT_NODE),
+    [parsed],
+  );
+  const fn = useMemo(() => compileNode(node), [node]);
+  const keys = useMemo(() => computeKeys(fn), [fn]);
 
-  const refresh = () => boardRef.current?.update();
+  // data yang dibaca papan JSXGraph (selalu lewat ref agar tidak basi)
+  const pRef = useRef(params);
+  pRef.current = params;
+  const oRef = useRef(opts);
+  oRef.current = opts;
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  const keysRef = useRef(keys);
+  keysRef.current = keys;
+  const moveRef = useRef<(x: number, pt: DragPoint) => void>(() => undefined);
+  moveRef.current = (x, pt) => {
+    const nx = Math.min(X0_LIM, Math.max(-X0_LIM, Math.round(x * 10) / 10));
+    const y = fnRef.current(nx);
+    // titik uji selalu tetap berada pada grafik f
+    pt.setPosition(COORDS_BY_USER, [nx, Number.isFinite(y) ? y : pt.Y()]);
+    const next: Params = { ...pRef.current, x0: nx };
+    pRef.current = next;
+    setParams(next);
+    boardRef.current?.update();
+  };
 
-  /* Fungsi awal f(x) yang diketik */
-  const commitExpression = (text: string) => {
-    const result = compileExpression(text);
-    if (!result.fn) {
+  /* ───────── Parameter ───────── */
+
+  const patchParams = (patch: Partial<Params>) =>
+    setParams((prev) => ({ ...cleanParams(prev), ...patch }));
+
+  const setOpt = (key: keyof Opts) =>
+    setOpts((prev) => ({ ...DEFAULT_OPTS, ...prev, [key]: !oRef.current[key] }));
+
+  const changeExpression = (text: string) => {
+    setExprText(text);
+    const result = parseExpression(text);
+    if ("error" in result) {
       setExprError(result.error);
       return;
     }
     setExprError(null);
-    functionRef.current = result.fn;
-    keysRef.current = computeKeys(result.fn);
     setExpression(text.trim());
-    refresh();
   };
 
-  const changeExpression = (text: string) => {
-    setExprText(text);
-    commitExpression(text);
+  const clearTransform = () =>
+    patchParams({ h: 0, k: 0, a: 1, b: 1 });
+
+  const reset = () => {
+    setParams(DEFAULT_PARAMS);
+    setOpts(DEFAULT_OPTS);
+    setExpression(DEFAULT_EXPRESSION);
+    setExprText(DEFAULT_EXPRESSION);
+    setExprError(null);
+    boardRef.current?.setBoundingBox(HOME_BOX, true);
   };
 
-  const choosePreset = (expr: string) => {
-    setExprText(expr);
-    commitExpression(expr);
-  };
+  /* ───────── Tampilan ───────── */
 
-  /* Parameter transformasi */
-  const patchParams = (patch: Partial<Params>) => {
-    const next = { ...paramsRef.current, ...patch };
-    paramsRef.current = next;
-    setParams(next);
-    refresh();
-  };
-
-  const changeParam = (key: ParamKey, raw: number) => {
-    const row = key === "x0" ? probeRow : paramRows.find((r) => r.key === key);
-    let value = raw;
-    /* Nilai 0 dilewati: a = 0 atau b = 0 membuat grafik menjadi garis datar. */
-    if (row?.nonZero && value === 0) {
-      value = paramsRef.current[key] > 0 ? -row.step : row.step;
-    }
-    patchParams({ [key]: value } as Partial<Params>);
-  };
-
-  const nudgeParam = (key: ParamKey, direction: 1 | -1) => {
-    const row = key === "x0" ? probeRow : paramRows.find((r) => r.key === key);
-    if (!row) return;
-    let next = cleanNumber(paramsRef.current[key] + direction * row.step);
-    if (row.nonZero && next === 0) next = direction * row.step;
-    changeParam(key, Math.min(row.max, Math.max(row.min, next)));
-  };
-
-  const mirror = (key: "a" | "b") =>
-    patchParams(
-      key === "a" ? { a: -paramsRef.current.a } : { b: -paramsRef.current.b },
-    );
-
-  const toggleOriginal = (checked: boolean) => {
-    showOriginalRef.current = checked;
-    setShowOriginal(checked);
-    refresh();
-  };
-
-  const toggleKey = (checked: boolean) => {
-    showKeyRef.current = checked;
-    setShowKey(checked);
-    refresh();
-  };
-
-  const clearTransformation = () =>
-    patchParams({ ...identityParams, x0: paramsRef.current.x0 });
-
-  const resetAll = () => {
-    choosePreset(DEFAULT_EXPRESSION);
-    showOriginalRef.current = true;
-    setShowOriginal(true);
-    showKeyRef.current = true;
-    setShowKey(true);
-    patchParams({ ...defaultParams });
-  };
-
-  /* Tampilan: zoom, pusatkan, layar penuh */
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(INITIAL_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
 
-  const toggleFullscreen = async () => {
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (!isFullscreen) {
-      setPanelOpen(false);
-      setIsFullscreen(true);
-      if (el.requestFullscreen) {
-        try {
-          await el.requestFullscreen();
-          nativeFullscreenRef.current = true;
-        } catch {
-          // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
-        }
-      }
-    } else {
-      if (document.fullscreenElement) {
+    if (isFs || document.fullscreenElement === el) {
+      if (document.fullscreenElement === el) {
         try {
           await document.exitFullscreen();
         } catch {
           /* diabaikan */
         }
       }
-      nativeFullscreenRef.current = false;
-      setIsFullscreen(false);
+      nativeFsRef.current = false;
+      setIsFs(false);
+      return;
+    }
+    // Pasang tata letak layar penuh lebih dulu (flushSync), baru minta layar
+    // penuh asli, agar ukuran grafik langsung benar.
+    flushSync(() => {
+      setPanelOpen(false);
+      setIsFs(true);
+    });
+    if (el.requestFullscreen) {
+      try {
+        await el.requestFullscreen();
+        nativeFsRef.current = true;
+      } catch {
+        /* tetap pakai layar penuh CSS */
+      }
     }
   };
 
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
   useEffect(() => {
-    const onChange = () => {
-      if (!document.fullscreenElement && nativeFullscreenRef.current) {
-        nativeFullscreenRef.current = false;
-        setIsFullscreen(false);
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
+      screen as unknown as {
+        orientation?: {
+          lock?: (m: "landscape") => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).orientation;
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
+    return () => {
+      try {
+        o.unlock?.();
+      } catch {
+        /* abaikan */
       }
     };
-    const onKey = (event: KeyboardEvent) => {
+  }, [isFs]);
+
+  // Sinkron saat keluar lewat Esc / gestur sistem.
+  useEffect(() => {
+    const onChange = () => {
+      if (!document.fullscreenElement && nativeFsRef.current) {
+        nativeFsRef.current = false;
+        setIsFs(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
       if (
-        event.key === "Escape" &&
+        e.key === "Escape" &&
         !document.fullscreenElement &&
-        !nativeFullscreenRef.current
+        !nativeFsRef.current
       ) {
-        setIsFullscreen(false);
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -896,288 +1024,276 @@ export function FunctionTransformationSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
-  useEffect(() => {
-    if (!isFullscreen) return;
-    if (!window.matchMedia("(pointer: coarse)").matches) return;
-    const orientation = (
-      screen as unknown as {
-        orientation?: {
-          lock?: (mode: "landscape") => Promise<void>;
-          unlock?: () => void;
-        };
-      }
-    ).orientation;
-    if (typeof orientation?.lock !== "function") return;
-    orientation.lock("landscape").catch(() => undefined);
-    return () => {
-      try {
-        orientation.unlock?.();
-      } catch {
-        /* abaikan */
-      }
-    };
-  }, [isFullscreen]);
+  /* ───────── Papan JSXGraph ───────── */
 
-  /* Papan JSXGraph */
   useEffect(() => {
+    const el = hostRef.current;
+    if (!el) return;
+
     const board = JXG.JSXGraph.initBoard(boardId, {
-      boundingbox: INITIAL_BOX,
+      boundingbox: HOME_BOX,
       axis: false,
       showCopyright: false,
       showNavigation: false,
       keepAspectRatio: true,
-      // Geser dengan tahan klik kiri (atau satu jari) pada area kosong;
-      // zoom dengan roda mouse atau pinch.
+      // Ukuran papan diatur oleh sync di bawah; pengamat bawaan dimatikan
+      // agar tidak berebut saat masuk layar penuh.
+      resize: { enabled: false, throttle: 100 },
       pan: { enabled: true, needShift: false, needTwoFingers: false },
       zoom: {
         wheel: true,
         needShift: false,
         factorX: 1.15,
         factorY: 1.15,
-        min: 0.25,
-        max: 8,
+        min: 0.15,
+        max: 12,
       },
     });
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
+      highlight: false,
     });
 
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
-      highlight: false,
-    };
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
-
-    /* Garis x = h dan y = k (titik (h, k) menggantikan titik asal) */
-    const guideAttrs = {
-      strokeColor: colors.guide,
-      strokeWidth: 1.5,
-      strokeOpacity: 0.7,
-      dash: 3,
+    const axis = {
+      strokeColor: "#94a3b8",
+      strokeWidth: 1.25,
       highlight: false,
-      fixed: true,
+      ticks,
     };
-    const guideX = () =>
-      paramsRef.current.h === 0 ? 1000 : paramsRef.current.h;
-    const guideY = () =>
-      paramsRef.current.k === 0 ? 1000 : paramsRef.current.k;
-    board.create(
-      "line",
-      [
-        [guideX, 0],
-        [guideX, 1],
-      ],
-      guideAttrs,
-    );
-    board.create(
-      "line",
-      [
-        [0, guideY],
-        [1, guideY],
-      ],
-      guideAttrs,
-    );
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
-    /* Kurva berdasarkan titik-titik; NaN memutus garis */
+    const show = (key: keyof Opts) => oRef.current[key];
+    const unit = () => {
+      const b = board as unknown as { unitX: number; unitY: number };
+      return { ux: b.unitX || 40, uy: b.unitY || 40 };
+    };
+    const view = () => {
+      const [x1, y1, x2, y2] = board.getBoundingBox() as number[];
+      const margin = (x2 - x1) * 0.1;
+      return { xMin: x1 - margin, xMax: x2 + margin, ySpan: Math.abs(y1 - y2) };
+    };
+    const extent = () => {
+      const bb = board.getBoundingBox() as number[];
+      return 4 * Math.max(...bb.map((v) => Math.abs(v))) + 30;
+    };
+
+    /* Kurva berdasarkan deret titik; null menyembunyikannya */
     const makeCurve = (
-      strokeColor: string,
-      strokeWidth: number,
-      build: () => { xs: number[]; ys: number[] },
+      stroke: string,
+      width: number,
+      dash: number,
+      build: () => { xs: number[]; ys: number[] } | null,
     ) => {
       const curve = board.create("curve", [[0], [0]], {
-        strokeColor,
-        strokeWidth,
+        strokeColor: stroke,
+        strokeWidth: width,
+        dash,
         highlight: false,
         fixed: true,
       }) as unknown as DataCurve;
       curve.updateDataArray = () => {
-        const { xs, ys } = build();
-        curve.dataX = xs;
-        curve.dataY = ys;
+        const data = build();
+        if (!data || data.xs.length === 0) {
+          curve.dataX = [Number.NaN];
+          curve.dataY = [Number.NaN];
+          return;
+        }
+        curve.dataX = data.xs;
+        curve.dataY = data.ys;
       };
       return curve;
     };
+    const polyline = (points: Vec[] | null) =>
+      !points ||
+      points.some((q) => !Number.isFinite(q[0]) || !Number.isFinite(q[1]))
+        ? null
+        : { xs: points.map((q) => q[0]), ys: points.map((q) => q[1]) };
 
-    /* Kurva dihitung pada rentang x yang sedang terlihat (+10% margin),
-       sehingga tetap utuh saat grafik digeser atau di-zoom. */
-    const view = () => {
-      const [x1, y1, x2, y2] = board.getBoundingBox();
-      const margin = (x2 - x1) * 0.1;
-      return { xMin: x1 - margin, xMax: x2 + margin, ySpan: Math.abs(y1 - y2) };
-    };
-
-    makeCurve(colors.original, 2.5, () => {
-      if (!showOriginalRef.current)
-        return { xs: [Number.NaN], ys: [Number.NaN] };
-      const { xMin, xMax, ySpan } = view();
-      return sampleCurve(
-        functionRef.current,
-        identityParams,
-        xMin,
-        xMax,
-        ySpan,
-      );
+    /* Garis bantu x = h dan y = k (tidak digambar bila berimpit dengan sumbu) */
+    makeCurve(color.guide, 1.5, 2, () => {
+      const { h } = pRef.current;
+      if (!show("guide") || h === 0) return null;
+      const s = extent();
+      return polyline([
+        [h, -s],
+        [h, s],
+      ]);
     });
-    makeCurve(colors.image, 3, () => {
-      const { xMin, xMax, ySpan } = view();
-      return sampleCurve(
-        functionRef.current,
-        paramsRef.current,
-        xMin,
-        xMax,
-        ySpan,
-      );
+    makeCurve(color.guide, 1.5, 2, () => {
+      const { k } = pRef.current;
+      if (!show("guide") || k === 0) return null;
+      const s = extent();
+      return polyline([
+        [-s, k],
+        [s, k],
+      ]);
     });
 
-    /* Titik kunci: asal dan bayangannya */
+    /* f(x) dan g(x) */
+    makeCurve(color.f, 2.5, 0, () => {
+      if (!show("original")) return null;
+      const { xMin, xMax, ySpan } = view();
+      return sampleCurve(fnRef.current, IDENTITY, xMin, xMax, ySpan);
+    });
+    makeCurve(color.g, 3.5, 0, () => {
+      const { xMin, xMax, ySpan } = view();
+      return sampleCurve(fnRef.current, pRef.current, xMin, xMax, ySpan);
+    });
+
+    /* Titik dan label */
+    const dot = (
+      x: () => number,
+      y: () => number,
+      fill: string,
+      size: number,
+    ) =>
+      board.create("point", [x, y], {
+        name: "",
+        withLabel: false,
+        size,
+        fillColor: fill,
+        strokeColor: "#ffffff",
+        strokeWidth: 1.5,
+        fixed: true,
+        highlight: false,
+      });
+    const label = (
+      x: () => number,
+      y: () => number,
+      text: string | (() => string),
+      tone: string,
+      offset: [number, number] = [8, 8],
+    ) =>
+      board.create(
+        "text",
+        [
+          () => (Number.isFinite(x()) ? x() : 1e6),
+          () => (Number.isFinite(y()) ? y() : 1e6),
+          text,
+        ],
+        {
+          fontSize: 12,
+          strokeColor: tone,
+          offset,
+          highlight: false,
+          fixed: true,
+        },
+      );
+
+    // titik kunci: asal (A, B, ...) pada f dan bayangannya (A′, B′, ...) pada g
     const keyBase = (i: number): Vec => {
       const u = keysRef.current[i];
-      if (!showKeyRef.current || u === undefined) {
-        return [Number.NaN, Number.NaN];
-      }
-      return [u, functionRef.current(u)];
+      if (!show("key") || u === undefined) return [Number.NaN, Number.NaN];
+      return [u, fnRef.current(u)];
     };
     const keyImage = (i: number): Vec => {
       const base = keyBase(i);
-      return Number.isNaN(base[0]) ? base : mapPoint(paramsRef.current, base);
+      return Number.isNaN(base[0]) ? base : mapPoint(pRef.current, base);
     };
-
-    keyLetters.forEach((name, i) => {
-      board.create("point", [() => keyBase(i)[0], () => keyBase(i)[1]], {
-        name,
-        withLabel: true,
-        size: 4,
-        fillColor: colors.original,
-        strokeColor: "#ffffff",
-        strokeWidth: 1.5,
-        fixed: true,
-        highlight: false,
-        label: { offset: [8, 8], fontSize: 11, strokeColor: colors.original },
-      });
-      board.create("point", [() => keyImage(i)[0], () => keyImage(i)[1]], {
-        name: `${name}′`,
-        withLabel: true,
-        size: 4,
-        fillColor: colors.image,
-        strokeColor: "#ffffff",
-        strokeWidth: 1.5,
-        fixed: true,
-        highlight: false,
-        label: { offset: [8, -14], fontSize: 11, strokeColor: colors.image },
-      });
+    KEY_LETTERS.forEach((name, i) => {
+      dot(() => keyBase(i)[0], () => keyBase(i)[1], color.f, 4);
+      dot(() => keyImage(i)[0], () => keyImage(i)[1], color.g, 4);
+      label(() => keyBase(i)[0], () => keyBase(i)[1], name, color.f, [6, 6]);
+      label(
+        () => keyImage(i)[0],
+        () => keyImage(i)[1],
+        `${name}′`,
+        color.g,
+        [6, -16],
+      );
     });
 
-    /* Titik uji P pada f dan bayangannya P′ pada g */
-    const probe = () => probeOf(functionRef.current, paramsRef.current);
-    board.create(
-      "point",
-      [
-        () => probe()?.base[0] ?? Number.NaN,
-        () => probe()?.base[1] ?? Number.NaN,
-      ],
-      {
-        name: "P",
-        withLabel: true,
-        size: 5,
-        fillColor: colors.original,
-        strokeColor: "#ffffff",
-        strokeWidth: 2,
-        fixed: true,
-        highlight: false,
-        label: { offset: [8, 8], fontSize: 12, strokeColor: colors.original },
-      },
+    /* Titik uji: P pada f (bisa diseret), P′ pada g, dan panahnya */
+    const probe = () =>
+      show("probe") ? probeOf(fnRef.current, pRef.current) : null;
+
+    makeCurve(color.probe, 1.75, 0, () => {
+      const pr = probe();
+      if (!pr) return null;
+      const [from, to] = [pr.base, pr.image];
+      const { ux, uy } = unit();
+      const dx = (to[0] - from[0]) * ux;
+      const dy = (to[1] - from[1]) * uy;
+      // terlalu pendek (dalam piksel): tanpa panah
+      if (Math.hypot(dx, dy) < 14) return null;
+      const phi = Math.atan2(dy, dx);
+      const barb = (sign: 1 | -1): Vec => {
+        const angle = phi + Math.PI + sign * 0.45;
+        return [
+          to[0] + (9 * Math.cos(angle)) / ux,
+          to[1] + (9 * Math.sin(angle)) / uy,
+        ];
+      };
+      return polyline([from, to, barb(1), to, barb(-1)]);
+    });
+
+    dot(
+      () => probe()?.image[0] ?? Number.NaN,
+      () => probe()?.image[1] ?? Number.NaN,
+      color.g,
+      5,
     );
-    board.create(
-      "point",
-      [
-        () => probe()?.image[0] ?? Number.NaN,
-        () => probe()?.image[1] ?? Number.NaN,
-      ],
-      {
-        name: "P′",
-        withLabel: true,
-        size: 5,
-        fillColor: colors.image,
-        strokeColor: "#ffffff",
-        strokeWidth: 2,
-        fixed: true,
-        highlight: false,
-        label: { offset: [8, -14], fontSize: 12, strokeColor: colors.image },
-      },
+    label(
+      () => probe()?.image[0] ?? Number.NaN,
+      () => probe()?.image[1] ?? Number.NaN,
+      "P′",
+      color.g,
+      [8, -18],
+    );
+    label(
+      () => probe()?.base[0] ?? Number.NaN,
+      () => probe()?.base[1] ?? Number.NaN,
+      "P",
+      color.f,
+      [8, 8],
     );
 
-    const arrowEnd = (which: "from" | "to", coord: 0 | 1) => () => {
-      const hidden = 1000 + (which === "to" ? 1 : 0);
-      const current = probe();
-      if (!current) return hidden;
-      const [from, to] = [current.base, current.image];
-      if (
-        !Number.isFinite(to[0]) ||
-        !Number.isFinite(to[1]) ||
-        Math.hypot(to[0] - from[0], to[1] - from[1]) < 1e-6
-      ) {
-        return hidden;
-      }
-      return (which === "from" ? from : to)[coord];
-    };
-    board.create(
-      "segment",
-      [
-        [arrowEnd("from", 0), arrowEnd("from", 1)],
-        [arrowEnd("to", 0), arrowEnd("to", 1)],
-      ],
+    // titik uji P: bisa diseret (dibuat paling akhir agar berada di atas)
+    const start = pRef.current;
+    const y0 = fnRef.current(start.x0);
+    const handle = board.create(
+      "point",
+      [start.x0, Number.isFinite(y0) ? y0 : 0],
       {
-        strokeColor: colors.guide,
-        strokeWidth: 1.5,
-        dash: 2,
-        lastArrow: { type: 2, size: 5 },
+        name: "",
+        withLabel: false,
+        size: 7,
+        face: "o",
+        fillColor: color.f,
+        strokeColor: "#ffffff",
+        strokeWidth: 2,
+        fixed: false,
         highlight: false,
-        fixed: true,
+        snapToGrid: false,
+        showInfobox: false,
       },
-    );
+    ) as unknown as DragPoint;
+    handle.on("drag", () => moveRef.current(handle.X(), handle));
+    probeRef.current = handle;
 
     board.update();
 
-    // Saat ukuran kontainer berubah (putar layar, layar penuh, ganti mode),
-    // pertahankan skala dan titik tengah tampilan agar grafik tidak melompat.
-    let last = {
-      w: containerRef.current?.clientWidth ?? 0,
-      h: containerRef.current?.clientHeight ?? 0,
-    };
+    // Saat ukuran berubah (layar penuh / putar layar): pertahankan skala
+    // dan titik tengah agar grafik tidak melompat.
+    let last = { w: el.clientWidth, h: el.clientHeight };
     const sync = (force = false) => {
-      const el = containerRef.current;
-      if (!el || el.clientWidth <= 0 || el.clientHeight <= 0) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
+      if (w <= 0 || h <= 0) return;
       if (!force && w === last.w && h === last.h) return;
 
       const bb = board.getBoundingBox();
@@ -1197,23 +1313,44 @@ export function FunctionTransformationSimulation() {
       last = { w, h };
       board.update();
     };
-    syncSizeRef.current = sync;
+    syncRef.current = sync;
     const observer = new ResizeObserver(() => sync());
-    if (containerRef.current) observer.observe(containerRef.current);
+    observer.observe(el);
 
     return () => {
-      syncSizeRef.current = null;
+      syncRef.current = null;
       observer.disconnect();
+      probeRef.current = null;
       JXG.JSXGraph.freeBoard(board);
       boardRef.current = null;
     };
   }, [boardId]);
 
-  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
-  // CSS lalu layar penuh asli). Sinkronkan ulang ukuran papan setelah
-  // transisi selesai agar grafik langsung terisi penuh.
+  // Perbarui papan setiap parameter, fungsi, atau pilihan berubah; titik uji
+  // yang bisa diseret disamakan dengan nilai penggeser dan tetap di grafik f.
   useEffect(() => {
-    const run = () => syncSizeRef.current?.(true);
+    const pt = probeRef.current;
+    if (pt) {
+      const y = fn(params.x0);
+      if (opts.probe && Number.isFinite(y)) {
+        if (
+          Math.abs(pt.X() - params.x0) > 1e-9 ||
+          Math.abs(pt.Y() - y) > 1e-9
+        ) {
+          pt.setPosition(COORDS_BY_USER, [params.x0, y]);
+        }
+        pt.showElement();
+      } else {
+        pt.hideElement();
+      }
+    }
+    boardRef.current?.update();
+  }, [params, opts, fn, keys]);
+
+  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi.
+  useEffect(() => {
+    const run = () => syncRef.current?.(true);
     const raf = requestAnimationFrame(() => requestAnimationFrame(run));
     const t1 = window.setTimeout(run, 150);
     const t2 = window.setTimeout(run, 450);
@@ -1226,148 +1363,214 @@ export function FunctionTransformationSimulation() {
       document.removeEventListener("fullscreenchange", run);
       window.removeEventListener("resize", run);
     };
-  }, [isFullscreen, tabbed]);
+  }, [isFs]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Nilai turunan ───────── */
 
-  const { h, k, a, b } = params;
-  const formula = formulaText(expression, params);
-  const baseFormula = `f(x) = ${displayExpression(expression)}`;
-  const effects = describeEffects(params);
-  const probe = probeOf(compiled, params);
-
-  const keyRows = computeKeys(compiled).map((u, i) => {
-    const base: Vec = [u, compiled(u)];
-    return { name: keyLetters[i], base, image: mapPoint(params, base) };
-  });
-  const rows = probe
-    ? [...keyRows, { name: "P", base: probe.base, image: probe.image }]
-    : keyRows;
-
-  const bText = b < 0 ? `(${formatValue(b)})` : formatValue(b);
-  const mappingX = `x′ = ${formatValue(h)} + x/${bText}`;
-  const mappingY = `y′ = ${formatValue(a)} · y ${signed(k)}`;
-  const caption = formula;
+  const fText = originalText(node);
+  const gText = transformedText(node, params);
+  const probeNow = probeOf(fn, params);
+  const guideOn = opts.guide && (params.h !== 0 || params.k !== 0);
+  const compact = (text: string) => text.replace(/\s+/g, "");
 
   return (
-    <div
-      ref={rootRef}
-      className={`function-transformation-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFullscreen ? " is-fullscreen" : ""}`}
-    >
-      <p className="ft-orientation-hint">
+    <div ref={rootRef} className={`ft${isFs ? " is-fs" : ""}`}>
+      <p className="ft-hint">
         <Smartphone size={14} aria-hidden="true" />
         <span>
-          Miringkan ponsel ke mode lanskap agar bidang koordinat dan panel isian
-          tampil berdampingan.
+          Miringkan ponsel ke mode lanskap agar grafik dan pengatur nyaman
+          dipakai.
         </span>
       </p>
 
-      <div className="ft-main">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="ft-board-panel" aria-label="Bidang koordinat">
+      <div className="ft-layout">
+        {/* ───── Grafik ───── */}
+        <section className="ft-graph" aria-label="Grafik transformasi fungsi">
           <div className="ft-stage">
             <div
-              className="ft-board"
               id={boardId}
-              ref={containerRef}
-              aria-label="Bidang koordinat interaktif. Grafik awal f(x) berwarna biru kehijauan dan grafik hasil transformasi g(x) berwarna oranye. Seret area kosong untuk menggeser bidang, gulir atau cubit untuk memperbesar atau memperkecil."
+              ref={hostRef}
+              className="ft-board"
+              aria-label="Grafik fungsi awal f(x) berwarna biru dan hasil transformasi g(x) berwarna merah muda. Seret latar untuk menggeser, gulir atau cubit untuk memperbesar, seret titik P untuk memindahkan titik uji sepanjang grafik f."
             />
-            <p className="ft-caption" aria-live="polite">
-              {caption}
-            </p>
-            <div className="ft-view-tools" role="group" aria-label="Tampilan">
+
+            <div className="ft-hud">
+              <p className="ft-chip" aria-live="polite">
+                <b>g(x)</b>
+                <span>= {gText}</span>
+              </p>
+              <p className="ft-pinfo">
+                <span>
+                  <b style={{ color: color.f }}>f(x)</b> = {fText}
+                </span>
+                {opts.probe && probeNow && (
+                  <span>
+                    <b style={{ color: color.f }}>P</b> {fmtPt(probeNow.base)} →{" "}
+                    <b style={{ color: color.g }}>P′</b>{" "}
+                    {fmtPt(probeNow.image)}
+                  </span>
+                )}
+              </p>
+            </div>
+
+            <div className="ft-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFullscreen}
-                aria-label={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFullscreen ? (
-                  <Minimize2 size={15} aria-hidden="true" />
+                {isFs ? (
+                  <Minimize2 size={16} aria-hidden="true" />
                 ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
+                  <Maximize2 size={16} aria-hidden="true" />
                 )}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={resetView}
+                onClick={center}
                 aria-label="Pusatkan tampilan"
                 title="Pusatkan tampilan"
               >
-                <Crosshair size={15} aria-hidden="true" />
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFullscreen && (
+              {isFs && (
                 <button
                   type="button"
-                  className="ft-toolbar-toggle"
-                  onClick={() => setPanelOpen((open) => !open)}
+                  className="ft-toggle"
+                  onClick={() => setPanelOpen((o) => !o)}
                   aria-pressed={panelOpen}
-                  aria-controls={`ft-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`ft-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
-          <div className="ft-legend" aria-label="Legenda grafik">
-            <span>
-              <i className="legend-original" /> grafik awal f(x)
-            </span>
-            <span>
-              <i className="legend-image" /> hasil g(x)
-            </span>
-            <span>
-              <i className="legend-guide" /> garis x = h dan y = k
-            </span>
-          </div>
+
+          <ul className="ft-legend" aria-label="Legenda grafik">
+            {opts.original && (
+              <li>
+                <i style={{ borderColor: color.f }} /> f(x) asli
+              </li>
+            )}
+            <li>
+              <i style={{ borderColor: color.g }} /> g(x) hasil
+            </li>
+            {guideOn && (
+              <li>
+                <i className="dash" style={{ borderColor: color.guide }} /> x = h, y = k
+              </li>
+            )}
+            {opts.key && (
+              <li>
+                <b style={{ background: color.f }} />
+                <b style={{ background: color.g }} /> titik kunci
+              </li>
+            )}
+            {opts.probe && probeNow && (
+              <li>
+                <i style={{ borderColor: color.probe }} /> P → P′
+              </li>
+            )}
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`ft-column-${baseId}`}
-          className={`ft-column${isFullscreen ? " is-floating" : ""}${
-            isFullscreen && panelOpen ? " is-open" : ""
-          }`}
-          data-tab={tab}
+        {/* ───── Pengatur ───── */}
+        <section
+          id={`ft-panel-${baseId}`}
+          className={`ft-panel${isFs ? " is-floating" : ""}${isFs && panelOpen ? " is-open" : ""}`}
+          aria-label="Pengatur transformasi fungsi"
         >
           <div className="ft-tabs" role="group" aria-label="Bagian panel">
-            {panelTabs.map((item) => (
+            {TABS.map((item) => (
               <button
-                key={item.tab}
+                key={item.key}
                 type="button"
-                aria-pressed={tab === item.tab}
-                onClick={() => setTab(item.tab)}
+                aria-pressed={tab === item.key}
+                onClick={() => setTab(item.key)}
               >
                 {item.label}
               </button>
             ))}
           </div>
 
-          <section className="ft-side" aria-label="Pengaturan transformasi">
-            <div className="ft-panel" data-pane="function">
-              <h3>Fungsi awal f(x)</h3>
-              <div className="ft-expr-row">
-                <label htmlFor={`${baseId}-expr`} className="ft-expr-label">
-                  f(x) =
-                </label>
+          {tab === "set" && (
+            <>
+              <div className="ft-sliders">
+                <p className="ft-cap">Geser · h ke kanan, k ke atas</p>
+                {SHIFT_ROWS.map((row) => (
+                  <ParamRow
+                    key={row.key}
+                    id={`ft-${baseId}-${row.key}`}
+                    def={row}
+                    value={params[row.key]}
+                    onChange={(v) => patchParams({ [row.key]: v } as Partial<Params>)}
+                  />
+                ))}
+                <p className="ft-cap">Regang · a tegak, b mendatar (± = cermin)</p>
+                {STRETCH_ROWS.map((row) => (
+                  <ParamRow
+                    key={row.key}
+                    id={`ft-${baseId}-${row.key}`}
+                    def={row}
+                    value={params[row.key]}
+                    onChange={(v) => patchParams({ [row.key]: v } as Partial<Params>)}
+                    onFlip={() =>
+                      patchParams({ [row.key]: -params[row.key] } as Partial<Params>)
+                    }
+                  />
+                ))}
+                <p className="ft-cap">Titik uji · seret P di grafik</p>
+                <ParamRow
+                  id={`ft-${baseId}-x0`}
+                  def={PROBE_ROW}
+                  value={params.x0}
+                  onChange={(v) => patchParams({ x0: v })}
+                />
+              </div>
+
+              <div className="ft-chips" role="group" aria-label="Tampilkan di grafik">
+                {OPTION_ROWS.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    aria-pressed={opts[row.key]}
+                    onClick={() => setOpt(row.key)}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="ft-actions">
+                <button type="button" className="ft-btn" onClick={reset}>
+                  <RotateCcw size={13} aria-hidden="true" />
+                  <span>Atur ulang</span>
+                </button>
+                <button type="button" className="ft-btn" onClick={clearTransform}>
+                  <X size={13} aria-hidden="true" />
+                  <span>Tanpa ubahan</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {tab === "fn" && (
+            <>
+              <div className="ft-field" data-bad={exprError ? "true" : undefined}>
+                <label htmlFor={`ft-${baseId}-expr`}>f(x) =</label>
                 <input
-                  id={`${baseId}-expr`}
-                  className="ft-expr"
+                  id={`ft-${baseId}-expr`}
                   type="text"
                   inputMode="text"
                   autoComplete="off"
@@ -1375,246 +1578,80 @@ export function FunctionTransformationSimulation() {
                   autoCorrect="off"
                   spellCheck={false}
                   enterKeyHint="done"
-                  placeholder="mis. x^2 − 3"
                   value={exprText}
-                  aria-invalid={exprError !== null}
-                  aria-describedby={`${baseId}-expr-note`}
-                  onChange={(event) =>
-                    changeExpression(event.currentTarget.value)
-                  }
-                  onFocus={(event) => event.currentTarget.select()}
+                  aria-invalid={!!exprError}
+                  onChange={(event) => changeExpression(event.currentTarget.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") event.currentTarget.blur();
+                  }}
                 />
               </div>
-              <p
-                id={`${baseId}-expr-note`}
-                className={`ft-expr-note${exprError ? " is-error" : ""}`}
-                role={exprError ? "alert" : undefined}
-              >
-                {exprError ??
-                  "Pangkat: ^ · akar: sqrt(x) · nilai mutlak: abs(x) · juga sin, cos, tan, ln, log, e^x, pi."}
-              </p>
-              <div
-                className="ft-segmented"
-                role="group"
-                aria-label="Contoh fungsi awal"
-              >
-                {presets.map((preset) => (
+              {exprError ? (
+                <p className="ft-note" role="status">
+                  {exprError}
+                </p>
+              ) : (
+                <p className="ft-help">
+                  Ketik fungsi dalam <code>x</code>, atau pilih contoh di bawah.
+                  Bisa memakai <code>+ − * / ^</code>, <code>sin cos tan</code>,{" "}
+                  <code>sqrt abs ln log exp</code>, <code>e</code>, dan{" "}
+                  <code>pi</code>.
+                </p>
+              )}
+              <div className="ft-presets" role="group" aria-label="Contoh fungsi awal">
+                {PRESETS.map((item) => (
                   <button
-                    key={preset.expr}
+                    key={item.expr}
                     type="button"
-                    aria-pressed={expression === preset.expr}
-                    onClick={() => choosePreset(preset.expr)}
+                    aria-pressed={compact(expression) === item.expr}
+                    onClick={() => changeExpression(item.expr)}
                   >
-                    {preset.label}
+                    {item.label}
                   </button>
                 ))}
               </div>
-              <label className="ft-check">
-                <input
-                  type="checkbox"
-                  checked={showOriginal}
-                  onChange={(event) =>
-                    toggleOriginal(event.currentTarget.checked)
-                  }
-                />
-                Tampilkan grafik awal f(x)
-              </label>
-              <label className="ft-check">
-                <input
-                  type="checkbox"
-                  checked={showKey}
-                  onChange={(event) => toggleKey(event.currentTarget.checked)}
-                />
-                Tampilkan titik kunci
-              </label>
-            </div>
+            </>
+          )}
 
-            <div className="ft-panel" data-pane="transform">
-              <h3>Translasi, peregangan, dan refleksi</h3>
-              <div className="ft-rows">
-                {paramRows.map((row) => (
-                  <SliderField
-                    key={row.key}
-                    label={row.label}
-                    sub={row.sub}
-                    tone={row.tone}
-                    value={params[row.key]}
-                    min={row.min}
-                    max={row.max}
-                    step={row.step}
-                    nonZero={row.nonZero}
-                    onChange={(v) => changeParam(row.key, v)}
-                    onNudge={(d) => nudgeParam(row.key, d)}
-                  />
-                ))}
-              </div>
-              <div className="ft-segmented ft-mirror">
-                <button
-                  type="button"
-                  aria-pressed={a < 0}
-                  onClick={() => mirror("a")}
-                >
-                  Cerminkan a → −a
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={b < 0}
-                  onClick={() => mirror("b")}
-                >
-                  Cerminkan b → −b
-                </button>
-              </div>
-              <p className="ft-hint">
-                g(x) = a · f(b(x − h)) + k. Nilai negatif menghasilkan refleksi:
-                a &lt; 0 terhadap garis y = k, b &lt; 0 terhadap garis x = h.
-              </p>
-              <div className="ft-reset-row">
-                <button
-                  type="button"
-                  className="ft-reset-button"
-                  onClick={clearTransformation}
-                >
-                  Tanpa transformasi
-                </button>
-              </div>
-            </div>
+          {tab === "res" && (
+            <>
+              <dl className="ft-readouts" aria-live="polite">
+                {cell("Fungsi awal", `f(x) = ${fText}`, color.f, true)}
+                {cell("Hasil transformasi", `g(x) = ${gText}`, color.g, true)}
+                {cell("Aturan titik", pointRule(params), undefined, true)}
+              </dl>
 
-            <div className="ft-panel" data-pane="more">
-              <h3>Titik uji</h3>
-              <div className="ft-rows">
-                <SliderField
-                  label={probeRow.label}
-                  sub={probeRow.sub}
-                  tone={probeRow.tone}
-                  value={params.x0}
-                  min={probeRow.min}
-                  max={probeRow.max}
-                  step={probeRow.step}
-                  nonZero={false}
-                  onChange={(v) => changeParam("x0", v)}
-                  onNudge={(d) => nudgeParam("x0", d)}
-                />
-              </div>
-              <p className="ft-probe-note">
-                {probe
-                  ? `P${formatCoord(probe.base)} → P′${formatCoord(probe.image)}`
-                  : `x = ${formatValue(params.x0)} berada di luar daerah asal f(x).`}
-              </p>
-            </div>
+              <dl className="ft-readouts" aria-live="polite">
+                {describeEffects(params).map((item) =>
+                  cell(item.title, item.text, item.tone, true),
+                )}
+              </dl>
 
-            <div className="ft-reset-row" data-pane="more">
-              <button
-                type="button"
-                className="ft-reset-button"
-                onClick={resetAll}
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                <span>Atur ulang semua</span>
-              </button>
-              <GraphAppearanceControls
-                appearance={appearance}
-                onStep={onStep}
-              />
-            </div>
-          </section>
-
-          <div className="ft-results" data-pane="result">
-            <section className="ft-panel ft-wide" aria-labelledby={ruleTitleId}>
-              <h3 id={ruleTitleId}>Persamaan grafik</h3>
-              <div className="ft-card-grid">
-                <article className="ft-card">
-                  <h4>Bentuk umum</h4>
-                  <p className="ft-formula">g(x) = a · f(b(x − h)) + k</p>
-                  <p>
-                    h dan k menggeser grafik, a meregangkan vertikal, b
-                    meregangkan horizontal.
-                  </p>
-                </article>
-                <article className="ft-card">
-                  <h4>Grafik awal</h4>
-                  <p className="ft-formula ft-formula-original">
-                    {baseFormula}
-                  </p>
-                  <p>Titik (x, y) pada f menjadi titik (x′, y′) pada g.</p>
-                </article>
-                <article className="ft-card ft-card-result">
-                  <h4>Hasil transformasi</h4>
-                  <p className="ft-formula ft-formula-image">{formula}</p>
-                  <p>
-                    {mappingX}; {mappingY}
-                  </p>
-                </article>
-              </div>
-              <ul className="ft-effects">
-                {effects.map((effect) => (
-                  <li key={effect.title}>
-                    <strong>{effect.title}:</strong> {effect.text}
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section
-              className="ft-panel ft-wide"
-              aria-labelledby={tableTitleId}
-            >
-              <h3 id={tableTitleId}>Titik kunci dan titik uji</h3>
-              <div className="ft-table-wrap">
-                <table className="ft-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Titik</th>
-                      <th scope="col">Pada f(x)</th>
-                      <th scope="col">Pada g(x)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.name}>
-                        <th scope="row">
-                          {row.name} → {row.name}′
-                        </th>
-                        <td className="ft-cell-original">
-                          {formatCoord(row.base)}
-                        </td>
-                        <td className="ft-cell-image">
-                          {formatCoord(row.image)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
-        </div>
+              <dl className="ft-readouts" aria-live="polite">
+                {probeNow
+                  ? cell(
+                      "P → P′",
+                      `${fmtPt(probeNow.base)} → ${fmtPt(probeNow.image)}`,
+                      color.probe,
+                      true,
+                    )
+                  : cell("P → P′", "f belum terdefinisi di x₀", undefined, true)}
+                {keys.map((u, i) => {
+                  const base: Vec = [u, fn(u)];
+                  return cell(
+                    `${KEY_LETTERS[i]} → ${KEY_LETTERS[i]}′`,
+                    `${fmtPt(base)} → ${fmtPt(mapPoint(params, base))}`,
+                    undefined,
+                    true,
+                  );
+                })}
+              </dl>
+            </>
+          )}
+        </section>
       </div>
-
-      <ul className="ft-insights">
-        <li>
-          <strong>Translasi</strong>: g(x) = f(x − h) + k menggeser grafik h
-          satuan ke kanan dan k satuan ke atas. Perubahan di dalam f memengaruhi
-          x dan arahnya tampak berlawanan.
-        </li>
-        <li>
-          <strong>Refleksi</strong>: −f(x) mencerminkan grafik terhadap sumbu x,
-          sedangkan f(−x) mencerminkannya terhadap sumbu y.
-        </li>
-        <li>
-          <strong>Peregangan vertikal</strong>: a · f(x) mengalikan setiap
-          ordinat dengan a. Jika |a| &gt; 1 grafik meregang, jika |a| &lt; 1
-          grafik memampat.
-        </li>
-        <li>
-          <strong>Peregangan horizontal</strong>: f(bx) mengalikan setiap absis
-          dengan 1/b. Jika |b| &gt; 1 grafik memampat, jika |b| &lt; 1 grafik
-          meregang.
-        </li>
-        <li>
-          <strong>Titik (h, k)</strong> berperan sebagai titik asal baru:
-          peregangan dan refleksi terjadi terhadap garis x = h dan y = k.
-        </li>
-      </ul>
     </div>
   );
 }
+
+export default FunctionTransformationSimulation;

@@ -7,33 +7,37 @@ import {
   Play,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { flushSync } from "react-dom";
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./ConicSectionsSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi irisan kerucut.
-   Satu keluarga kurva dengan fokus di titik asal (0, 0) dan persamaan kutub
+/* Simulasi irisan kerucut — tema slate seperti landing page 1729.
+   Urutan desain: ponsel lanskap → desktop → ponsel potret.
+   Layar penuh: grafik 100% layar, toolbar dan panel pengatur mengambang.
+
+   Satu keluarga kurva dengan fokus di titik asal (0, 0):
 
        r = ℓ / (1 − e cos θ)
 
-   e = eksentrisitas, ℓ = parameter (setengah lebar fokal / semi latus rectum).
+   e = eksentrisitas, ℓ = setengah lebar fokal (semi latus rectum).
    e = 0 lingkaran, 0 < e < 1 elips, e = 1 parabola, e > 1 hiperbola.
    Setiap titik P memenuhi  PF = e · (jarak P ke direktriks).
-   Persamaan umum: (1 − e²)x² − 2eℓx + y² = ℓ².
+   Persamaan umum: (1 − e²)x² − 2eℓx + y² = ℓ². */
 
-   Tata letak: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1. */
-
-/* ---------- Tipe ---------- */
+/* ───────── Tipe ───────── */
 
 type Vec = [number, number];
 type Sample = [number, number, number]; // x, y, θ (derajat)
@@ -42,12 +46,11 @@ type Opts = {
   focus: boolean;
   dir: boolean;
   tangent: boolean;
-  dist: boolean;
   guide: boolean;
   ghost: boolean;
 };
 type Kind = "circle" | "ellipse" | "parabola" | "hyperbola";
-type PanelTab = "par" | "opt" | "res" | "info";
+type Tab = "set" | "res";
 type Anim = "e" | "t" | null;
 type Board = ReturnType<typeof JXG.JSXGraph.initBoard>;
 type DataCurve = {
@@ -57,7 +60,7 @@ type DataCurve = {
   setAttribute: (attributes: Record<string, unknown>) => void;
 };
 
-/* ---------- Konstanta ---------- */
+/* ───────── Konstanta ───────── */
 
 const EPS = 1e-9;
 const E_MIN = 0;
@@ -65,48 +68,42 @@ const E_MAX = 3;
 const L_MIN = 0.5;
 const L_MAX = 10;
 const HOME_BOX: [number, number, number, number] = [-10, 10, 16, -10];
-/** Layar kecil atau pendek memakai panel kanan bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
 
 const DEFAULT_PARAMS: Params = { e: 0.6, l: 4, t: 60 };
 const DEFAULT_OPTS: Opts = {
   focus: true,
   dir: true,
   tangent: true,
-  dist: true,
   guide: false,
   ghost: true,
 };
 
+/* Warna grafik: dipakai juga oleh legenda, slider, dan hasil di panel. */
 const KINDS: Record<Kind, { label: string; color: string; e: number }> = {
-  circle: { label: "Lingkaran", color: "#087f8c", e: 0 },
-  ellipse: { label: "Elips", color: "#6b4e9b", e: 0.6 },
-  parabola: { label: "Parabola", color: "#d16b36", e: 1 },
-  hyperbola: { label: "Hiperbola", color: "#b23a48", e: 2 },
+  circle: { label: "Lingkaran", color: "#0d9488", e: 0 },
+  ellipse: { label: "Elips", color: "#7c3aed", e: 0.6 },
+  parabola: { label: "Parabola", color: "#ea580c", e: 1 },
+  hyperbola: { label: "Hiperbola", color: "#e11d48", e: 2 },
 };
 const KIND_ORDER: Kind[] = ["circle", "ellipse", "parabola", "hyperbola"];
 
-const COLOR_FOCUS = "#183e54";
-const COLOR_DIR = "#8a6d00";
-const COLOR_TAN = "#2f6bd0";
-const COLOR_GUIDE = "#63727d";
-
-const panelTabs: { tab: PanelTab; label: string }[] = [
-  { tab: "par", label: "Parameter" },
-  { tab: "opt", label: "Tampilan" },
-  { tab: "res", label: "Hasil" },
-  { tab: "info", label: "Info" },
-];
+const color = {
+  focus: "#0f172a",
+  dir: "#ca8a04",
+  tan: "#2563eb",
+  guide: "#94a3b8",
+  l: "#059669",
+};
 
 const optionRows: { key: keyof Opts; label: string }[] = [
   { key: "focus", label: "Fokus" },
   { key: "dir", label: "Direktriks" },
-  { key: "tangent", label: "Titik P dan garis singgung" },
-  { key: "dist", label: "Jarak P ke fokus dan ke direktriks" },
-  { key: "guide", label: "Pusat, puncak, dan asimtot" },
+  { key: "tangent", label: "Titik P" },
+  { key: "guide", label: "Pusat & asimtot" },
+  { key: "ghost", label: "Bandingkan" },
 ];
 
-/* ---------- Matematika ---------- */
+/* ───────── Matematika ───────── */
 
 function kindOf(e: number): Kind {
   if (e < EPS) return "circle";
@@ -170,8 +167,6 @@ function analyze(e: number, l: number, tDeg: number) {
 
   return {
     kind,
-    e,
-    l,
     a,
     b,
     c,
@@ -194,7 +189,6 @@ function analyze(e: number, l: number, tDeg: number) {
     pf2,
     pd,
     ratio: pd > EPS ? pf1 / pd : Number.NaN,
-    rightBranch: u > 0,
   };
 }
 
@@ -235,9 +229,9 @@ function conicBranch(
   return [];
 }
 
-/* ---------- Format ---------- */
+/* ───────── Format ───────── */
 
-function fmt(value: number, digits = 3) {
+function fmt(value: number, digits = 2) {
   if (!Number.isFinite(value)) return "—";
   if (Math.abs(value) < Math.pow(10, -digits) / 2) return "0";
   return new Intl.NumberFormat("id-ID", {
@@ -250,14 +244,14 @@ function fmt(value: number, digits = 3) {
 
 const fmtPt = (x: number, y: number) => `(${fmt(x)}; ${fmt(y)})`;
 
-/** Menyusun suku-suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
+/** Menyusun suku "koef·simbol" menjadi teks dengan tanda yang rapi. */
 function poly(terms: [number, string][]) {
   let out = "";
   terms.forEach(([coef, symbol]) => {
-    if (Math.abs(coef) < 5e-4) return;
+    if (Math.abs(coef) < 5e-3) return;
     const abs = Math.abs(coef);
     const body =
-      symbol !== "" && Math.abs(abs - 1) < 5e-4
+      symbol !== "" && Math.abs(abs - 1) < 5e-3
         ? symbol
         : `${fmt(abs)}${symbol}`;
     if (out === "") out = coef < 0 ? `−${body}` : body;
@@ -267,12 +261,12 @@ function poly(terms: [number, string][]) {
 }
 
 function shifted(h: number) {
-  if (Math.abs(h) < 5e-4) return "x";
+  if (Math.abs(h) < 5e-3) return "x";
   return h > 0 ? `(x − ${fmt(h)})` : `(x + ${fmt(-h)})`;
 }
 
-function standardForm(an: Analysis) {
-  const { kind, l } = an;
+function standardForm(an: Analysis, l: number) {
+  const { kind } = an;
   if (kind === "circle") return `x² + y² = ${fmt(l * l)}`;
   if (kind === "ellipse")
     return `${shifted(an.x0)}² / ${fmt(an.a * an.a)} + y² / ${fmt(an.b * an.b)} = 1`;
@@ -282,23 +276,9 @@ function standardForm(an: Analysis) {
   return `y² = ${fmt(4 * p)}(x + ${fmt(p)})`;
 }
 
-/* ---------- Hook & komponen kecil ---------- */
+/* ───────── Baris pengatur ───────── */
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
+/** Tombol − / + yang bisa ditahan untuk mengubah nilai terus-menerus. */
 function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
   const stepRef = useRef(onStep);
   stepRef.current = onStep;
@@ -310,17 +290,11 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     timers.current = {};
   };
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timers.current.delay);
-      window.clearInterval(timers.current.repeat);
-    },
-    [],
-  );
+  useEffect(() => stop, []);
 
   return (direction: 1 | -1) => ({
     type: "button" as const,
-    className: "cs-nudge",
+    className: "cs-step",
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       stop();
@@ -328,7 +302,7 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
       timers.current.delay = window.setTimeout(() => {
         timers.current.repeat = window.setInterval(
           () => stepRef.current(direction),
-          70,
+          60,
         );
       }, 400);
     },
@@ -338,14 +312,14 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     onBlur: stop,
     onContextMenu: (event: { preventDefault: () => void }) =>
       event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
+    // detail === 0 → aktivasi lewat keyboard
     onClick: (event: { detail: number }) => {
       if (event.detail === 0) stepRef.current(direction);
     },
   });
 }
 
-/** Satu baris: e  −  ──●──  +  [0,6]  ▶ */
+/** Satu baris:  e  −  ────●────  +  0,6  ▶ */
 function ParamRow({
   id,
   label,
@@ -354,7 +328,6 @@ function ParamRow({
   min,
   max,
   step,
-  nudge,
   digits,
   bipolar,
   tone,
@@ -369,7 +342,6 @@ function ParamRow({
   min: number;
   max: number;
   step: number;
-  nudge: number;
   digits: number;
   bipolar?: boolean;
   tone: string;
@@ -382,55 +354,54 @@ function ParamRow({
     return Math.round(v * f) / f;
   };
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
-  const bind = useHoldRepeat((d) => onChange(round(clamp(value + d * nudge))));
+  const bind = useHoldRepeat((d) => onChange(round(clamp(value + d * step))));
   const pct = ((clamp(value) - min) / (max - min)) * 100;
-  const rangeStyle = {
+  const style = {
     "--lo": bipolar ? `${Math.min(50, pct)}%` : "0%",
     "--hi": bipolar ? `${Math.max(50, pct)}%` : `${pct}%`,
-    "--tone": tone,
+    "--sc": tone,
   } as CSSProperties;
 
   return (
-    <div className="cs-param" style={{ "--tone": tone } as CSSProperties}>
+    <div className="cs-slider" style={style}>
       <label htmlFor={id} title={title}>
         {label}
       </label>
-      <button {...bind(-1)} aria-label={`Kurangi ${title}`}>
-        <Minus size={12} aria-hidden="true" />
+      <button
+        {...bind(-1)}
+        disabled={value <= min}
+        aria-label={`Kurangi ${title}`}
+      >
+        <Minus size={14} aria-hidden="true" />
       </button>
       <input
+        id={id}
         className="cs-range"
         type="range"
         min={min}
         max={max}
         step={step}
         value={clamp(value)}
-        style={rangeStyle}
-        aria-label={`Penggeser ${title}`}
+        aria-valuetext={`${title} sama dengan ${fmt(value, digits)}`}
         onChange={(event) =>
           onChange(round(clamp(Number(event.currentTarget.value))))
         }
       />
-      <button {...bind(1)} aria-label={`Tambah ${title}`}>
-        <Plus size={12} aria-hidden="true" />
+      <button
+        {...bind(1)}
+        disabled={value >= max}
+        aria-label={`Tambah ${title}`}
+      >
+        <Plus size={14} aria-hidden="true" />
       </button>
-      <input
-        id={id}
-        className="cs-num"
-        type="number"
-        inputMode="decimal"
-        step={step}
-        value={value}
-        aria-label={`Nilai ${title}`}
-        onChange={(event) => {
-          const v = parseFloat(event.currentTarget.value);
-          if (Number.isFinite(v)) onChange(round(clamp(v)));
-        }}
-      />
+      <output htmlFor={id} aria-live="off">
+        {fmt(value, digits)}
+        {label === "θ" ? "°" : ""}
+      </output>
       {onPlay ? (
         <button
           type="button"
-          className="cs-icon-btn"
+          className="cs-step cs-play"
           aria-pressed={!!playing}
           aria-label={
             playing ? `Hentikan animasi ${title}` : `Animasikan ${title}`
@@ -451,26 +422,26 @@ function ParamRow({
   );
 }
 
-const kv = (key: string, value: string) => (
-  <div className="cs-kv" key={key}>
-    <span>{key}</span>
-    <b>{value}</b>
+const cell = (key: string, value: string, tone?: string, wide?: boolean) => (
+  <div key={key} className={wide ? "cs-wide" : undefined}>
+    <dt>{key}</dt>
+    <dd style={tone ? { color: tone } : undefined}>{value}</dd>
   </div>
 );
 
-/* ---------- Komponen utama ---------- */
+/* ───────── Komponen utama ───────── */
 
 export function ConicSectionsSimulation() {
   const baseId = useId().replace(/:/g, "");
   const boardId = `cs-board-${baseId}`;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const boardRef = useRef<Board | null>(null);
   const nativeFsRef = useRef(false);
-  const syncSizeRef = useRef<(() => void) | null>(null);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
   const samplesRef = useRef<Sample[]>([]);
   const mainCurvesRef = useRef<DataCurve[]>([]);
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
 
   const [params, setParams] = useStoredSimulationState<Params>(
     "conic.params",
@@ -481,13 +452,9 @@ export function ConicSectionsSimulation() {
     DEFAULT_OPTS,
   );
   const [anim, setAnim] = useState<Anim>(null);
-  const [tab, setTab] = useState<PanelTab>("par");
-  const [isFull, setIsFull] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
+  const [tab, setTab] = useState<Tab>("set");
+  const [isFs, setIsFs] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  // Layar kecil / pendek dan layar penuh memakai panel kanan bertab.
-  const tabbed = smallScreen || isFull;
 
   // data yang dibaca papan JSXGraph (selalu lewat ref agar tidak basi)
   const pRef = useRef(params);
@@ -501,15 +468,18 @@ export function ConicSectionsSimulation() {
   };
 
   const an = analyze(params.e, params.l, params.t);
-  const kindInfo = KINDS[an.kind];
+  const kind = an.kind;
+  const info = KINDS[kind];
+
+  /* ───────── Parameter ───────── */
 
   const setParam = (patch: Partial<Params>) => {
     setAnim(null);
     setParams((prev) => ({ ...prev, ...patch }));
   };
 
-  const setOpt = (key: keyof Opts, value: boolean) =>
-    setOpts((prev) => ({ ...prev, [key]: value }));
+  const setOpt = (key: keyof Opts) =>
+    setOpts((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const reset = () => {
     setAnim(null);
@@ -518,16 +488,16 @@ export function ConicSectionsSimulation() {
     boardRef.current?.setBoundingBox(HOME_BOX, true);
   };
 
-  /* Tampilan: zoom, pusatkan */
+  /* ───────── Tampilan ───────── */
+
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(HOME_BOX, true);
 
-  /* Layar penuh */
-  const toggleFullscreen = async () => {
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (isFull || document.fullscreenElement === el) {
+    if (isFs || document.fullscreenElement === el) {
       if (document.fullscreenElement === el) {
         try {
           await document.exitFullscreen();
@@ -536,44 +506,62 @@ export function ConicSectionsSimulation() {
         }
       }
       nativeFsRef.current = false;
-      setIsFull(false);
+      setIsFs(false);
       return;
     }
-
-    // Tata letak layar penuh dipasang lebih dulu, baru layar penuh asli
-    // diminta. Dengan begitu elemen tidak sempat berada di layar penuh asli
-    // dengan tata letak desktop biasa, yang membuat ukuran grafik tidak lengkap.
-    // flushSync memastikan kelas .is-fullscreen/.is-tabbed sudah ada di DOM
-    // SEBELUM requestFullscreen dipanggil (tanpa ini, React baru menerapkannya
-    // sesudahnya, sehingga transisi pertama memakai tata letak desktop).
+    // Pasang tata letak layar penuh lebih dulu (flushSync), baru minta layar
+    // penuh asli, agar ukuran grafik langsung benar.
     flushSync(() => {
       setPanelOpen(false);
-      setIsFull(true);
+      setIsFs(true);
     });
     if (el.requestFullscreen) {
       try {
         await el.requestFullscreen();
         nativeFsRef.current = true;
       } catch {
-        // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
+        /* tetap pakai layar penuh CSS */
       }
     }
   };
 
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
+  useEffect(() => {
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
+      screen as unknown as {
+        orientation?: {
+          lock?: (m: "landscape") => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).orientation;
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
+    return () => {
+      try {
+        o.unlock?.();
+      } catch {
+        /* abaikan */
+      }
+    };
+  }, [isFs]);
+
+  // Sinkron saat keluar lewat Esc / gestur sistem.
   useEffect(() => {
     const onChange = () => {
       if (!document.fullscreenElement && nativeFsRef.current) {
         nativeFsRef.current = false;
-        setIsFull(false);
+        setIsFs(false);
       }
     };
-    const onKey = (event: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (
-        event.key === "Escape" &&
+        e.key === "Escape" &&
         !document.fullscreenElement &&
         !nativeFsRef.current
       ) {
-        setIsFull(false);
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -584,33 +572,11 @@ export function ConicSectionsSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
-  useEffect(() => {
-    if (!isFull) return undefined;
-    if (!window.matchMedia("(pointer: coarse)").matches) return undefined;
-    const orientation = (
-      screen as unknown as {
-        orientation?: {
-          lock?: (mode: "landscape") => Promise<void>;
-          unlock?: () => void;
-        };
-      }
-    ).orientation;
-    if (typeof orientation?.lock !== "function") return undefined;
-    orientation.lock("landscape").catch(() => undefined);
-    return () => {
-      try {
-        orientation.unlock?.();
-      } catch {
-        /* abaikan */
-      }
-    };
-  }, [isFull]);
+  /* ───────── Papan JSXGraph ───────── */
 
-  /* Papan JSXGraph */
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
+    const el = hostRef.current;
+    if (!el) return;
 
     const board = JXG.JSXGraph.initBoard(boardId, {
       boundingbox: HOME_BOX,
@@ -618,11 +584,9 @@ export function ConicSectionsSimulation() {
       showCopyright: false,
       showNavigation: false,
       keepAspectRatio: true, // lingkaran harus tetap terlihat bulat
-      // Ukuran papan diatur sepenuhnya oleh syncSize di bawah. Pengamat ukuran
-      // bawaan JSXGraph (throttle + setTimeout) bisa berebut dan meninggalkan
-      // tinggi kanvas yang basi saat masuk layar penuh.
+      // Ukuran papan diatur oleh sync di bawah; pengamat bawaan dimatikan
+      // agar tidak berebut saat masuk layar penuh.
       resize: { enabled: false, throttle: 100 },
-      // geser dengan tahan klik kiri atau satu jari (papan memakai touch-action: none)
       pan: { enabled: true, needShift: false, needTwoFingers: false },
       zoom: {
         wheel: true,
@@ -636,39 +600,29 @@ export function ConicSectionsSimulation() {
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
-    });
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
       highlight: false,
-    };
+    });
+
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
+    const axis = {
+      strokeColor: "#94a3b8",
+      strokeWidth: 1.25,
+      highlight: false,
+      ticks,
+    };
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
     // analisis dihitung sekali per perubahan parameter
     let cache: { p: Params; v: Analysis } | null = null;
@@ -686,14 +640,14 @@ export function ConicSectionsSimulation() {
 
     /* Kurva berdasarkan daftar titik; null menyembunyikannya */
     const makeCurve = (
-      color: string,
+      stroke: string,
       width: number,
       dash: number,
       opacity: number,
       build: () => Vec[] | null,
     ) => {
       const curve = board.create("curve", [[0], [0]], {
-        strokeColor: color,
+        strokeColor: stroke,
         strokeWidth: width,
         strokeOpacity: opacity,
         dash,
@@ -720,14 +674,13 @@ export function ConicSectionsSimulation() {
     const toVec = (s: Sample[]): Vec[] => s.map(([x, y]) => [x, y] as Vec);
 
     // pembanding: keempat jenis dengan fokus dan ℓ yang sama
-    KIND_ORDER.forEach((kind) => {
-      const info = KINDS[kind];
+    KIND_ORDER.forEach((k) => {
       const ghost = (which: "a" | "b") => () =>
         show("ghost")
-          ? toVec(conicBranch(info.e, pRef.current.l, extent(), which))
+          ? toVec(conicBranch(KINDS[k].e, pRef.current.l, extent(), which))
           : null;
-      makeCurve(info.color, 1.6, 0, 0.4, ghost("a"));
-      if (kind === "hyperbola") makeCurve(info.color, 1.6, 0, 0.4, ghost("b"));
+      makeCurve(KINDS[k].color, 1.5, 0, 0.35, ghost("a"));
+      if (k === "hyperbola") makeCurve(KINDS[k].color, 1.5, 0, 0.35, ghost("b"));
     });
 
     // garis bantu: direktriks, asimtot
@@ -739,15 +692,11 @@ export function ConicSectionsSimulation() {
         [x, s],
       ];
     };
-    makeCurve(COLOR_DIR, 2, 3, 1, () =>
-      show("dir") ? vertical(A().dir1) : null,
-    );
-    makeCurve(COLOR_DIR, 2, 3, 1, () =>
-      show("dir") ? vertical(A().dir2) : null,
-    );
+    makeCurve(color.dir, 2, 3, 1, () => (show("dir") ? vertical(A().dir1) : null));
+    makeCurve(color.dir, 2, 3, 1, () => (show("dir") ? vertical(A().dir2) : null));
 
     [1, -1].forEach((sign) => {
-      makeCurve(COLOR_GUIDE, 1.2, 2, 0.9, () => {
+      makeCurve(color.guide, 1.25, 2, 1, () => {
         const a = A();
         if (!show("guide") || a.kind !== "hyperbola") return null;
         const n = Math.hypot(a.a, a.b);
@@ -760,22 +709,22 @@ export function ConicSectionsSimulation() {
       });
     });
 
-    // kurva utama (maksimal dua cabang); sampelnya disimpan untuk klik-menempatkan P
-    const mainA = makeCurve(KINDS.circle.color, 3, 0, 1, () => {
+    // kurva utama (maksimal dua cabang); sampelnya dipakai untuk klik-menempatkan P
+    const mainA = makeCurve(KINDS.ellipse.color, 3, 0, 1, () => {
       const p = pRef.current;
       const r = extent();
       const first = conicBranch(p.e, p.l, r, "a");
       samplesRef.current = first.concat(conicBranch(p.e, p.l, r, "b"));
       return toVec(first);
     });
-    const mainB = makeCurve(KINDS.circle.color, 3, 0, 1, () => {
+    const mainB = makeCurve(KINDS.ellipse.color, 3, 0, 1, () => {
       const p = pRef.current;
       return toVec(conicBranch(p.e, p.l, extent(), "b"));
     });
     mainCurvesRef.current = [mainA, mainB];
 
     // garis singgung dan jarak
-    makeCurve(COLOR_TAN, 2.4, 0, 1, () => {
+    makeCurve(color.tan, 2.25, 0, 1, () => {
       const a = A();
       if (!show("tangent") || !a.valid) return null;
       const n = Math.hypot(a.tx, a.ty);
@@ -787,27 +736,27 @@ export function ConicSectionsSimulation() {
         [a.px + d[0] * s, a.py + d[1] * s],
       ];
     });
-    makeCurve(COLOR_GUIDE, 1.5, 2, 1, () => {
+    makeCurve(color.focus, 1.5, 2, 0.7, () => {
       const a = A();
-      return show("dist") && a.valid
+      return show("tangent") && a.valid
         ? [
             [a.px, a.py],
             [0, 0],
           ]
         : null;
     });
-    makeCurve(COLOR_GUIDE, 1.5, 2, 1, () => {
+    makeCurve(color.focus, 1.5, 2, 0.7, () => {
       const a = A();
-      return show("dist") && a.valid && a.f2
+      return show("tangent") && a.valid && a.f2
         ? [
             [a.px, a.py],
             [a.f2[0], 0],
           ]
         : null;
     });
-    makeCurve(COLOR_DIR, 1.8, 2, 1, () => {
+    makeCurve(color.dir, 1.75, 2, 1, () => {
       const a = A();
-      return show("dist") && a.valid && a.dir1 !== null
+      return show("tangent") && show("dir") && a.valid && a.dir1 !== null
         ? [
             [a.px, a.py],
             [a.dir1, a.py],
@@ -819,10 +768,9 @@ export function ConicSectionsSimulation() {
     const dot = (
       x: () => number,
       y: () => number,
-      color: string,
+      fill: string,
       size: number,
       face = "o",
-      fill = color,
     ) =>
       board.create("point", [x, y], {
         name: "",
@@ -830,7 +778,7 @@ export function ConicSectionsSimulation() {
         size,
         face,
         fillColor: fill,
-        strokeColor: color === fill ? "#ffffff" : color,
+        strokeColor: "#ffffff",
         strokeWidth: 1.5,
         fixed: true,
         highlight: false,
@@ -839,7 +787,7 @@ export function ConicSectionsSimulation() {
       x: () => number,
       y: () => number,
       text: string,
-      color: string,
+      tone: string,
     ) =>
       board.create(
         "text",
@@ -849,8 +797,8 @@ export function ConicSectionsSimulation() {
           text,
         ],
         {
-          fontSize: 14,
-          strokeColor: color,
+          fontSize: 13,
+          strokeColor: tone,
           offset: [8, 8],
           highlight: false,
           fixed: true,
@@ -858,64 +806,43 @@ export function ConicSectionsSimulation() {
       );
 
     const focusOn = () => show("focus");
-    dot(
-      () => (focusOn() ? 0 : Number.NaN),
-      () => 0,
-      COLOR_FOCUS,
-      4.5,
-    );
-    dot(
-      () => (focusOn() && A().f2 ? A().f2![0] : Number.NaN),
-      () => 0,
-      COLOR_FOCUS,
-      4.5,
-    );
-    label(
-      () => (focusOn() ? 0 : Number.NaN),
-      () => 0,
-      "F₁",
-      COLOR_FOCUS,
-    );
-    label(
-      () => (focusOn() && A().f2 ? A().f2![0] : Number.NaN),
-      () => 0,
-      "F₂",
-      COLOR_FOCUS,
-    );
+    const f2x = () => (focusOn() && A().f2 ? A().f2![0] : Number.NaN);
+    dot(() => (focusOn() ? 0 : Number.NaN), () => 0, color.focus, 5);
+    dot(f2x, () => 0, color.focus, 5);
+    label(() => (focusOn() ? 0 : Number.NaN), () => 0, "F₁", color.focus);
+    label(f2x, () => 0, "F₂", color.focus);
 
     // pusat dan puncak
     const guideOn = () => show("guide");
     dot(
       () => (guideOn() && A().pair ? A().x0 : Number.NaN),
       () => 0,
-      COLOR_GUIDE,
-      3.5,
-      "o",
-      "#ffffff",
+      color.guide,
+      4,
     );
     for (let k = 0; k < 2; k += 1) {
       dot(
         () => (guideOn() && A().vertices[k] ? A().vertices[k][0] : Number.NaN),
         () => 0,
-        KINDS.circle.color,
-        3.5,
+        color.l,
+        4,
         "<>",
       );
     }
 
     // titik P
-    const pOn = () => (show("tangent") || show("dist")) && A().valid;
+    const pOn = () => show("tangent") && A().valid;
     dot(
       () => (pOn() ? A().px : Number.NaN),
       () => (pOn() ? A().py : Number.NaN),
-      COLOR_FOCUS,
-      5.5,
+      color.tan,
+      6,
     );
     label(
       () => (pOn() ? A().px : Number.NaN),
       () => (pOn() ? A().py : Number.NaN),
       "P",
-      COLOR_FOCUS,
+      color.tan,
     );
 
     board.update();
@@ -952,40 +879,22 @@ export function ConicSectionsSimulation() {
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointerup", onUp);
 
-    // Selaraskan ukuran papan dengan kotaknya. Pembanding utamanya adalah ukuran
-    // yang DIKETAHUI JSXGraph (canvasWidth/Height), sehingga papan yang
-    // tertinggal selalu terkoreksi. Skala dan titik tengah dipertahankan.
-    const syncSize = () => {
+    // Saat ukuran berubah (layar penuh / putar layar): pertahankan skala
+    // dan titik tengah agar grafik tidak melompat.
+    let last = { w: el.clientWidth, h: el.clientHeight };
+    const sync = (force = false) => {
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (w <= 0 || h <= 0) return;
-      const sized = board as unknown as {
-        canvasWidth: number;
-        canvasHeight: number;
-        fullUpdate?: () => void;
-      };
-      const oldW = sized.canvasWidth;
-      const oldH = sized.canvasHeight;
-      // Selain canvasWidth/Height, cocokkan juga dengan ukuran SVG yang benar-
-      // benar tergambar, karena nilai internal JSXGraph bisa sudah "benar"
-      // sementara SVG-nya masih berukuran lama.
-      const svg = el.querySelector("svg");
-      const svgW = svg ? Math.round(svg.getBoundingClientRect().width) : w;
-      const svgH = svg ? Math.round(svg.getBoundingClientRect().height) : h;
-      if (w === oldW && h === oldH && svgW === w && svgH === h) return;
+      if (!force && w === last.w && h === last.h) return;
+
       const bb = board.getBoundingBox();
       const spanX = bb[2] - bb[0];
       const spanY = bb[1] - bb[3];
       board.resizeContainer(w, h, true, true);
-      if (w === oldW && h === oldH) {
-        // Hanya SVG yang tertinggal: ukuran logis sama, cukup gambar ulang.
-        sized.fullUpdate?.();
-        board.update();
-        return;
-      }
-      if (oldW > 0 && oldH > 0 && spanX > 0 && spanY > 0) {
-        const ux = oldW / spanX;
-        const uy = oldH / spanY;
+      if (last.w > 0 && last.h > 0 && spanX > 0 && spanY > 0) {
+        const ux = last.w / spanX;
+        const uy = last.h / spanY;
         const cx = (bb[0] + bb[2]) / 2;
         const cy = (bb[1] + bb[3]) / 2;
         board.setBoundingBox(
@@ -993,73 +902,53 @@ export function ConicSectionsSimulation() {
           true,
         );
       }
-      sized.fullUpdate?.();
+      last = { w, h };
       board.update();
     };
-    syncSizeRef.current = syncSize;
-    const observer = new ResizeObserver(syncSize);
+    syncRef.current = sync;
+    const observer = new ResizeObserver(() => sync());
     observer.observe(el);
-    if (el.parentElement) observer.observe(el.parentElement);
 
     return () => {
+      syncRef.current = null;
       observer.disconnect();
-      syncSizeRef.current = null;
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointerup", onUp);
       JXG.JSXGraph.freeBoard(board);
       boardRef.current = null;
+      mainCurvesRef.current = [];
     };
   }, [boardId]);
 
-  // Warna kurva utama mengikuti jenis irisan kerucut
+  // Gambar ulang saat parameter atau pilihan tampilan berubah.
   useEffect(() => {
-    mainCurvesRef.current.forEach((curve) =>
-      curve.setAttribute({ strokeColor: kindInfo.color }),
-    );
-    boardRef.current?.update();
-  }, [kindInfo.color]);
+    const board = boardRef.current;
+    if (!board) return;
+    mainCurvesRef.current.forEach((c) => c.setAttribute({ strokeColor: info.color }));
+    board.update();
+  }, [params, opts, info.color]);
 
-  // Perbarui papan setiap parameter atau pilihan berubah
+  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi.
   useEffect(() => {
-    boardRef.current?.update();
-  }, [params, opts]);
-
-  // Masuk/keluar layar penuh atau ganti mode panel mengubah ukuran papan
-  useEffect(() => {
-    // Browser menyelesaikan transisi layar penuh asli dengan waktu yang tidak
-    // pasti (animasi bilah browser, perubahan viewport). Selama ~2 detik papan
-    // dicocokkan dengan kotaknya setiap frame; syncSize murah karena langsung
-    // keluar bila ukurannya sudah sama.
-    let raf = 0;
-    const started = performance.now();
-    const tick = () => {
-      syncSizeRef.current?.();
-      if (performance.now() - started < 2000) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [isFull, tabbed]);
-
-  useEffect(() => {
-    let timer = 0;
-    const sync = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => syncSizeRef.current?.(), 120);
-    };
-    window.addEventListener("resize", sync);
-    document.addEventListener("fullscreenchange", sync);
-    window.visualViewport?.addEventListener("resize", sync);
+    const run = () => syncRef.current?.(true);
+    const raf = requestAnimationFrame(() => requestAnimationFrame(run));
+    const t1 = window.setTimeout(run, 150);
+    const t2 = window.setTimeout(run, 450);
+    document.addEventListener("fullscreenchange", run);
+    window.addEventListener("resize", run);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("resize", sync);
-      document.removeEventListener("fullscreenchange", sync);
-      window.visualViewport?.removeEventListener("resize", sync);
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.removeEventListener("fullscreenchange", run);
+      window.removeEventListener("resize", run);
     };
-  }, []);
+  }, [isFs]);
 
   // Animasi: e bolak-balik 0 ↔ 3, atau titik P berkeliling
   useEffect(() => {
-    if (!anim) return undefined;
+    if (!anim) return;
     let raf = 0;
     let last = performance.now();
     let dir = 1;
@@ -1092,49 +981,13 @@ export function ConicSectionsSimulation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anim]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Nilai turunan ───────── */
 
-  const { kind } = an;
   const general = `${poly([
     [1 - params.e * params.e, "x²"],
     [-2 * params.e * params.l, "x"],
     [1, "y²"],
   ])} = ${fmt(params.l * params.l)}`;
-
-  const elements: [string, string][] = [];
-  if (kind === "circle") {
-    elements.push(["Pusat = fokus", "(0; 0)"]);
-    elements.push(["Jari-jari r = ℓ", fmt(an.l)]);
-    elements.push(["Direktriks", "di tak hingga"]);
-  } else if (kind === "parabola") {
-    elements.push(["p = ℓ/2", fmt(an.l / 2)]);
-    elements.push(["Fokus F", "(0; 0)"]);
-    elements.push(["Puncak", fmtPt(-an.l / 2, 0)]);
-    elements.push(["Direktriks", `x = ${fmt(an.dir1 ?? Number.NaN)}`]);
-    elements.push(["Lebar fokal 4p", fmt(2 * an.l)]);
-  } else {
-    elements.push(["a", fmt(an.a)]);
-    elements.push(["b", fmt(an.b)]);
-    elements.push([
-      "c = √(" + (kind === "ellipse" ? "a² − b²" : "a² + b²") + ")",
-      fmt(an.c),
-    ]);
-    elements.push(["e = c / a", fmt(an.c / an.a)]);
-    elements.push(["Pusat", fmtPt(an.x0, 0)]);
-    elements.push(["Fokus F₁", "(0; 0)"]);
-    elements.push(["Fokus F₂", fmtPt(an.f2 ? an.f2[0] : 0, 0)]);
-    elements.push([
-      "Puncak",
-      an.vertices.map((v) => fmtPt(v[0], v[1])).join("  "),
-    ]);
-    elements.push([
-      "Direktriks",
-      `x = ${fmt(an.dir1 ?? Number.NaN)} dan x = ${fmt(an.dir2 ?? Number.NaN)}`,
-    ]);
-    if (kind === "hyperbola")
-      elements.push(["Asimtot", `y = ±${fmt(an.b / an.a)}${shifted(an.x0)}`]);
-    elements.push(["ℓ = b² / a", fmt(an.l)]);
-  }
 
   const tangentText = an.valid
     ? `${poly([
@@ -1143,177 +996,151 @@ export function ConicSectionsSimulation() {
       ])} = ${fmt(an.tanC)}`
     : "—";
 
+  const ineq =
+    kind === "circle"
+      ? "e = 0"
+      : kind === "ellipse"
+        ? "0 < e < 1"
+        : kind === "parabola"
+          ? "e = 1"
+          : "e > 1";
+
+  const showP = opts.tangent && an.valid;
+
   return (
-    <div
-      ref={rootRef}
-      className={`conic-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFull ? " is-fullscreen" : ""}`}
-    >
-      <p className="cs-orientation-hint">
+    <div ref={rootRef} className={`cs${isFs ? " is-fs" : ""}`}>
+      <p className="cs-hint">
         <Smartphone size={14} aria-hidden="true" />
         <span>
-          Miringkan ponsel ke mode lanskap agar grafik dan panel isian tampil
-          berdampingan.
+          Miringkan ponsel ke mode lanskap agar grafik dan pengatur nyaman
+          dipakai.
         </span>
       </p>
 
-      <div className="cs-boards">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="cs-board-panel" aria-label="Grafik irisan kerucut">
+      <div className="cs-layout">
+        {/* ───── Grafik ───── */}
+        <section className="cs-graph" aria-label="Grafik irisan kerucut">
           <div className="cs-stage">
             <div
-              className="cs-board"
               id={boardId}
-              ref={containerRef}
-              tabIndex={0}
-              aria-label="Grafik irisan kerucut dengan fokus di titik asal. Seret untuk menggeser, roda mouse atau cubit untuk zoom, klik atau ketuk kurva untuk menempatkan titik P."
+              ref={hostRef}
+              className="cs-board"
+              aria-label="Grafik irisan kerucut dengan fokus di titik asal. Seret untuk menggeser, gulir atau cubit untuk memperbesar, ketuk kurva untuk memindahkan titik P."
             />
 
-            <p
-              className="cs-chip"
-              style={{ borderLeftColor: kindInfo.color }}
-              aria-live="polite"
-            >
-              <b style={{ color: kindInfo.color }}>{kindInfo.label}</b>
-              <span>e = {fmt(params.e, 2)}</span>
-            </p>
+            <div className="cs-hud">
+              <p
+                className="cs-chip"
+                style={{ borderLeftColor: info.color }}
+                aria-live="polite"
+              >
+                <b style={{ color: info.color }}>{info.label}</b>
+                <span>e = {fmt(params.e)}</span>
+              </p>
+              {showP && (
+                <p className="cs-pinfo">
+                  <b>P</b> {fmtPt(an.px, an.py)}
+                  {Number.isFinite(an.pd) && (
+                    <>
+                      {" "}
+                      · PF = {fmt(an.pf1)} · d = {fmt(an.pd)}
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
 
-            {(opts.tangent || opts.dist) && (
-              <div className="cs-pinfo" aria-live="off">
-                {an.valid ? (
-                  <>
-                    <span>
-                      <b>P</b> {fmtPt(an.px, an.py)}
-                    </span>
-                    {opts.dist && (
-                      <span>
-                        PF₁ = {fmt(an.pf1, 2)}
-                        {Number.isFinite(an.pd) && (
-                          <>
-                            {" "}
-                            · jarak ke direktriks = {fmt(an.pd, 2)} · rasio ={" "}
-                            {fmt(an.ratio, 2)}
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span>P terlalu jauh (dekat arah asimtot).</span>
-                )}
-              </div>
-            )}
-
-            <div className="cs-tools" role="group" aria-label="Tampilan">
+            <div className="cs-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFull}
-                aria-label={isFull ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFull ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFull ? (
-                  <Minimize2 size={15} aria-hidden="true" />
+                {isFs ? (
+                  <Minimize2 size={16} aria-hidden="true" />
                 ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
+                  <Maximize2 size={16} aria-hidden="true" />
                 )}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={resetView}
-                aria-label="Kembali ke tampilan awal"
-                title="Kembali ke tampilan awal"
+                onClick={center}
+                aria-label="Pusatkan tampilan"
+                title="Pusatkan tampilan"
               >
-                <Crosshair size={15} aria-hidden="true" />
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFull && (
+              {isFs && (
                 <button
                   type="button"
-                  className="cs-toolbar-toggle"
-                  onClick={() => setPanelOpen((open) => !open)}
+                  className="cs-toggle"
+                  onClick={() => setPanelOpen((o) => !o)}
                   aria-pressed={panelOpen}
-                  aria-controls={`cs-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`cs-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="cs-legend" aria-label="Legenda grafik">
-            <span>
-              <i style={{ borderTopColor: kindInfo.color }} /> {kindInfo.label}
-            </span>
+          <ul className="cs-legend" aria-label="Legenda grafik">
+            <li>
+              <i style={{ borderColor: info.color }} /> {info.label.toLowerCase()}
+            </li>
             {opts.focus && (
-              <span>
-                <b className="dot-focus" /> fokus
-              </span>
+              <li>
+                <b style={{ background: color.focus }} /> fokus
+              </li>
             )}
             {opts.dir && (
-              <span>
-                <i className="line-dir" /> direktriks
-              </span>
+              <li>
+                <i className="dash" style={{ borderColor: color.dir }} /> direktriks
+              </li>
             )}
             {opts.tangent && (
-              <span>
-                <i className="line-tan" /> garis singgung
-              </span>
+              <li>
+                <i style={{ borderColor: color.tan }} /> garis singgung
+              </li>
             )}
             {opts.ghost &&
               KIND_ORDER.map((k) => (
-                <span key={k} className="legend-ghost">
-                  <b style={{ background: KINDS[k].color }} />{" "}
-                  {KINDS[k].label.toLowerCase()} (e = {KINDS[k].e})
-                </span>
+                <li key={k}>
+                  <b style={{ background: KINDS[k].color, opacity: 0.5 }} />{" "}
+                  {KINDS[k].label.toLowerCase()}
+                </li>
               ))}
-          </div>
-          <p className="cs-hint">
-            Tahan klik kiri lalu seret untuk menggeser · roda mouse untuk zoom ·
-            klik pada kurva untuk memindahkan titik P.
-          </p>
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`cs-column-${baseId}`}
-          className={`cs-column${isFull ? " is-floating" : ""}${
-            isFull && panelOpen ? " is-open" : ""
-          }`}
-          data-tab={tab}
+        {/* ───── Pengatur ───── */}
+        <section
+          id={`cs-panel-${baseId}`}
+          className={`cs-panel${isFs ? " is-floating" : ""}${isFs && panelOpen ? " is-open" : ""}`}
+          aria-label="Pengatur irisan kerucut"
         >
           <div className="cs-tabs" role="group" aria-label="Bagian panel">
-            {panelTabs.map((item) => (
-              <button
-                key={item.tab}
-                type="button"
-                aria-pressed={tab === item.tab}
-                onClick={() => setTab(item.tab)}
-              >
-                {item.label}
-              </button>
-            ))}
+            <button type="button" aria-pressed={tab === "set"} onClick={() => setTab("set")}>
+              Atur
+            </button>
+            <button type="button" aria-pressed={tab === "res"} onClick={() => setTab("res")}>
+              Hasil
+            </button>
           </div>
 
-          <section className="cs-controls" aria-label="Pengaturan">
-            <div className="cs-pane" data-pane="par">
-              <div
-                className="cs-kinds"
-                role="group"
-                aria-label="Jenis irisan kerucut"
-              >
+          {tab === "set" ? (
+            <>
+              <div className="cs-kinds" role="group" aria-label="Jenis irisan kerucut">
                 {KIND_ORDER.map((k) => (
                   <button
                     key={k}
@@ -1327,227 +1154,147 @@ export function ConicSectionsSimulation() {
                 ))}
               </div>
 
-              <div className="cs-params">
+              <div className="cs-sliders">
                 <ParamRow
-                  id={`cs-e-${baseId}`}
+                  id={`cs-${baseId}-e`}
                   label="e"
                   title="eksentrisitas e"
                   value={params.e}
                   min={E_MIN}
                   max={E_MAX}
                   step={0.01}
-                  nudge={0.01}
                   digits={2}
-                  tone={kindInfo.color}
+                  tone={info.color}
                   playing={anim === "e"}
                   onChange={(v) => setParam({ e: v })}
                   onPlay={() => setAnim(anim === "e" ? null : "e")}
                 />
                 <ParamRow
-                  id={`cs-l-${baseId}`}
+                  id={`cs-${baseId}-l`}
                   label="ℓ"
                   title="parameter ℓ (setengah lebar fokal)"
                   value={params.l}
                   min={L_MIN}
                   max={L_MAX}
                   step={0.1}
-                  nudge={0.1}
                   digits={1}
-                  tone="#183e54"
+                  tone={color.l}
                   onChange={(v) => setParam({ l: v })}
                 />
                 <ParamRow
-                  id={`cs-t-${baseId}`}
+                  id={`cs-${baseId}-t`}
                   label="θ"
                   title="sudut titik P dari fokus (derajat)"
                   value={params.t}
                   min={-180}
                   max={180}
                   step={0.5}
-                  nudge={1}
                   digits={1}
                   bipolar
-                  tone={COLOR_TAN}
+                  tone={color.tan}
                   playing={anim === "t"}
                   onChange={(v) => setParam({ t: v })}
                   onPlay={() => setAnim(anim === "t" ? null : "t")}
                 />
               </div>
 
-              <label className="cs-check">
-                <input
-                  type="checkbox"
-                  checked={opts.ghost}
-                  onChange={(event) =>
-                    setOpt("ghost", event.currentTarget.checked)
-                  }
-                />
-                Bandingkan keempat jenis (fokus dan ℓ sama)
-              </label>
+              <div className="cs-chips" role="group" aria-label="Tampilkan di grafik">
+                {optionRows.map((row) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    aria-pressed={opts[row.key]}
+                    onClick={() => setOpt(row.key)}
+                  >
+                    {row.label}
+                  </button>
+                ))}
+              </div>
 
               <button type="button" className="cs-reset" onClick={reset}>
                 <RotateCcw size={13} aria-hidden="true" />
                 <span>Atur ulang</span>
               </button>
-            </div>
+            </>
+          ) : (
+            <>
+              <dl className="cs-readouts" aria-live="polite">
+                {cell("Jenis", `${info.label} (${ineq})`, info.color, true)}
+                {cell("Persamaan umum", general, undefined, true)}
+                {cell("Bentuk baku", standardForm(an, params.l), info.color, true)}
 
-            <div className="cs-pane" data-pane="opt">
-              <div className="cs-options">
-                {optionRows.map((row) => (
-                  <label key={row.key}>
-                    <input
-                      type="checkbox"
-                      checked={opts[row.key]}
-                      onChange={(event) =>
-                        setOpt(row.key, event.currentTarget.checked)
-                      }
-                    />
-                    {row.label}
-                  </label>
-                ))}
-              </div>
-              <GraphAppearanceControls
-                appearance={appearance}
-                onStep={onStep}
-              />
-            </div>
-          </section>
+                {kind === "circle" && (
+                  <>
+                    {cell("Pusat = fokus", "(0; 0)")}
+                    {cell("Jari-jari = ℓ", fmt(params.l), color.l)}
+                  </>
+                )}
+                {kind === "parabola" && (
+                  <>
+                    {cell("Fokus", "(0; 0)", color.focus)}
+                    {cell("Puncak", fmtPt(-params.l / 2, 0), color.l)}
+                    {cell("Direktriks", `x = ${fmt(an.dir1 ?? Number.NaN)}`, color.dir)}
+                    {cell("p = ℓ/2", fmt(params.l / 2))}
+                  </>
+                )}
+                {an.pair && (
+                  <>
+                    {cell("a", fmt(an.a))}
+                    {cell("b", fmt(an.b))}
+                    {cell(kind === "ellipse" ? "c = √(a² − b²)" : "c = √(a² + b²)", fmt(an.c))}
+                    {cell("e = c / a", fmt(an.c / an.a), info.color)}
+                    {cell("Pusat", fmtPt(an.x0, 0))}
+                    {cell("Puncak", an.vertices.map((v) => fmtPt(v[0], v[1])).join("  "), color.l)}
+                    {cell("Fokus F₁", "(0; 0)", color.focus)}
+                    {cell("Fokus F₂", fmtPt(an.f2 ? an.f2[0] : 0, 0), color.focus)}
+                    {cell(
+                      "Direktriks",
+                      `x = ${fmt(an.dir1 ?? Number.NaN)} dan x = ${fmt(an.dir2 ?? Number.NaN)}`,
+                      color.dir,
+                      true,
+                    )}
+                    {kind === "hyperbola" &&
+                      cell("Asimtot", `y = ±${fmt(an.b / an.a)}${shifted(an.x0)}`, color.guide, true)}
+                  </>
+                )}
+              </dl>
 
-          <div className="cs-results">
-            <div className="cs-pane" data-pane="res">
-              <section
-                className="cs-card cs-card-kind"
-                aria-label="Jenis kurva"
-              >
-                <h3 style={{ color: kindInfo.color }}>{kindInfo.label}</h3>
-                <p>
-                  e = {fmt(params.e, 2)}
-                  {kind === "circle" && " (e = 0)"}
-                  {kind === "ellipse" && " (0 < e < 1)"}
-                  {kind === "parabola" && " (e = 1)"}
-                  {kind === "hyperbola" && " (e > 1)"}
-                </p>
-              </section>
-
-              <section className="cs-card" aria-label="Persamaan">
-                <h4>Persamaan</h4>
-                <p className="cs-eq">{general}</p>
-                <p className="cs-eq-note">umum, dengan fokus di (0; 0)</p>
-                <p className="cs-eq">{standardForm(an)}</p>
-                <p className="cs-eq-note">bentuk baku (setelah digeser)</p>
-              </section>
-
-              <section className="cs-card" aria-label="Unsur-unsur">
-                <h4>Unsur-unsur</h4>
-                <div className="cs-kvs">
-                  {elements.map(([k, v]) => kv(k, v))}
-                </div>
-              </section>
-
-              <section
-                className="cs-card"
-                aria-label="Titik P dan garis singgung"
-              >
-                <h4>Titik P dan garis singgung</h4>
+              <dl className="cs-readouts" aria-live="polite">
                 {an.valid ? (
-                  <div className="cs-kvs">
-                    {kv("θ", `${fmt(params.t, 1)}°`)}
-                    {kv("P", fmtPt(an.px, an.py))}
-                    {kv("PF₁", fmt(an.pf1))}
-                    {Number.isFinite(an.pf2) && kv("PF₂", fmt(an.pf2))}
-                    {Number.isFinite(an.pd) &&
-                      kv("Jarak ke direktriks", fmt(an.pd))}
-                    {Number.isFinite(an.ratio) &&
-                      kv("PF₁ / jarak = e", fmt(an.ratio))}
+                  <>
+                    {cell("Titik P", fmtPt(an.px, an.py), color.tan)}
+                    {cell("θ", `${fmt(params.t, 1)}°`, color.tan)}
+                    {cell("PF₁", fmt(an.pf1))}
+                    {Number.isFinite(an.pf2) && cell("PF₂", fmt(an.pf2))}
+                    {Number.isFinite(an.pd) && cell("Jarak ke direktriks", fmt(an.pd), color.dir)}
+                    {Number.isFinite(an.ratio) && cell("PF₁ / jarak = e", fmt(an.ratio), info.color)}
                     {kind === "ellipse" &&
-                      kv(
+                      cell(
                         "PF₁ + PF₂ = 2a",
                         `${fmt(an.pf1 + an.pf2)} (2a = ${fmt(2 * an.a)})`,
+                        undefined,
+                        true,
                       )}
                     {kind === "hyperbola" &&
-                      kv(
+                      cell(
                         "|PF₁ − PF₂| = 2a",
                         `${fmt(Math.abs(an.pf1 - an.pf2))} (2a = ${fmt(2 * an.a)})`,
+                        undefined,
+                        true,
                       )}
-                    {kv("Garis singgung", tangentText)}
-                    {kv(
-                      "Gradien",
-                      an.slope === null ? "tegak lurus sumbu x" : fmt(an.slope),
-                    )}
-                  </div>
+                    {cell("Garis singgung", tangentText, color.tan, true)}
+                    {cell("Gradien", an.slope === null ? "tegak lurus sumbu x" : fmt(an.slope))}
+                  </>
                 ) : (
-                  <p className="cs-eq-note">
-                    P berada sangat jauh. Ubah θ agar P kembali ke kurva.
-                  </p>
+                  cell("Titik P", "terlalu jauh. Ubah θ agar P kembali ke kurva.", undefined, true)
                 )}
-              </section>
-            </div>
-
-            <div className="cs-pane" data-pane="info">
-              <table className="cs-info-table">
-                <thead>
-                  <tr>
-                    <th scope="col">e</th>
-                    <th scope="col">Bentuk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>e = 0</td>
-                    <td>lingkaran (direktriks di tak hingga)</td>
-                  </tr>
-                  <tr>
-                    <td>0 &lt; e &lt; 1</td>
-                    <td>elips: tertutup, dua fokus, dua direktriks</td>
-                  </tr>
-                  <tr>
-                    <td>e = 1</td>
-                    <td>parabola: satu fokus, satu direktriks</td>
-                  </tr>
-                  <tr>
-                    <td>e &gt; 1</td>
-                    <td>hiperbola: dua cabang, dua fokus, asimtot</td>
-                  </tr>
-                </tbody>
-              </table>
-              <ul className="cs-insights">
-                <li>
-                  <strong style={{ color: COLOR_FOCUS }}>
-                    Definisi fokus–direktriks:
-                  </strong>{" "}
-                  jarak setiap titik pada kurva ke fokus sama dengan e kali
-                  jaraknya ke direktriks. Karena itu PF₁ / jarak selalu sama
-                  dengan e, di mana pun titik P berada.
-                </li>
-                <li>
-                  <strong style={{ color: KINDS.circle.color }}>
-                    Parameter ℓ:
-                  </strong>{" "}
-                  ℓ adalah setengah lebar kurva tepat di atas fokus (setengah
-                  latus rectum). Dengan ℓ tetap, menggeser e mengubah lingkaran
-                  menjadi elips, lalu parabola, lalu hiperbola secara
-                  berkesinambungan.
-                </li>
-                <li>
-                  <strong style={{ color: COLOR_TAN }}>Garis singgung:</strong>{" "}
-                  pada elips, garis singgung membagi dua sudut luar antara PF₁
-                  dan PF₂; pada hiperbola, membagi dua sudut F₁PF₂; pada
-                  parabola, membagi dua sudut antara PF dan garis tegak lurus
-                  direktriks. Inilah sifat pemantul irisan kerucut.
-                </li>
-                <li>
-                  <strong style={{ color: KINDS.parabola.color }}>
-                    Koordinat:
-                  </strong>{" "}
-                  titik pada kurva memenuhi (1 − e²)x² − 2eℓx + y² = ℓ² dengan
-                  fokus di titik asal. Bentuk baku ditampilkan setelah sumbu
-                  digeser ke pusat atau puncak.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+              </dl>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );
 }
+
+export default ConicSectionsSimulation;

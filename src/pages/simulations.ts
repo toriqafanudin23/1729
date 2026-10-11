@@ -86,18 +86,6 @@ export const SIMULATIONS: SimulationMeta[] = [
     ),
   },
   {
-    slug: "matriks-transformasi",
-    title: "Transformasi Matriks",
-    category: "Matriks",
-    summary:
-      "Perhatikan bagaimana matriks mengubah vektor basis dan membentuk kisi, luas, dan bayangan sebuah bentuk.",
-    concepts: ["Matriks", "Determinan", "Basis", "Transformasi linear"],
-    glyph: "[ ]",
-    component: lazy(() =>
-      import("../simulasi/MatrixTransformSimulation").then((m) => ({ default: m.MatrixTransformSimulation })),
-    ),
-  },
-  {
     slug: "irisan-kerucut",
     title: "Irisan Kerucut",
     category: "Geometri",
@@ -155,18 +143,6 @@ export const SIMULATIONS: SimulationMeta[] = [
     glyph: "f(x)",
     component: lazy(() =>
       import("../simulasi/GraphPlotterSimulation").then((m) => ({ default: m.GraphPlotterSimulation })),
-    ),
-  },
-  {
-    slug: "garis-singgung",
-    title: "Garis Singgung",
-    category: "Kalkulus",
-    summary:
-      "Lihat garis singgung yang bergerak mengikuti kurva dan bagaimana gradien berubah ketika titik singgung berubah.",
-    concepts: ["Garis singgung", "Gradien", "Turunan", "Kalkulus"],
-    glyph: "↗",
-    component: lazy(() =>
-      import("../simulasi/HeroDerivativeSimulation").then((m) => ({ default: m.HeroDerivativeSimulation })),
     ),
   },
   {

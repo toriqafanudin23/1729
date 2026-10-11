@@ -1,616 +1,595 @@
-/* Penggambar grafik fungsi (disusun ulang).
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. Token --pl-* sengaja tidak memakai nama --line/--paper
-   agar GraphAppearanceControls tetap memakai variabel situsnya sendiri. */
+/* Simulasi penggambar grafik — tema slate landing page 1729 (sama dengan
+   simulasi dua lingkaran).
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-.plotter-simulation,
-.plotter-simulation *,
-.plotter-simulation *::before,
-.plotter-simulation *::after {
+.gp,
+.gp *,
+.gp *::before,
+.gp *::after {
   box-sizing: border-box;
 }
 
-.plotter-simulation {
-  --plot-inter: #b23a48;
-  --plot-accent: #087f8c;
-  --pl-ink: var(--sim-ink, #18313d);
-  --pl-muted: var(--sim-muted, #62727d);
-  --pl-line: var(--sim-line, #d5e0e4);
-  --pl-paper: var(--sim-paper, #f3f7f5);
+.gp {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  /* dipakai oleh GraphAppearanceControls */
+  --paper: #f8fafc;
+  --navy: #0f172a;
+  --navy-bright: #2563eb;
+
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
   --track: 3px;
-  --thumb: 13px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--pl-paper);
-  color: var(--pl-ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.plotter-simulation button {
-  font-family: inherit;
+.gp button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.plotter-simulation button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.plotter-simulation button:focus-visible,
-.plotter-simulation input:focus-visible,
-.plotter-simulation summary:focus-visible {
-  outline: 2px solid var(--plot-accent);
+.gp button:focus-visible,
+.gp input:focus-visible,
+.gp .gp-board:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.plot-orientation-hint {
+.gp-hint {
   display: none;
 }
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.plotter-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.plot-boards {
+.gp-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.plot-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.plot-board-panel {
+.gp-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--pl-line);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
-.plot-stage {
+.gp-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
 }
 
-.plot-board {
+.gp-board {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
-.plot-board:active {
+.gp-board:active {
   cursor: grabbing;
 }
-
-.plot-board:focus-visible {
-  outline: 2px solid var(--plot-accent);
+.gp-board:focus-visible {
   outline-offset: -2px;
 }
 
-.plot-board .JXGtext {
-  font-family: "Open Sans", sans-serif;
-}
-
-/* Alat tampilan melayang di kanan atas */
-.plot-tools {
+.gp-empty {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
-  display: grid;
-  gap: 3px;
-}
-
-.plot-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--pl-ink);
-  cursor: pointer;
-}
-
-.plot-tools button:hover {
-  border-color: var(--plot-accent);
-  background: #e8f3f1;
-}
-
-/* Pelacak (nilai y dan gradien) melayang di kiri bawah */
-.plot-trace {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 10px;
-  max-width: calc(100% - 50px);
-  padding: 3px 8px;
-  border-left: 3px solid #63727d;
-  background: rgba(255, 255, 255, 0.92);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-.plot-trace span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.plot-trace small {
-  color: var(--pl-muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.plot-swatch {
-  display: inline-block;
-  flex: 0 0 auto;
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  vertical-align: -1px;
-}
-
-.plot-toast {
-  position: absolute;
-  top: 6px;
+  top: 50%;
   left: 50%;
-  z-index: 3;
-  max-width: calc(100% - 100px);
-  margin: 0;
-  padding: 4px 10px;
-  background: rgba(24, 49, 61, 0.92);
-  color: #fff;
-  font-size: 11px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.plot-empty {
-  position: absolute;
-  inset: 0;
   z-index: 1;
-  display: grid;
-  place-items: center;
+  max-width: 80%;
   margin: 0;
-  padding: 0 16px;
-  color: var(--pl-muted);
+  padding: 6px 12px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--mute);
   font-size: 12px;
   text-align: center;
   pointer-events: none;
 }
+.gp-empty strong {
+  color: var(--ink);
+}
 
-.plot-legend {
-  display: flex;
-  gap: 4px 12px;
+/* Info nilai di posisi kursor / ketukan, kiri atas */
+.gp-hud {
+  position: absolute;
+  top: var(--inset-t);
+  left: var(--inset-l);
+  z-index: 2;
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
+  pointer-events: none;
+}
+
+.gp-chip,
+.gp-pinfo {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+}
+
+.gp-chip {
+  padding: 3px 10px;
+  border-left: 3px solid var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.gp-pinfo {
+  display: grid;
+  gap: 1px;
   padding: 3px 8px;
-  border-top: 1px solid var(--pl-line);
-  color: var(--pl-muted);
+  color: var(--text);
+  font-family: var(--mono);
   font-size: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  line-height: 1.4;
 }
-
-.plot-legend::-webkit-scrollbar {
-  display: none;
-}
-
-.plot-legend span {
-  display: inline-flex;
-  flex: 0 0 auto;
+.gp-pinfo span {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   white-space: nowrap;
 }
-
-.plot-legend i {
-  width: 14px;
-  height: 0;
-  border-top: 3px solid #183e54;
-}
-
-.plot-legend i.line-dash {
-  border-top-style: dashed;
-  border-top-width: 2px;
-  border-top-color: #63727d;
-}
-
-.plot-legend b {
+.gp-pinfo i {
+  flex: 0 0 auto;
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.plot-legend .dot-inter {
-  background: var(--plot-inter);
-}
-
-.plot-legend .dot-axis {
-  border: 2px solid #63727d;
-  background: #fff;
-}
-
-.plot-legend .dot-ext {
-  border-radius: 0;
-  background: #63727d;
-  transform: rotate(45deg) scale(0.8);
-}
-
-.plot-legend .dot-pin {
-  border-radius: 0;
-  background: #183e54;
-}
-
-/* Petunjuk panjang hanya di desktop */
-.plot-hint {
-  display: none;
-}
-
-/* ───────── Tab panel kanan ───────── */
-
-.plot-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.plot-tabs button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--pl-ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.plot-tabs button:first-child {
-  margin-left: 0;
-}
-
-.plot-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--plot-accent);
-  background: var(--plot-accent);
+/* Pesan singkat (titik disematkan, tautan disalin), bawah tengah */
+.gp-toast {
+  position: absolute;
+  bottom: calc(var(--inset-b) + 4px);
+  left: 50%;
+  z-index: 5;
+  max-width: calc(100% - 96px);
+  margin: 0;
+  padding: 4px 12px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--ink);
   color: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
-.plot-badge {
+/* Toolbar mengambang, kanan atas */
+.gp-tools {
+  position: absolute;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
+  display: grid;
+  gap: 4px;
+}
+
+.gp-tools button {
   display: inline-grid;
   place-items: center;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--plot-inter);
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.gp-tools button:hover {
+  border-color: var(--ink);
+}
+.gp-tools button:active {
+  background: var(--line);
+}
+.gp-tools .gp-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
   color: #fff;
+}
+
+/* Legenda: warna grafik + rumusnya */
+.gp-legend {
+  display: flex;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 4px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 10px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gp-legend::-webkit-scrollbar {
+  display: none;
+}
+.gp-legend:empty {
+  display: none;
+}
+.gp-legend li {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.gp-legend li span {
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gp-legend i {
+  width: 14px;
+  height: 0;
+  border-top: 3px solid;
+}
+.gp-legend i.dash {
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
+.gp-legend b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.gp-legend b.diamond {
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+.gp-legend b.square {
+  border-radius: 1px;
+}
+
+/* ───────── Pengatur ───────── */
+
+.gp-panel {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  scrollbar-width: thin;
+}
+.gp-panel > * {
+  flex: 0 0 auto;
+}
+
+/* Tab: Fungsi | Opsi | Hasil | Info */
+.gp-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+}
+.gp-tabs button {
+  position: relative;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.gp-tabs button[aria-pressed="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+.gp-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 14px;
+  height: 14px;
+  margin-left: 3px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--ink);
   font-size: 9px;
   line-height: 1;
 }
-
-/* Isi panel: satu kartu putih yang bisa digulir */
-.plotter-simulation.is-tabbed .plot-controls,
-.plotter-simulation.is-tabbed .plot-results {
-  min-width: 0;
-  min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--pl-line);
+.gp-tabs button[aria-pressed="true"] .gp-badge {
   background: #fff;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 
-.plot-pane {
+/* ───────── Rumus ───────── */
+
+.gp-slots {
   display: grid;
-  align-content: start;
-  gap: 8px;
-  min-width: 0;
+  gap: 6px;
 }
 
-/* Hanya panel pada tab aktif yang tampil */
-.plotter-simulation.is-tabbed .plot-column[data-tab="fn"] .plot-results,
-.plotter-simulation.is-tabbed .plot-column[data-tab="opt"] .plot-results,
-.plotter-simulation.is-tabbed .plot-column[data-tab="res"] .plot-controls,
-.plotter-simulation.is-tabbed .plot-column[data-tab="info"] .plot-controls,
-.plotter-simulation.is-tabbed
-  .plot-column[data-tab="fn"]
-  [data-pane]:not([data-pane="fn"]),
-.plotter-simulation.is-tabbed
-  .plot-column[data-tab="opt"]
-  [data-pane]:not([data-pane="opt"]),
-.plotter-simulation.is-tabbed
-  .plot-column[data-tab="res"]
-  [data-pane]:not([data-pane="res"]),
-.plotter-simulation.is-tabbed
-  .plot-column[data-tab="info"]
-  [data-pane]:not([data-pane="info"]) {
-  display: none;
-}
-
-/* ───────── Baris fungsi ───────── */
-
-/* Satu baris: [tampil] [ y = ........ ] f′ ×   (label disembunyikan) */
-.plot-slot {
+/* satu grafik:  ① [ rumus ............ ]  👁  f′  ✕ */
+.gp-slot {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto 22px;
-  grid-template-areas:
-    "show inp der del"
-    ". st st st";
-  align-items: center;
-  column-gap: 4px;
-  row-gap: 1px;
-  min-width: 0;
-}
-
-.plot-slot-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-.plot-toggle-show {
-  grid-area: show;
-}
-
-.plot-slot > .plot-input {
-  grid-area: inp;
-}
-
-.plot-toggle-der {
-  grid-area: der;
-}
-
-.plot-slot > .plot-del {
-  grid-area: del;
-}
-
-.plot-slot > .plot-status {
-  grid-area: st;
-}
-
-.plot-toggle {
-  display: inline-flex;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
-  color: var(--pl-muted);
-  font-size: 11px;
+}
+.gp-slot.is-off .gp-input {
+  opacity: 0.55;
+}
+
+.gp-num-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sc);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
   font-weight: 700;
-  cursor: pointer;
 }
 
-.plot-toggle input,
-.plot-options input {
-  flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--plot-accent);
-}
-
-.plot-toggle-show span {
-  display: none;
-}
-
-.plot-input {
+.gp-input {
   width: 100%;
   min-width: 0;
   height: 30px;
   padding: 0 8px;
-  border: 1px solid #aebdc2;
-  border-left-width: 4px;
-  border-radius: 0;
-  background: #fcfdfc;
-  color: var(--pl-ink);
-  font-family: "Cambria Math", "Courier New", monospace;
-  font-size: 14px;
-}
-
-.plot-input[aria-invalid="true"] {
-  border-color: #b23a48;
-  background: #fff6f6;
-}
-
-.plot-status {
-  min-height: 0;
-  margin: 0;
-  color: var(--pl-muted);
-  font-size: 10px;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-/* Di layar kecil hanya pesan kesalahan yang ditampilkan */
-.plot-status:not(.is-error) {
-  display: none;
-}
-
-.plot-status.is-error {
-  color: #b23a48;
-  font-weight: 600;
-}
-
-.plot-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 4px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--pl-muted);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.plot-icon-btn:hover {
-  border-color: #aebdc2;
-  background: var(--pl-paper);
-  color: var(--plot-inter);
-}
-
-.plot-icon-btn[aria-pressed="true"] {
-  border-color: var(--plot-accent);
-  color: var(--plot-accent);
-}
-
-.plot-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  justify-self: start;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--sc);
+  border-radius: 8px;
   background: #fff;
-  color: var(--pl-ink);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.gp-input::placeholder {
+  color: var(--soft);
+}
+.gp-input:focus {
+  border-color: var(--sc);
+}
+.gp-input[aria-invalid="true"] {
+  border-color: #e11d48;
+  background: #fff1f2;
+}
+
+.gp-slot-acts {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.gp-mini {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--mute);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.gp-mini:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.gp-mini[aria-pressed="true"] {
+  color: var(--ink);
+}
+.gp-mini.gp-der {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+}
+.gp-mini.gp-der[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.gp-mini:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
-.plot-add:hover {
-  border-color: var(--plot-accent);
-  background: #e8f3f1;
+.gp-err {
+  grid-column: 2 / -1;
+  margin: 0;
+  padding: 3px 8px;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
-/* ───────── Parameter: a =  −  ──●──  +  [1]  ▶ ───────── */
+/* panel sempit: tombol tampil/turunan/hapus pindah ke baris bawah */
+@container (max-width: 299px) {
+  .gp-slot {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+  .gp-slot-acts {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
 
-.plot-params {
+.gp-action {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.gp-action:hover {
+  border-color: var(--ink);
+}
+
+/* ───────── Parameter (slider) ───────── */
+
+.gp-params {
   display: grid;
   gap: 2px;
-  padding: 6px 8px;
-  border: 1px solid var(--pl-line);
-  background: #f7faf9;
 }
 
-.plot-params > span {
-  color: var(--pl-muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.plot-param {
+/* satu baris:  a  −  ────●────  +  1  ▶ */
+.gp-param {
+  --sc: var(--ink);
   display: grid;
-  grid-template-columns: 26px 20px minmax(0, 1fr) 20px 44px 22px;
+  grid-template-columns: 16px var(--step) minmax(0, 1fr) var(--step) 46px var(--step);
   align-items: center;
   column-gap: 4px;
-  min-width: 0;
 }
 
-.plot-param label {
-  font-size: 13px;
+.gp-param label {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
   font-weight: 700;
-  white-space: nowrap;
 }
 
-.plot-param label em {
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-}
-
-.plot-nudge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
+.gp-step {
+  display: inline-grid;
+  place-items: center;
+  width: var(--step);
+  height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
-  color: var(--pl-ink);
+  color: var(--ink);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.plot-nudge:hover {
-  border-color: var(--plot-accent);
-  background: #f1f6f5;
+.gp-step:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.gp-step:active:not(:disabled) {
+  background: var(--line);
+}
+.gp-play[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
-.plot-nudge:active {
-  background: #e0ecea;
-}
-
-.plot-param-num {
+.gp-num {
   width: 100%;
   min-width: 0;
   height: 24px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fff;
-  color: var(--plot-accent);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  appearance: textfield;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--wash);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
-
-.plot-param-num::-webkit-outer-spin-button,
-.plot-param-num::-webkit-inner-spin-button {
+.gp-num::-webkit-outer-spin-button,
+.gp-num::-webkit-inner-spin-button {
   margin: 0;
   -webkit-appearance: none;
 }
 
-/* Area sentuh 28px, tampilan visual hanya 3px. Isi dari titik 0 (tengah). */
-.plot-range {
-  --lo: 50%;
+/* area sentuh 28px, tampilan hanya garis tipis; --lo/--hi: bagian berwarna
+   (dari tengah, karena parameter bisa negatif) */
+.gp-range {
+  --lo: 0%;
   --hi: 50%;
   -webkit-appearance: none;
   appearance: none;
@@ -621,952 +600,611 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
-.plot-range::-webkit-slider-runnable-track {
+.gp-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--pl-line) 0,
-    var(--pl-line) var(--lo),
-    var(--plot-accent) var(--lo),
-    var(--plot-accent) var(--hi),
-    var(--pl-line) var(--hi),
-    var(--pl-line) 100%
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
-.plot-range::-webkit-slider-thumb {
+.gp-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--plot-accent);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.plot-range::-moz-range-track {
+.gp-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--pl-line);
+  background: linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
+  );
 }
-
-.plot-range::-moz-range-progress {
-  height: var(--track);
-  border-radius: 999px;
-  background: transparent;
-}
-
-.plot-range::-moz-range-thumb {
-  box-sizing: border-box;
+.gp-range::-moz-range-thumb {
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--plot-accent);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.plot-range:focus-visible {
+.gp-range:focus-visible {
   outline: none;
 }
-
-.plot-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--plot-accent);
+.gp-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
 }
-
-.plot-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--plot-accent);
+.gp-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
 @media (pointer: coarse) {
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .plot-input,
-  .plot-param-num {
-    font-size: 16px;
+  .gp {
+    --step: 26px;
   }
-
-  .plot-param-num {
+  .gp-mini {
+    width: 28px;
     height: 28px;
   }
-
-  .plot-param {
-    grid-template-columns: 26px 22px minmax(0, 1fr) 22px 48px 22px;
-  }
-
-  .plot-nudge {
-    width: 22px;
-    height: 22px;
+  /* 16px mencegah iOS memperbesar halaman saat mengetik */
+  .gp-input,
+  .gp-num {
+    font-size: 16px;
   }
 }
 
-/* ───────── Palet simbol, opsi, contoh ───────── */
+/* ───────── Sisipan rumus ───────── */
 
-.plot-palette,
-.plot-presets {
-  display: grid;
-  gap: 5px;
-}
-
-.plot-palette > span,
-.plot-presets > span {
-  color: var(--pl-muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.plot-palette-buttons,
-.plot-presets-buttons {
+.gp-snips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-
-.plot-palette-buttons button,
-.plot-presets-buttons button {
+.gp-snips button {
   min-width: 34px;
-  height: 28px;
+  height: 26px;
   padding: 0 8px;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
-  color: var(--pl-ink);
-  font-family: "Cambria Math", Georgia, serif;
+  color: var(--ink);
+  font-family: var(--serif);
   font-size: 13px;
-  font-weight: 700;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.gp-snips button:hover {
+  border-color: var(--ink);
+}
+.gp-snips button:active {
+  background: var(--line);
 }
 
-.plot-presets-buttons button {
-  height: 30px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 11px;
-}
+/* ───────── Opsi ───────── */
 
-.plot-palette-buttons button:hover,
-.plot-presets-buttons button:hover {
-  border-color: var(--plot-accent);
-  background: #e8f3f1;
-}
-
-.plot-options {
-  display: grid;
-  gap: 4px;
-}
-
-.plot-options label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  color: var(--pl-ink);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.plot-opt-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.plot-file-actions {
+.gp-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
+}
+.gp-chips button {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--mute);
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.gp-chips button:hover {
+  border-color: var(--ink);
+}
+.gp-chips button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
-.plot-file-actions button {
+/* contoh cepat: 2 kolom, tiap pilihan punya titik warna */
+.gp-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+.gp-presets button {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
-  color: var(--pl-ink);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.gp-presets button::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kc);
+}
+.gp-presets button:hover {
+  border-color: var(--kc);
 }
 
-.plot-file-actions button:hover {
-  border-color: var(--plot-accent);
-  background: #e8f3f1;
+.gp .sim-appearance-controls {
+  border-radius: 8px;
+  font-family: var(--sans);
+}
+.gp .sim-appearance-stepper {
+  font-size: 11px;
+  font-weight: 600;
+}
+.gp .sim-appearance-stepper button {
+  border-radius: 50%;
+}
+
+.gp-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 /* ───────── Hasil ───────── */
 
-.plot-warning {
+.gp-note {
   margin: 0;
   padding: 5px 8px;
-  border: 1px solid #e2c27a;
-  background: #fff7e0;
-  color: #6b5200;
-  font-size: 11px;
-  line-height: 1.35;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-size: 10.5px;
+  line-height: 1.5;
 }
 
-.plot-pins {
-  display: grid;
-  gap: 4px;
-}
-
-.plot-pins-head {
+.gp-pins-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--pl-muted);
-  font-size: 10px;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 11px;
   font-weight: 700;
 }
-
-.plot-pins-head button {
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--pl-ink);
-  font-size: 10px;
-  font-weight: 600;
+.gp-pins-head button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mute);
+  font-size: 10.5px;
+  text-decoration: underline;
   cursor: pointer;
 }
-
-.plot-pins-head button:hover {
-  border-color: var(--plot-accent);
-  background: #e8f3f1;
-}
-
-.plot-pins ul {
+.gp-pins ul {
   display: grid;
   gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-
-.plot-pins li {
+.gp-pins li {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 3px 4px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
 }
-
-.plot-pins li small {
-  flex: 1 1 auto;
-  color: var(--pl-muted);
-  font-family: "Open Sans", sans-serif;
+.gp-pins li i {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.gp-pins li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gp-pins li small {
+  color: var(--mute);
   font-size: 10px;
-  font-weight: 600;
+  white-space: nowrap;
 }
-
-.plot-pins li button {
-  margin-left: auto;
-  min-width: 22px;
+.gp-pins li button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 22px;
   height: 22px;
-  padding: 0 5px;
-  border: 1px solid transparent;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
   background: transparent;
-  color: var(--pl-muted);
-  font-size: 13px;
-  line-height: 1;
+  color: var(--mute);
   cursor: pointer;
 }
-
-.plot-pins li button:hover {
-  border-color: #aebdc2;
-  background: var(--pl-paper);
-  color: var(--plot-inter);
+.gp-pins li button:hover {
+  background: var(--line);
+  color: var(--ink);
 }
 
-.plot-readouts {
+.gp-readouts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   margin: 0;
-  border: 1px solid var(--pl-line);
-  background: var(--pl-line);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
 }
-
-.plot-readouts > div {
+.gp-readouts > div {
   min-width: 0;
-  padding: 5px 8px;
+  padding: 4px 8px;
   background: #fff;
 }
-
-.plot-readouts dt {
+.gp-readouts > .gp-wide {
+  grid-column: 1 / -1;
+}
+.gp-readouts dt {
   display: flex;
   align-items: center;
-  gap: 3px;
-  margin-bottom: 2px;
-  color: var(--pl-muted);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.plot-readouts dt .plot-swatch {
-  width: 9px;
-  height: 9px;
-}
-
-.plot-readouts dt .plot-swatch:last-of-type {
-  margin-right: 4px;
-}
-
-.plot-readouts dd {
-  display: grid;
-  gap: 2px;
-  margin: 0;
-  color: var(--plot-inter);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--mute);
+  font-size: 9px;
   line-height: 1.3;
-  overflow-wrap: anywhere;
 }
-
-.plot-readouts dd.plot-none {
-  color: var(--pl-muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 11px;
+.gp-readouts dt i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
-
-.plot-readouts dd.plot-same {
-  color: var(--plot-accent);
-  font-family: "Open Sans", sans-serif;
-  font-size: 12px;
+.gp-readouts dt small {
+  font-size: inherit;
 }
-
-.plot-readouts small {
-  display: block;
-  margin-top: 2px;
-  color: var(--pl-muted);
-  font-size: 10px;
-}
-
-.plot-axis-table-wrap {
-  min-width: 0;
-  overflow-x: auto;
-  border: 1px solid var(--pl-line);
-  background: #fff;
-}
-
-.plot-axis-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-}
-
-.plot-axis-table caption {
-  padding: 5px 8px;
-  color: var(--pl-muted);
-  font-size: 10px;
-  font-weight: 600;
-  text-align: left;
-}
-
-.plot-axis-table th,
-.plot-axis-table td {
-  padding: 4px 8px;
-  border-top: 1px solid var(--pl-line);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-}
-
-.plot-axis-table thead th {
-  color: var(--pl-muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10px;
-}
-
-.plot-axis-table tbody th {
-  font-family: "Open Sans", sans-serif;
-  font-size: 11px;
-}
-
-.plot-axis-table td {
-  color: #183e54;
-  overflow-wrap: anywhere;
-}
-
-/* ───────── Info ───────── */
-
-.plot-guide {
-  border: 1px solid var(--pl-line);
-  background: #fff;
-  font-size: 11px;
-}
-
-.plot-guide summary {
-  padding: 6px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.plot-guide table {
-  width: calc(100% - 16px);
-  margin: 0 8px;
-  border-collapse: collapse;
-}
-
-.plot-guide th,
-.plot-guide td {
-  padding: 4px 6px;
-  border-top: 1px solid var(--pl-line);
-  font-size: 10.5px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.plot-guide thead th {
-  color: var(--pl-muted);
-  font-weight: 700;
-}
-
-.plot-guide code {
-  padding: 1px 4px;
-  background: #eef3f2;
-  font-family: "Courier New", monospace;
-  font-size: 10.5px;
-  overflow-wrap: anywhere;
-}
-
-.plot-guide p {
-  margin: 6px 8px 8px;
-  color: var(--pl-muted);
-  font-size: 10.5px;
-  line-height: 1.45;
-}
-
-.plot-insights {
+.gp-readouts dd {
   display: grid;
-  gap: 5px;
+  gap: 1px;
   margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--pl-muted);
-  font-size: 10.5px;
-  line-height: 1.45;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.gp-guide dd {
+  font-weight: 500;
 }
 
-.plot-insights li {
-  padding-left: 8px;
-  border-left: 3px solid var(--pl-line);
-}
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .plotter-simulation.is-tabbed {
+  .gp {
     gap: 4px;
     padding: 4px;
   }
-
-  .plotter-simulation.is-tabbed .plot-boards {
+  .gp-layout {
     gap: 4px;
   }
-
-  .plotter-simulation.is-tabbed .plot-controls,
-  .plotter-simulation.is-tabbed .plot-results {
-    padding: 6px;
+  .gp-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
-  .plot-range {
+  .gp-range {
     height: 24px;
+  }
+  .gp-readouts > div {
+    padding: 2px 7px;
   }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .gp {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .gp-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .gp-chip {
+    padding: 4px 14px;
+    font-size: clamp(20px, 2vw, 26px);
+  }
+  .gp-pinfo {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .gp-toast {
+    font-size: 12px;
+  }
+  .gp-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .gp-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+  .gp-tabs button {
+    height: 30px;
+    font-size: 13px;
+  }
+  .gp-slots {
+    gap: 8px;
+  }
+  .gp-input {
+    height: 36px;
+    font-size: 14px;
+  }
+  .gp-num-badge {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+  .gp-slot {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+  }
+  .gp-mini {
+    width: 32px;
+    height: 32px;
+  }
+  .gp-err,
+  .gp-note {
+    font-size: 12px;
+  }
+  .gp-action {
+    height: 34px;
+    font-size: 13px;
+  }
+  .gp-param {
+    grid-template-columns: 22px var(--step) minmax(0, 1fr) var(--step) 56px var(--step);
+  }
+  .gp-param label {
+    font-size: 22px;
+  }
+  .gp-num {
+    height: 28px;
+    font-size: 13px;
+  }
+  .gp-range {
+    height: 32px;
+  }
+  .gp-snips button {
+    height: 32px;
+    font-size: 15px;
+  }
+  .gp-chips button {
+    height: 30px;
+    font-size: 12px;
+  }
+  .gp-presets {
+    gap: 6px;
+  }
+  .gp-presets button {
+    height: 34px;
+    font-size: 12px;
+  }
+  .gp .sim-appearance-stepper {
+    font-size: 12px;
+  }
+  .gp-pins li,
+  .gp-readouts dd {
+    font-size: 13px;
+  }
+  .gp-pins-head {
+    font-size: 13px;
+  }
+  .gp-readouts > div {
+    padding: 8px 12px;
+  }
+  .gp-readouts dt {
+    font-size: 11px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) {
+  .gp {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) .plot-orientation-hint {
+  .gp-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--plot-accent);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .plot-orientation-hint svg {
+  .gp-hint svg {
     flex: 0 0 auto;
-    color: var(--plot-accent);
+    color: var(--mute);
   }
-
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) .plot-boards {
+  .gp-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) .plot-board-panel {
-    height: clamp(260px, 48dvh, 440px);
+  .gp-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) .plot-controls,
-  .plotter-simulation.is-tabbed:not(.is-fullscreen) .plot-results {
+  .gp-panel {
     overflow: visible;
   }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, info nilai, legenda, dan panel
+   pengatur mengambang di atasnya. Diletakkan paling akhir agar menimpa
+   aturan potret dan desktop. */
 
-.plotter-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  gap: 12px;
-  padding: 14px;
-  font-size: 13px;
-}
+.gp.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.plotter-simulation:not(.is-tabbed) .plot-boards {
-  grid-template-rows: clamp(520px, 76vh, 760px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-column {
-  display: contents;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-tabs {
-  display: none;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-controls {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 16px;
-  min-width: 0;
-  min-height: 0;
-  padding: 14px;
-  border: 1px solid var(--pl-line);
-  background: #fff;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-/* Hasil di bawah: lagi-lagi 2 : 1 (hasil | panduan) */
-.plotter-simulation:not(.is-tabbed) .plot-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  min-width: 0;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pane {
-  gap: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-trace {
-  left: 10px;
-  bottom: 10px;
-  padding: 5px 12px;
-  font-size: 14px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-toast {
-  top: 10px;
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-empty {
-  font-size: 14px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-hint {
-  display: block;
-  margin: 0;
-  padding: 0 14px 8px;
-  color: var(--pl-muted);
-  font-size: 10px;
-  line-height: 1.4;
-  text-align: center;
-}
-
-/* Baris fungsi dua tingkat: label + saklar di atas, isian di bawah */
-.plotter-simulation:not(.is-tabbed) .plot-slot {
-  grid-template-columns: minmax(0, 1fr) auto auto 26px;
-  grid-template-areas:
-    "lab show der del"
-    "inp inp inp inp"
-    "st st st st";
-  column-gap: 10px;
-  row-gap: 5px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-slot-label {
-  position: static;
-  grid-area: lab;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  width: auto;
-  height: auto;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-slot-label em {
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-toggle-show span {
-  display: inline;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-input {
-  height: 40px;
-  padding: 0 11px;
-  font-size: 15px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-status {
-  min-height: 15px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-status:not(.is-error) {
-  display: block;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-icon-btn {
-  min-width: 26px;
-  height: 26px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-add {
-  height: 32px;
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-params {
-  gap: 6px;
-  padding: 10px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-params > span {
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-param {
-  grid-template-columns: 30px 24px minmax(0, 1fr) 24px 56px 26px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-nudge {
-  width: 24px;
-  height: 24px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-param-num {
-  height: 30px;
-  font-size: 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-range {
-  height: 30px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-palette > span,
-.plotter-simulation:not(.is-tabbed) .plot-presets > span {
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-palette-buttons button {
-  height: 32px;
-  font-size: 14px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-presets-buttons button {
-  height: 32px;
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-options label {
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-file-actions button {
-  height: 32px;
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pins {
-  padding: 12px 14px;
-  border: 1px solid var(--pl-line);
-  background: #fff;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pins ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pins li {
-  font-size: 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pins li small {
-  flex: 0 0 auto;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-pins li button {
-  margin-left: 0;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-warning {
-  padding: 9px 12px;
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-readouts {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-readouts > div {
-  padding: 10px 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-readouts dd {
-  font-size: 15px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-readouts dd.plot-none {
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-readouts dd.plot-same {
-  font-size: 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-axis-table {
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-axis-table caption {
-  padding: 9px 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-axis-table th,
-.plotter-simulation:not(.is-tabbed) .plot-axis-table td {
-  padding: 7px 13px;
-  font-size: 14px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-axis-table tbody th {
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-guide {
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-guide summary {
-  padding: 10px 13px;
-  font-size: 12px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-guide table {
-  width: calc(100% - 26px);
-  margin: 0 13px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-guide th,
-.plotter-simulation:not(.is-tabbed) .plot-guide td {
-  padding: 6px 8px;
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-guide p {
-  margin: 8px 13px 12px;
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-insights {
-  gap: 6px;
-  font-size: 11px;
-}
-
-.plotter-simulation:not(.is-tabbed) .plot-insights li {
-  padding-left: 10px;
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.plotter-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
+  display: block;
   width: 100vw;
   height: 100dvh;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.plotter-simulation:fullscreen.simulation-fullscreen-frame {
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  overflow: hidden !important;
-}
-
-.plotter-simulation.simulation-fullscreen-frame.is-fullscreen:not(:fullscreen) {
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
-  aspect-ratio: auto !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  transform: none !important;
-}
-
-.plotter-simulation.is-fullscreen .plot-orientation-hint {
+.gp.is-fs .gp-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .plotter-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    font-size: 13px;
-  }
-
-  .plotter-simulation.is-fullscreen .plot-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-
-  .plotter-simulation.is-fullscreen .plot-input {
-    height: 34px;
-  }
-
-  .plotter-simulation.is-fullscreen .plot-trace {
-    font-size: 14px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .plotter-simulation.is-fullscreen .plot-boards {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .plotter-simulation.is-fullscreen .plot-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, panel input (tab + isi) tersembunyi dan muncul
-   mengambang di atas grafik lewat tombol toolbar di deretan tombol alat.
-   Ditaruh setelah aturan potret agar menimpanya. */
-.plotter-simulation.is-fullscreen .plot-boards {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.plotter-simulation.is-fullscreen .plot-board-panel {
+.gp.is-fs .gp-layout {
+  display: block;
   height: 100%;
 }
 
-.plotter-simulation.is-fullscreen .plot-stage {
+.gp.is-fs .gp-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.gp.is-fs .gp-stage {
   height: 100%;
 }
 
-.plotter-simulation.is-fullscreen .plot-column.is-floating {
+/* legenda: chip kecil di kiri bawah */
+.gp.is-fs .gp-legend {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  flex-wrap: wrap;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+.gp.is-fs .gp-legend:empty {
+  display: none;
+}
+
+/* pesan singkat naik di atas legenda */
+.gp.is-fs .gp-toast {
+  bottom: calc(var(--inset-b) + 44px);
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.gp.is-fs .gp-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  width: min(340px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(340px, 56vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
+}
+.gp.is-fs .gp-panel.is-floating.is-open {
+  display: flex;
 }
 
-.plotter-simulation.is-fullscreen .plot-column.is-floating.is-open {
-  display: grid;
-}
-
-.plot-tools .plot-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--plot-accent);
-  background: #d6ebe8;
-  color: var(--plot-accent);
+/* ponsel lanskap pendek: tombol toolbar sedikit lebih kecil agar semua muat */
+@media (max-height: 360px) {
+  .gp.is-fs {
+    --btn: 30px;
+  }
+  .gp.is-fs .gp-tools {
+    gap: 3px;
+  }
+  .gp.is-fs .gp-panel.is-floating {
+    gap: 6px;
+    padding: 6px 8px;
+  }
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .plotter-simulation.is-fullscreen .plot-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(380px, calc(100% - 70px));
+  .gp.is-fs .gp-panel.is-floating {
+    width: min(400px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .plotter-simulation * {
+  .gp * {
     transition: none !important;
+    animation: none !important;
   }
 }

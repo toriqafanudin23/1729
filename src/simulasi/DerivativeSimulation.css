@@ -1,115 +1,90 @@
-/* Simulasi turunan (disusun ulang, mengikuti VectorSimulation.css).
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. */
+/* Simulasi turunan — tema slate landing page 1729 (sama dengan fungsi kuadrat).
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-.derivative-simulation,
-.derivative-simulation *,
-.derivative-simulation *::before,
-.derivative-simulation *::after {
+.dv,
+.dv *,
+.dv *::before,
+.dv *::after {
   box-sizing: border-box;
 }
 
-.derivative-simulation {
-  --k-teal: #087f8c;
-  --k-orange: #d16b36;
-  --k-green: #527a41;
-  --k-gold: #927000;
-  --k-red: #b23a48;
-  --k-ink: #183e54;
-  --ink: var(--sim-ink, #18313d);
-  --muted: var(--sim-muted, #62727d);
-  --line: var(--sim-line, #d5e0e4);
-  --paper: var(--sim-paper, #f3f7f5);
+.dv {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
   --track: 3px;
-  --thumb: 13px;
-  --step: 22px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--paper);
-  color: var(--ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.derivative-simulation h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.derivative-simulation button {
-  font-family: inherit;
+.dv button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.derivative-simulation button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.derivative-simulation button:focus-visible,
-.derivative-simulation input:focus-visible {
-  outline: 2px solid var(--k-teal);
+.dv button:focus-visible,
+.dv input:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.dv-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.dv-orientation-hint {
+.dv-hint {
   display: none;
 }
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.derivative-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.dv-main {
+.dv-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.dv-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.dv-board-panel {
+.dv-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
@@ -117,7 +92,6 @@
   position: relative;
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
 .dv-board {
@@ -126,292 +100,209 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
 .dv-board:active {
   cursor: grabbing;
 }
 
-.dv-board .JXGtext {
-  font-family: "Open Sans", sans-serif;
-}
-
-/* Persamaan dan kemiringan melayang di kiri atas grafik */
-.dv-caption {
+/* Fungsi + kemiringan, kiri atas */
+.dv-eq {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
   display: grid;
   gap: 1px;
-  max-width: calc(100% - 50px);
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
   margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid var(--k-ink);
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
-  color: var(--k-ink);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.3;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
   pointer-events: none;
+}
+.dv-eq-fn {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
-
-.dv-caption-slope {
-  color: var(--k-orange);
-  font-size: 12px;
+.dv-eq-slope {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.dv-eq-slope sub {
+  font-size: 0.75em;
+  line-height: 0;
 }
 
-/* Layar penuh, zoom, pusatkan: melayang di kanan atas */
-.dv-view-tools {
+/* Toolbar mengambang, kanan atas */
+.dv-tools {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
-.dv-view-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+.dv-tools button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   color: var(--ink);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.dv-tools button:hover {
+  border-color: var(--ink);
+}
+.dv-tools .dv-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
-.dv-view-tools button:hover {
-  border-color: var(--k-teal);
-  background: #e8f3f1;
-}
-
+/* Legenda */
 .dv-legend {
   display: flex;
   gap: 4px 12px;
-  padding: 3px 8px;
+  margin: 0;
+  padding: 4px 10px;
   border-top: 1px solid var(--line);
-  color: var(--muted);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
   font-size: 10px;
+  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
-
 .dv-legend::-webkit-scrollbar {
   display: none;
 }
-
-.dv-legend span {
+.dv-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
 .dv-legend i {
   width: 14px;
   height: 0;
-  border: 0 solid var(--k-ink);
-  border-top-width: 3px;
+  border-top: 3px solid;
 }
-
-.dv-legend .legend-secant {
-  border-color: var(--k-orange);
-}
-
-.dv-legend .legend-tangent {
-  border-color: var(--k-teal);
+.dv-legend i.dash {
   border-top-width: 2px;
   border-top-style: dashed;
 }
-
 .dv-legend b {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
-.dv-legend .dot-p {
-  background: var(--k-gold);
-}
+/* ───────── Pengatur ───────── */
 
-.dv-legend .dot-q {
-  background: var(--k-orange);
-}
-
-/* ───────── Tab panel kanan ───────── */
-
-.dv-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.dv-tabs button {
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.dv-tabs button:first-child {
-  margin-left: 0;
-}
-
-.dv-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--k-teal);
-  background: var(--k-teal);
-  color: #fff;
-}
-
-/* Isi panel: satu kartu putih; judul h3 tidak perlu (sudah ada di tab) */
-.derivative-simulation.is-tabbed .dv-side,
-.derivative-simulation.is-tabbed .dv-results {
+.dv-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--line);
-  background: #fff;
+  padding: 10px;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
   scrollbar-width: thin;
 }
 
-.derivative-simulation.is-tabbed .dv-side,
-.derivative-simulation.is-tabbed .dv-results {
+/* Pilihan fungsi */
+.dv-fns {
   display: grid;
-  align-content: start;
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
 }
-
-.derivative-simulation.is-tabbed .dv-panel > h3 {
-  display: none;
-}
-
-/* Hanya satu tab yang tampil */
-.derivative-simulation.is-tabbed
-  .dv-column[data-tab="input"]
-  [data-pane]:not([data-pane="input"]),
-.derivative-simulation.is-tabbed
-  .dv-column[data-tab="view"]
-  [data-pane]:not([data-pane="view"]),
-.derivative-simulation.is-tabbed
-  .dv-column[data-tab="result"]
-  [data-pane]:not([data-pane="result"]),
-.derivative-simulation.is-tabbed
-  .dv-column[data-tab="limit"]
-  [data-pane]:not([data-pane="limit"]),
-.derivative-simulation.is-tabbed .dv-column[data-tab="input"] .dv-results,
-.derivative-simulation.is-tabbed .dv-column[data-tab="view"] .dv-results,
-.derivative-simulation.is-tabbed .dv-column[data-tab="result"] .dv-side,
-.derivative-simulation.is-tabbed .dv-column[data-tab="limit"] .dv-side {
-  display: none;
-}
-
-.dv-panel {
+.dv-fns button {
+  height: 26px;
   min-width: 0;
-}
-
-.dv-insights {
-  display: none;
-}
-
-/* ───────── Pilih fungsi ───────── */
-
-.dv-segmented {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
-}
-
-.dv-segmented button {
-  flex: 1 1 auto;
-  min-height: 30px;
-  padding: 0 10px;
-  margin-top: -1px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
   color: var(--ink);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-
-.dv-segmented button:hover {
-  background: #e8f3f1;
+.dv-fns button:hover {
+  border-color: var(--ink);
 }
-
-.dv-segmented button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--k-teal);
-  background: var(--k-teal);
+.dv-fns button[aria-checked="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
   color: #fff;
 }
 
-/* ───────── Baris slider: x₀  −  ──●──  +  1,0 ───────── */
-
-.dv-rows {
+.dv-sliders {
   display: grid;
   gap: 2px;
 }
 
-.dv-row-wrap + .dv-row-wrap {
-  margin-top: 4px;
-}
-
-.dv-row {
-  --tone: var(--k-teal);
+/* satu baris:  x₀  −  ────●────  +  1,0 */
+.dv-slider {
   display: grid;
-  grid-template-columns: 24px var(--step) minmax(0, 1fr) var(--step) 46px;
+  grid-template-columns: 20px var(--step) minmax(0, 1fr) var(--step) 44px;
   align-items: center;
   column-gap: 4px;
-  min-width: 0;
 }
 
-.dv-row-h {
-  --tone: var(--k-orange);
-}
-
-.dv-row label {
-  color: var(--tone);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
+.dv-slider label {
+  color: var(--sc);
+  font-family: var(--serif);
+  font-size: 17px;
   font-style: italic;
-  font-weight: 800;
+  font-weight: 700;
+}
+
+.dv-slider output {
+  color: var(--sc);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
   white-space: nowrap;
 }
 
-.dv-row-hint {
-  display: none;
-  margin: 0;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.dv-nudge-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.dv-step {
+  display: inline-grid;
+  place-items: center;
   width: var(--step);
   height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
   color: var(--ink);
@@ -420,36 +311,14 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.dv-nudge-button:hover {
-  border-color: var(--tone);
-  background: #f1f6f5;
+.dv-step:hover {
+  border-color: var(--sc);
+}
+.dv-step:active {
+  background: var(--line);
 }
 
-.dv-nudge-button:active {
-  background: #e0ecea;
-}
-
-.dv-value {
-  min-width: 0;
-  color: var(--tone);
-  font-size: 12.5px;
-  font-weight: 800;
-  text-align: right;
-  white-space: nowrap;
-}
-
-@media (pointer: coarse) {
-  .derivative-simulation {
-    --step: 24px;
-  }
-
-  .dv-row {
-    grid-template-columns: 24px var(--step) minmax(0, 1fr) var(--step) 48px;
-  }
-}
-
-/* Area sentuh 28px, tampilan visual hanya 3px. Isi dari titik 0 (tengah). */
+/* area sentuh 28px, tampilan hanya garis tipis; isi dari titik 0 (tengah) */
 .dv-range {
   --lo: 50%;
   --hi: 50%;
@@ -462,638 +331,376 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
 .dv-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--line) 0,
-    var(--line) var(--lo),
-    var(--tone) var(--lo),
-    var(--tone) var(--hi),
-    var(--line) var(--hi),
-    var(--line) 100%
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
 .dv-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .dv-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--line);
+  background: linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
+  );
 }
-
-.dv-range::-moz-range-progress {
-  height: var(--track);
-  border-radius: 999px;
-  background: transparent;
-}
-
 .dv-range::-moz-range-thumb {
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
 .dv-range:focus-visible {
   outline: none;
 }
-
 .dv-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
-
 .dv-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
-/* ───────── Tombol aksi ───────── */
-
-.dv-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.dv-primary-button,
-.dv-reset-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.dv-primary-button {
-  border-color: var(--k-teal);
-  background: var(--k-teal);
-  color: #fff;
-}
-
-.dv-primary-button:hover {
-  background: #066b76;
-}
-
-.dv-primary-button[aria-pressed="true"] {
-  border-color: var(--k-orange);
-  background: var(--k-orange);
-}
-
-.dv-reset-button:hover {
-  border-color: var(--k-teal);
-  background: #e8f3f1;
-}
-
-/* ───────── Hasil perhitungan ───────── */
-
-.dv-wide {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-}
-
-.dv-wide h3 {
-  margin-bottom: 0;
-}
-
-.dv-readouts {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  margin: 0;
-}
-
-.dv-readouts > div {
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-}
-
-.dv-readouts dt {
-  margin-bottom: 1px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.dv-readouts dd {
-  margin: 0;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.dv-readouts small {
-  display: block;
-  margin-top: 1px;
-  color: var(--muted);
-  font-size: 9.5px;
-}
-
-.dv-readouts .readout-teal dd {
-  color: var(--k-teal);
-}
-
-.dv-readouts .readout-orange dd {
-  color: var(--k-orange);
-}
-
-.dv-readouts .readout-green dd {
-  color: var(--k-green);
-}
-
-.dv-readouts .readout-gold dd {
-  color: var(--k-gold);
-}
-
-.dv-readouts .readout-red dd {
-  color: var(--k-red);
-}
-
-.dv-readouts .readout-ink dd {
-  color: var(--k-ink);
+@media (pointer: coarse) {
+  .dv {
+    --step: 26px;
+  }
 }
 
 .dv-warning {
   margin: 0;
-  padding: 6px 8px;
-  border: 1px solid #e2c27a;
-  background: #fff7e0;
-  color: #6b5200;
-  font-size: 10.5px;
-  line-height: 1.4;
+  padding: 5px 8px;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
-/* Tabel limit */
-.dv-table-wrap {
+/* Hasil */
+.dv-readouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+.dv-readouts > div {
   min-width: 0;
-  overflow-x: auto;
+  padding: 4px 8px;
+  background: #fff;
 }
-
-.dv-table {
-  width: 100%;
-  border-collapse: collapse;
+.dv-readouts > .wide {
+  grid-column: 1 / -1;
+}
+.dv-readouts dt {
+  color: var(--mute);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.dv-readouts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
   font-size: 11px;
-}
-
-.dv-table caption {
-  padding: 0 0 4px;
-  color: var(--muted);
-  font-size: 10px;
   font-weight: 600;
-  text-align: left;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
-.dv-table th,
-.dv-table td {
-  padding: 4px 6px;
-  border-top: 1px solid var(--line);
-  text-align: right;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
+/* Tombol aksi */
+.dv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dv-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
   white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.dv-actions button:hover {
+  border-color: var(--ink);
+}
+.dv-actions .dv-primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.dv-actions .dv-primary[aria-pressed="true"] {
+  background: #fff;
+  color: var(--ink);
 }
 
-.dv-table thead th {
-  color: var(--muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-}
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-.dv-table tbody th {
-  color: var(--k-orange);
-  font-style: italic;
-}
-
-.dv-table td {
-  color: var(--k-ink);
-}
-
-.dv-table-limit th,
-.dv-table-limit td {
-  background: #e8f3f1;
-  color: var(--k-teal);
-}
-
-.dv-table-limit td {
-  text-align: center;
-}
-
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .derivative-simulation.is-tabbed {
+  .dv {
     gap: 4px;
     padding: 4px;
   }
-
-  .derivative-simulation.is-tabbed .dv-main {
+  .dv-layout {
     gap: 4px;
   }
-
-  .derivative-simulation.is-tabbed .dv-side,
-  .derivative-simulation.is-tabbed .dv-results {
-    padding: 6px;
+  .dv-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
+  .dv-fns button {
+    height: 24px;
+  }
   .dv-range {
     height: 24px;
   }
+  .dv-readouts > div {
+    padding: 2px 7px;
+  }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .dv {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .dv-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .dv-eq {
+    padding: 4px 14px;
+  }
+  .dv-eq-fn {
+    font-size: clamp(22px, 2.2vw, 30px);
+  }
+  .dv-eq-slope {
+    font-size: 13px;
+  }
+  .dv-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .dv-panel {
+    gap: 16px;
+    padding: 18px;
+  }
+  .dv-fns button {
+    height: 32px;
+    font-size: 13px;
+  }
+  .dv-sliders {
+    gap: 8px;
+  }
+  .dv-slider {
+    grid-template-columns: 26px var(--step) minmax(0, 1fr) var(--step) 56px;
+  }
+  .dv-slider label {
+    font-size: 22px;
+  }
+  .dv-slider output {
+    font-size: 13px;
+  }
+  .dv-range {
+    height: 32px;
+  }
+  .dv-readouts > div {
+    padding: 9px 12px;
+  }
+  .dv-readouts dt {
+    font-size: 11px;
+  }
+  .dv-readouts dd {
+    font-size: 14px;
+  }
+  .dv-warning {
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+  .dv-actions button {
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) {
+  .dv {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-orientation-hint {
+  .dv-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--k-teal);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .dv-orientation-hint svg {
+  .dv-hint svg {
     flex: 0 0 auto;
-    color: var(--k-teal);
+    color: var(--mute);
   }
-
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-main {
+  .dv-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-board-panel {
-    height: clamp(250px, 46dvh, 420px);
+  .dv-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-side,
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-results {
+  .dv-panel {
     overflow: visible;
   }
-
-  .derivative-simulation.is-tabbed:not(.is-fullscreen) .dv-readouts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, fungsi/kemiringan, legenda, dan
+   panel pengatur mengambang di atasnya. Diletakkan paling akhir agar
+   menimpa aturan potret dan desktop. */
 
-.derivative-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  --step: 28px;
-  gap: 12px;
-  padding: 14px;
-  border-top: 3px solid var(--gold);
-  font-size: 13px;
-}
+.dv.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.derivative-simulation:not(.is-tabbed) .dv-main {
-  grid-template-rows: clamp(460px, 72vh, 700px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-column {
-  display: contents;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-tabs {
-  display: none;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-side {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 12px;
-  align-items: start;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-panel {
-  padding: 14px;
-  border: 1px solid var(--line);
-  background: #fff;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-caption {
-  top: 10px;
-  left: 10px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: clamp(15px, 1.5vw, 20px);
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-caption-slope {
-  font-size: clamp(13px, 1.3vw, 17px);
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-view-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-view-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-segmented {
-  margin-bottom: 12px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-segmented button {
-  min-height: 36px;
-  font-size: 13px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-row {
-  grid-template-columns: 30px var(--step) minmax(0, 1fr) var(--step) 58px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-row label {
-  font-size: 19px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-row-hint {
-  display: block;
-  padding-left: 34px;
-  margin-top: -4px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-row-wrap + .dv-row-wrap {
-  margin-top: 10px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-value {
-  font-size: 15px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-range {
-  height: 30px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-actions {
-  margin-top: 14px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-primary-button,
-.derivative-simulation:not(.is-tabbed) .dv-reset-button {
-  height: 36px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-readouts {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 10px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-readouts > div {
-  padding: 9px 12px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-readouts dt {
-  font-size: 11px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-readouts dd {
-  font-size: 16px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-readouts small {
-  font-size: 10.5px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-warning {
-  padding: 9px 12px;
-  font-size: 12px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-table {
-  font-size: 12px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-table caption {
-  padding-bottom: 8px;
-  font-size: 11px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-table th,
-.derivative-simulation:not(.is-tabbed) .dv-table td {
-  padding: 7px 10px;
-  font-size: 14px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-table thead th {
-  font-size: 11px;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-insights {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.derivative-simulation:not(.is-tabbed) .dv-insights li {
-  padding-left: 10px;
-  border-left: 3px solid var(--line);
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.derivative-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
+  display: block;
   width: 100vw;
   height: 100dvh;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.derivative-simulation.is-fullscreen .dv-orientation-hint,
-.derivative-simulation.is-fullscreen .dv-insights {
+.dv.is-fs .dv-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .derivative-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    --step: 26px;
-    font-size: 13px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-caption {
-    font-size: 17px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-caption-slope {
-    font-size: 15px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-row {
-    grid-template-columns: 30px var(--step) minmax(0, 1fr) var(--step) 54px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-row label {
-    font-size: 18px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-range {
-    height: 32px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-value {
-    font-size: 14px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-
-  .derivative-simulation.is-fullscreen .dv-readouts dd {
-    font-size: 15px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .derivative-simulation.is-fullscreen .dv-main {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .derivative-simulation.is-fullscreen .dv-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, panel input (tab + isi) tersembunyi dan muncul
-   mengambang di atas grafik lewat tombol toolbar di bawah tombol pusatkan
-   tampilan. Ditaruh setelah aturan potret agar menimpanya. */
-.derivative-simulation.is-fullscreen .dv-main {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.derivative-simulation.is-fullscreen .dv-board-panel {
+.dv.is-fs .dv-layout {
+  display: block;
   height: 100%;
 }
 
-.derivative-simulation.is-fullscreen .dv-column.is-floating {
+.dv.is-fs .dv-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.dv.is-fs .dv-stage {
+  height: 100%;
+}
+
+/* legenda: chip kecil di kiri bawah */
+.dv.is-fs .dv-legend {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.dv.is-fs .dv-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  width: min(360px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(320px, 56vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
 }
-
-.derivative-simulation.is-fullscreen .dv-column.is-floating.is-open {
-  display: grid;
-}
-
-.dv-view-tools .dv-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--k-teal);
-  background: #d6ebe8;
-  color: var(--k-teal);
+.dv.is-fs .dv-panel.is-floating.is-open {
+  display: flex;
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .derivative-simulation.is-fullscreen .dv-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(400px, calc(100% - 70px));
+  .dv.is-fs .dv-panel.is-floating {
+    width: min(380px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .derivative-simulation * {
+  .dv * {
     transition: none !important;
+    animation: none !important;
   }
 }

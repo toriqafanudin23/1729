@@ -1,591 +1,348 @@
-.simulation-page {
-  --sim-ink: #18313d;
-  --sim-muted: #62727d;
-  --sim-line: #d5e0e4;
-  --sim-paper: #f3f7f5;
-  --sim-teal: #087f8c;
-  --sim-orange: #d16b36;
-  --sim-green: #527a41;
-}
+/* Simulasi trigonometri — tema slate landing page 1729 (sama dengan fungsi kuadrat).
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-/* ───────── Beranda & halaman daftar simulasi (tidak berubah) ───────── */
-
-.home-trig-showcase {
-  padding-block: 52px;
-  border-bottom: 1px solid var(--line);
-  background: #f3f7f5;
-}
-
-.home-trig-showcase-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 22px;
-}
-
-.home-trig-showcase-kicker {
-  color: #927000;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-}
-
-.home-trig-showcase-heading h2 {
-  margin: 4px 0 5px;
-  color: var(--navy);
-  font-size: 26px;
-  line-height: 1.35;
-}
-
-.home-trig-showcase-heading p {
-  max-width: 670px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.home-trig-showcase .trigonometry-simulation {
-  margin: 0;
-}
-
-.simulation-section {
-  padding-top: 30px;
-}
-
-.simulation-section:fullscreen {
-  box-sizing: border-box;
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
-  padding: 24px;
-  background: #fff;
-}
-
-.simulation-picker {
-  display: grid;
-  gap: 12px;
-  padding-top: 24px;
-}
-
-.simulation-picker-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.simulation-picker-label {
-  color: var(--sim-ink);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.simulation-picker-count {
-  color: var(--sim-muted);
-  font-size: 11px;
-}
-
-.simulation-select {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 38px 10px 12px;
-  border: 1px solid var(--sim-line);
-  border-radius: 4px;
-  background: #fff;
-  color: var(--sim-ink);
-  font: inherit;
-  font-size: 13px;
-}
-
-.simulation-select:focus-visible {
-  outline: 2px solid var(--sim-teal);
-  outline-offset: 3px;
-}
-
-.simulation-available {
-  margin-top: 48px;
-  padding-block: 28px 36px;
-  border-top: 1px solid var(--sim-line);
-}
-
-.simulation-available-heading {
-  margin-bottom: 18px;
-}
-
-.simulation-available-heading h2 {
-  margin: 4px 0 0;
-  color: var(--sim-ink);
-  font-size: 21px;
-}
-
-.simulation-available-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.simulation-available-list li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--sim-line);
-  color: var(--sim-ink);
-  font-size: 11px;
-}
-
-.simulation-available-list li span:last-child {
-  flex: 0 0 auto;
-  color: var(--sim-muted);
-  font-size: 10px;
-}
-
-.simulation-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 18px;
-}
-
-.simulation-index {
-  color: #927000;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-}
-
-.simulation-heading h2 {
-  margin: 3px 0 5px;
-  color: var(--sim-ink);
-  font-size: 25px;
-  line-height: 1.3;
-}
-
-.simulation-heading p {
-  max-width: 720px;
-  margin: 0;
-  color: var(--sim-muted);
-  font-size: 13px;
-}
-
-.simulation-prompt {
-  max-width: 720px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-left: 3px solid var(--sim-orange);
-  background: #fff8f2;
-}
-
-.simulation-prompt strong {
-  display: block;
-  margin-bottom: 2px;
-  color: #8b451f;
-  font-size: 10px;
-}
-
-.simulation-prompt p {
-  color: var(--sim-ink);
-  font-size: 11px;
-}
-
-.simulation-level {
-  flex: 0 0 auto;
-  padding: 5px 9px;
-  border: 1px solid #c8d8d5;
-  color: #315d58;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.simulation-heading-actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-}
-
-.simulation-fullscreen-button {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid #c49a00;
-  background: var(--gold);
-  color: #18313d;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.simulation-fullscreen-button:hover {
-  border-color: #927000;
-  background: #eab308;
-}
-
-.simulation-fullscreen-button:focus-visible {
-  outline: 2px solid var(--sim-ink);
-  outline-offset: 3px;
-}
-
-/* ───────── Simulasi trigonometri (disusun ulang) ─────────
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. */
-
-.trigonometry-simulation,
-.trigonometry-simulation *,
-.trigonometry-simulation *::before,
-.trigonometry-simulation *::after {
+.tg,
+.tg *,
+.tg *::before,
+.tg *::after {
   box-sizing: border-box;
 }
 
-.trigonometry-simulation {
-  --ink: var(--sim-ink, #18313d);
-  --muted: var(--sim-muted, #62727d);
-  --line: var(--sim-line, #d5e0e4);
-  --paper: var(--sim-paper, #f3f7f5);
-  --teal: var(--sim-teal, #087f8c);
-  --orange: var(--sim-orange, #d16b36);
-  --green: var(--sim-green, #527a41);
+.tg {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
+  --theta: #7c3aed;
   --track: 3px;
-  --thumb: 13px;
-  --step: 22px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--paper);
-  color: var(--ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.trigonometry-simulation h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.trigonometry-simulation button {
-  font-family: inherit;
+.tg button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.trigonometry-simulation button:focus-visible,
-.trigonometry-simulation input:focus-visible {
-  outline: 2px solid var(--teal);
+.tg button:focus-visible,
+.tg input:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.trig-orientation-hint {
+.tg-hint {
   display: none;
 }
 
-.trig-explanation {
-  display: none;
-}
+/* ───────── Pembagian 2 : 1 ───────── */
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
-
-.trigonometry-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-/* Lingkaran : (input + grafik) = 1 : 2 */
-.trig-main {
+.tg-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 8px;
   height: 100%;
-}
-
-/* Kolom kanan: input di atas, grafik di bawah, input : grafik = 1 : 2 */
-.trig-right {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.trig-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
-/* ───────── Grafik: lingkaran satuan + grafik fungsi ───────── */
+/* ───────── Grafik ───────── */
 
-.trig-board-panel {
+.tg-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
-.trig-stage {
+.tg-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
-.trig-circle-panel {
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.trig-board-cell {
-  position: absolute;
-  inset: 0;
-  min-width: 0;
-  min-height: 0;
-}
-
-.trig-board {
+.tg-board {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #fcfdfc;
-  background-image:
-    linear-gradient(rgba(72, 101, 103, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(72, 101, 103, 0.045) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
-.trig-board:active {
+.tg-board:active {
   cursor: grabbing;
 }
 
-.trig-board .JXGtext {
-  font-family: "Open Sans", sans-serif;
-}
-
-/* Sudut θ melayang di kiri atas lingkaran */
-.trig-caption {
+/* Sudut + koordinat, kiri atas */
+.tg-eq {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
-  max-width: calc(100% - 12px);
-  margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid var(--teal);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--ink);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.3;
-  pointer-events: none;
-  overflow-wrap: anywhere;
-}
-
-/* Koordinat titik melayang di kiri bawah lingkaran */
-.trig-tag {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  z-index: 2;
-  max-width: calc(100% - 8px);
-  margin: 0;
-  padding: 1px 6px;
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.3;
-  pointer-events: none;
-  overflow-wrap: anywhere;
-}
-
-/* Layar penuh: melayang di kanan atas */
-.trig-view-tools {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 3;
   display: grid;
-  gap: 3px;
+  gap: 1px;
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
+  margin: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  pointer-events: none;
+}
+.tg-eq-fn {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.tg-eq-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.trig-view-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+/* Toolbar mengambang, kanan atas */
+.tg-tools {
+  position: absolute;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
+  display: grid;
+  gap: 4px;
+}
+
+.tg-tools button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   color: var(--ink);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tg-tools button:hover {
+  border-color: var(--ink);
+}
+.tg-tools .tg-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
-.trig-view-tools button:hover {
-  border-color: var(--teal);
-  background: #e8f3f1;
-}
-
-.trig-legend {
+/* Legenda */
+.tg-legend {
   display: flex;
   gap: 4px 12px;
-  padding: 3px 8px;
+  margin: 0;
+  padding: 4px 10px;
   border-top: 1px solid var(--line);
-  color: var(--muted);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
   font-size: 10px;
+  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
-
-.trig-legend::-webkit-scrollbar {
+.tg-legend::-webkit-scrollbar {
   display: none;
 }
-
-.trig-legend span {
+.tg-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
-.trig-legend i {
+.tg-legend i {
   width: 14px;
-  height: 3px;
-  background: currentColor;
+  height: 0;
+  border-top: 3px solid;
+}
+.tg-legend i.dash {
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
+.tg-legend b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.trig-legend .legend-sine {
-  color: var(--orange);
-}
+/* ───────── Pengatur ───────── */
 
-.trig-legend .legend-cosine {
-  color: var(--teal);
-}
-
-.trig-legend .legend-tangent {
-  color: var(--green);
-}
-
-/* ───────── Tab panel kanan ───────── */
-
-.trig-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.trig-tabs button {
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.trig-tabs button:first-child {
-  margin-left: 0;
-}
-
-.trig-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--teal);
-  background: var(--teal);
-  color: #fff;
-}
-
-/* Isi panel: satu kartu putih; judul h3 tidak perlu (sudah ada di tab) */
-.trigonometry-simulation.is-tabbed .trig-side,
-.trigonometry-simulation.is-tabbed .trig-results {
-  display: grid;
-  align-content: start;
+.tg-panel {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  min-width: 0;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--line);
-  background: #fff;
+  padding: 10px;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
   scrollbar-width: thin;
 }
 
-.trigonometry-simulation.is-tabbed .trig-panel > h3,
-.trigonometry-simulation.is-tabbed .trig-hint {
-  display: none;
-}
-
-.trigonometry-simulation.is-tabbed
-  .trig-column[data-tab="angle"]
-  [data-pane]:not([data-pane="angle"]),
-.trigonometry-simulation.is-tabbed
-  .trig-column[data-tab="special"]
-  [data-pane]:not([data-pane="special"]),
-.trigonometry-simulation.is-tabbed
-  .trig-column[data-tab="result"]
-  [data-pane]:not([data-pane="result"]),
-.trigonometry-simulation.is-tabbed .trig-column[data-tab="result"] .trig-side {
-  display: none;
-}
-
-.trig-panel {
-  min-width: 0;
-}
-
-/* ───────── Baris sudut: θ  −  ──●──  +  [ 45 ] ───────── */
-
-.trig-angle-row {
-  --tone: var(--teal);
+/* Tampilkan / sembunyikan sin, cos, tan */
+.tg-chips {
   display: grid;
-  grid-template-columns: 24px var(--step) minmax(0, 1fr) var(--step) 44px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.tg-chips button {
+  height: 26px;
+  min-width: 0;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tg-chips button:hover {
+  border-color: var(--ink);
+}
+.tg-chips button[aria-pressed="true"] {
+  border-color: var(--c);
+  background: var(--c);
+  color: #fff;
+}
+
+.tg-group {
+  display: grid;
+  gap: 4px;
+}
+.tg-label {
+  margin: 0;
+  color: var(--mute);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.tg-angles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.tg-angles button {
+  height: 24px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tg-angles button:hover {
+  border-color: var(--ink);
+}
+.tg-angles button[aria-pressed="true"] {
+  border-color: var(--theta);
+  background: var(--theta);
+  color: #fff;
+}
+
+.tg-sliders {
+  display: grid;
+  gap: 2px;
+}
+
+/* satu baris:  θ  −  ────●────  +  [45] */
+.tg-slider {
+  display: grid;
+  grid-template-columns: 16px var(--step) minmax(0, 1fr) var(--step) 44px;
   align-items: center;
   column-gap: 4px;
-  min-width: 0;
 }
 
-.trig-angle-row label {
-  color: var(--tone);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
+.tg-slider label {
+  color: var(--sc);
+  font-family: var(--serif);
+  font-size: 17px;
   font-style: italic;
-  font-weight: 800;
-  white-space: nowrap;
+  font-weight: 700;
 }
 
-.trig-angle-row label small {
-  display: none;
+.tg-num {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--sc);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
 }
 
-.trig-step-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.tg-step {
+  display: inline-grid;
+  place-items: center;
   width: var(--step);
   height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
   color: var(--ink);
@@ -594,57 +351,17 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.trig-step-button:hover {
-  border-color: var(--teal);
-  background: #f1f6f5;
+.tg-step:hover {
+  border-color: var(--sc);
+}
+.tg-step:active {
+  background: var(--line);
 }
 
-.trig-step-button:active {
-  background: #e0ecea;
-}
-
-.trig-num {
-  width: 100%;
-  min-width: 0;
-  height: 24px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fff;
-  color: var(--teal);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.trig-angle-note {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-@media (pointer: coarse) {
-  .trigonometry-simulation {
-    --step: 24px;
-  }
-
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .trig-num {
-    height: 28px;
-    font-size: 16px;
-  }
-
-  .trig-angle-row {
-    grid-template-columns: 24px var(--step) minmax(0, 1fr) var(--step) 50px;
-  }
-}
-
-/* Area sentuh 28px, tampilan visual hanya 3px. */
-.trig-angle-slider {
-  --trig-fill: 0%;
+/* area sentuh 28px, tampilan hanya garis tipis; isi dari titik 0 (tengah) */
+.tg-range {
+  --lo: 50%;
+  --hi: 50%;
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -654,582 +371,360 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
-.trig-angle-slider::-webkit-slider-runnable-track {
+.tg-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--teal) 0,
-    var(--teal) var(--trig-fill),
-    var(--line) var(--trig-fill),
-    var(--line) 100%
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
-.trig-angle-slider::-webkit-slider-thumb {
+.tg-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.trig-angle-slider::-moz-range-track {
+.tg-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--line);
+  background: linear-gradient(
+    to right,
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
+    var(--sc) var(--lo),
+    var(--sc) var(--hi),
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
+  );
 }
-
-.trig-angle-slider::-moz-range-progress {
-  height: var(--track);
-  border-radius: 999px;
-  background: var(--teal);
-}
-
-.trig-angle-slider::-moz-range-thumb {
-  box-sizing: border-box;
+.tg-range::-moz-range-thumb {
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.trig-angle-slider:focus-visible {
+.tg-range:focus-visible {
   outline: none;
 }
-
-.trig-angle-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--teal);
+.tg-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
+}
+.tg-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
-.trig-angle-slider:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--teal);
+@media (pointer: coarse) {
+  .tg {
+    --step: 26px;
+  }
 }
 
-/* ───────── Kontrol umum ───────── */
-
-.trig-hint {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
-.trig-special-angle-buttons {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.trig-special-angle-buttons button {
-  flex: 1 1 auto;
-  min-width: 44px;
-  min-height: 30px;
-  padding: 0 8px;
-  margin-top: -1px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.trig-special-angle-buttons button:hover {
-  background: #e8f3f1;
-}
-
-.trig-special-angle-buttons button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--teal);
-  background: var(--teal);
-  color: #fff;
-}
-
-.trig-reset-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.trig-reset-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.trig-reset-button:hover {
-  border-color: var(--teal);
-  background: #e8f3f1;
-}
-
-/* ───────── Hasil perhitungan ───────── */
-
-/* Panel input lebar tapi pendek: hasil disusun mendatar (4 kolom) */
-.trig-readouts {
+/* Hasil */
+.tg-readouts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   margin: 0;
+  overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: 8px;
   background: var(--line);
 }
-
-.trig-readouts > div {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+.tg-readouts > div {
   min-width: 0;
-  padding: 6px 8px;
+  padding: 4px 8px;
   background: #fff;
 }
-
-.trig-readouts dt {
-  margin: 0;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
+.tg-readouts dt {
+  color: var(--mute);
+  font-size: 9px;
+  line-height: 1.2;
 }
-
-.trig-readouts dd {
+.tg-readouts dd {
   margin: 0;
   color: var(--ink);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
-.trig-readouts dd span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
+/* Tombol aksi */
+.tg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tg-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tg-actions button:hover {
+  border-color: var(--ink);
 }
 
-.trig-readouts .readout-sine dd {
-  color: var(--orange);
-}
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-.trig-readouts .readout-cosine dd {
-  color: var(--teal);
-}
-
-.trig-readouts .readout-tangent dd {
-  color: var(--green);
-  font-family: "Open Sans", sans-serif;
-  font-size: 13px;
-}
-
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .trigonometry-simulation.is-tabbed {
+  .tg {
     gap: 4px;
     padding: 4px;
   }
-
-  .trigonometry-simulation.is-tabbed .trig-main {
+  .tg-layout {
     gap: 4px;
   }
-
-  .trigonometry-simulation.is-tabbed .trig-side,
-  .trigonometry-simulation.is-tabbed .trig-results {
-    padding: 6px;
+  .tg-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
-  .trig-angle-slider {
+  .tg-chips button {
     height: 24px;
+  }
+  .tg-range {
+    height: 24px;
+  }
+  .tg-angles button {
+    height: 22px;
+  }
+  .tg-readouts > div {
+    padding: 2px 7px;
   }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .tg {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .tg-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .tg-eq {
+    padding: 4px 14px;
+  }
+  .tg-eq-fn {
+    font-size: clamp(22px, 2.2vw, 30px);
+  }
+  .tg-eq-val {
+    font-size: 13px;
+  }
+  .tg-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .tg-panel {
+    gap: 16px;
+    padding: 18px;
+  }
+  .tg-chips button {
+    height: 32px;
+    font-size: 13px;
+  }
+  .tg-sliders {
+    gap: 8px;
+  }
+  .tg-angles button {
+    height: 30px;
+    font-size: 12px;
+  }
+  .tg-num {
+    height: 30px;
+    font-size: 14px;
+  }
+  .tg-slider {
+    grid-template-columns: 22px var(--step) minmax(0, 1fr) var(--step) 56px;
+  }
+  .tg-slider label {
+    font-size: 22px;
+  }
+  .tg-range {
+    height: 32px;
+  }
+  .tg-readouts > div {
+    padding: 9px 12px;
+  }
+  .tg-readouts dt {
+    font-size: 11px;
+  }
+  .tg-readouts dd {
+    font-size: 14px;
+  }
+  .tg-label {
+    font-size: 12px;
+  }
+  .tg-actions button {
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) {
+  .tg {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen)
-    .trig-orientation-hint {
+  .tg-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--teal);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .trig-orientation-hint svg {
+  .tg-hint svg {
     flex: 0 0 auto;
-    color: var(--teal);
+    color: var(--mute);
   }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-main {
+  .tg-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  /* Potret: lingkaran, lalu input, lalu grafik (input tetap di atas grafik) */
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-right {
-    grid-template-rows: auto auto;
-    height: auto;
+  .tg-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-circle-panel {
-    height: clamp(240px, 40dvh, 360px);
-  }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-graph-panel {
-    height: clamp(220px, 36dvh, 340px);
-  }
-
-  /* Geser vertikal pada grafik tetap menggulir halaman */
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-function-board {
-    touch-action: pan-y !important;
-  }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-side,
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-results {
+  .tg-panel {
     overflow: visible;
   }
-
-  .trigonometry-simulation.is-tabbed:not(.is-fullscreen) .trig-hint {
-    display: block;
-  }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, fungsi/kemiringan, legenda, dan
+   panel pengatur mengambang di atasnya. Diletakkan paling akhir agar
+   menimpa aturan potret dan desktop. */
 
-.trigonometry-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  --step: 28px;
-  gap: 12px;
-  padding: 14px;
-  border-top: 3px solid var(--gold);
-  font-size: 13px;
-}
+.tg.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.trigonometry-simulation:not(.is-tabbed) .trig-main {
-  grid-template-rows: clamp(500px, 76vh, 760px);
-  gap: 12px;
-  height: auto;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-right {
-  gap: 12px;
-}
-
-/* Area input (1/3 tinggi kolom kanan): tiga kolom berdampingan
-   [sudut + atur ulang] [sudut istimewa] [hasil] */
-.trigonometry-simulation:not(.is-tabbed) .trig-column {
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 8px 12px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-tabs {
-  display: none;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-side {
-  display: contents;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-panel {
-  min-height: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  background: #fff;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-panel > h3 {
-  margin-bottom: 6px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-panel[data-pane="angle"] {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-reset-row {
-  grid-column: 1;
-  grid-row: 2;
-  margin: 0;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-panel[data-pane="special"] {
-  grid-column: 2;
-  grid-row: 1 / -1;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-results {
-  grid-column: 3;
-  grid-row: 1 / -1;
-  display: grid;
-  min-height: 0;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-hint {
-  display: none;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-caption {
-  top: 14px;
-  left: 14px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: clamp(15px, 1.5vw, 20px);
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-tag {
-  bottom: 12px;
-  left: 12px;
-  font-size: 11px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-view-tools {
-  top: 10px;
-  right: 10px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-view-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-angle-row {
-  grid-template-columns: 52px var(--step) minmax(0, 1fr) var(--step) 56px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-angle-row label {
-  font-size: 19px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-angle-row label small {
-  display: block;
-  margin-top: -4px;
-  color: var(--muted);
-  font-family: inherit;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 600;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-angle-slider {
-  height: 30px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-num {
-  height: 30px;
-  font-size: 14px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-angle-note {
-  font-size: 13px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-special-angle-buttons button {
-  min-height: 36px;
-  font-size: 12px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-reset-button {
-  height: 34px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-readouts {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, 1fr);
-  height: 100%;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-readouts > div {
-  padding: 6px 12px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-readouts dt {
-  font-size: 11px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-readouts dd {
-  font-size: 19px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-readouts .readout-tangent dd {
-  font-size: 14px;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-explanation {
-  display: block;
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.trigonometry-simulation:not(.is-tabbed) .trig-explanation strong {
-  color: var(--ink);
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.trigonometry-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
+  display: block;
   width: 100vw;
   height: 100dvh;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.trigonometry-simulation:fullscreen.simulation-fullscreen-frame {
-  width: 100%;
-  height: 100%;
-}
-
-.trigonometry-simulation.is-fullscreen .trig-orientation-hint,
-.trigonometry-simulation.is-fullscreen .trig-explanation {
+.tg.is-fs .tg-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
+.tg.is-fs .tg-layout {
+  display: block;
+  height: 100%;
+}
+
+.tg.is-fs .tg-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.tg.is-fs .tg-stage {
+  height: 100%;
+}
+
+/* legenda: chip kecil di kiri bawah */
+.tg.is-fs .tg-legend {
+  position: absolute;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.tg.is-fs .tg-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
+  z-index: 3;
+  display: none;
+  width: min(320px, 56vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
+}
+.tg.is-fs .tg-panel.is-floating.is-open {
+  display: flex;
+}
+
 @media (min-width: 900px) and (min-height: 541px) {
-  .trigonometry-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    --step: 26px;
-    font-size: 13px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-caption {
-    font-size: 17px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-angle-row {
-    grid-template-columns: 30px var(--step) minmax(0, 1fr) var(--step) 52px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-angle-row label {
-    font-size: 18px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-angle-slider {
-    height: 32px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-num {
-    height: 28px;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .trigonometry-simulation.is-fullscreen .trig-main {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-board-panel {
-    height: auto;
-  }
-
-  .trigonometry-simulation.is-fullscreen .trig-boards {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 0.85fr);
-  }
-}
-
-/* ───────── Beranda & halaman daftar simulasi, layar sempit (tidak berubah) ───────── */
-
-@media (max-width: 520px) {
-  .home-trig-showcase {
-    padding-block: 36px;
-  }
-
-  .home-trig-showcase-heading h2 {
-    font-size: 22px;
-  }
-
-  .simulation-section {
-    padding-top: 22px;
-  }
-
-  .simulation-heading {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .simulation-heading-actions {
-    align-self: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .simulation-section:fullscreen {
-    padding: 14px;
-  }
-
-  .simulation-heading h2 {
-    font-size: 21px;
-  }
-
-  .simulation-heading p {
-    font-size: 12px;
-  }
-
-  .simulation-level {
-    padding: 4px 6px;
-    font-size: 9px;
+  .tg.is-fs .tg-panel.is-floating {
+    width: min(380px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigonometry-simulation * {
+  .tg * {
     transition: none !important;
+    animation: none !important;
   }
 }

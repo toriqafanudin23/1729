@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { CATALOG_PATH } from "./simulations";
 import "./pages.css";
 
@@ -11,11 +12,11 @@ export default function NotFoundPage() {
     <div className="sp">
       <header className="sp-nav">
         <div className="sp-wrap sp-wrap--wide sp-nav__in">
-          <a href="/" className="sp-brand" aria-label="1729 beranda">
+          <Link to="/" className="sp-brand" aria-label="1729 beranda">
             1729
-          </a>
+          </Link>
           <nav className="sp-nav__links" aria-label="Navigasi utama">
-            <a href={CATALOG_PATH}>Simulasi</a>
+            <Link to={CATALOG_PATH}>Simulasi</Link>
           </nav>
         </div>
       </header>
@@ -23,9 +24,9 @@ export default function NotFoundPage() {
         <p className="sp-eyebrow">404</p>
         <h1 className="sp-h1">Halaman tidak ditemukan.</h1>
         <p className="sp-lead">Alamat yang kamu buka tidak cocok dengan halaman mana pun.</p>
-        <a href="/" className="sp-btn sp-btn--solid">
+        <Link to="/" className="sp-btn sp-btn--solid">
           Kembali ke beranda
-        </a>
+        </Link>
       </main>
     </div>
   );

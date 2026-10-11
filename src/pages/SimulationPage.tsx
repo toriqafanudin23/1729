@@ -1,4 +1,5 @@
 import { Suspense, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
 import NotFoundPage from "./NotFoundPage";
 import "./pages.css";
@@ -20,11 +21,11 @@ export default function SimulationPage({ slug }: { slug?: string }) {
   const header = (
     <header className="sp-nav">
       <div className="sp-wrap sp-wrap--wide sp-nav__in">
-        <a href="/" className="sp-brand" aria-label="1729 beranda">
+        <Link to="/" className="sp-brand" aria-label="1729 beranda">
           1729
-        </a>
+        </Link>
         <nav className="sp-nav__links" aria-label="Navigasi utama">
-          <a href={CATALOG_PATH}>Simulasi</a>
+          <Link to={CATALOG_PATH}>Simulasi</Link>
         </nav>
       </div>
     </header>
@@ -43,7 +44,7 @@ export default function SimulationPage({ slug }: { slug?: string }) {
 
       <main className="sp-wrap sp-wrap--wide sp-sim">
         <nav className="sp-crumbs" aria-label="Jejak halaman">
-          <a href={CATALOG_PATH}>Simulasi</a>
+          <Link to={CATALOG_PATH}>Simulasi</Link>
           <span aria-hidden>/</span>
           <span aria-current="page">{sim.title}</span>
         </nav>
@@ -75,10 +76,10 @@ export default function SimulationPage({ slug }: { slug?: string }) {
               <ul className="sp-others">
                 {others.map((s) => (
                   <li key={s.slug}>
-                    <a href={simulationPath(s.slug)}>
+                    <Link to={simulationPath(s.slug)}>
                       <span>{s.title}</span>
                       <span aria-hidden>→</span>
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

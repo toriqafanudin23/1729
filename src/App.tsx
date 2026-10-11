@@ -1,63 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { BrowserRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CatalogPage from "./pages/CatalogPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SimulationPage from "./pages/SimulationPage";
 
-const normalizePath = (pathname: string) => {
-  return pathname.replace(/\/+$/, "") || "/";
-};
-
-function App() {
-  const [path, setPath] = useState<string>(() => normalizePath(window.location.pathname));
+function ScrollToTop() {
+  const { pathname } = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [path]);
+  }, [pathname]);
 
-  useEffect(() => {
-    const onPopState = () => setPath(normalizePath(window.location.pathname));
-    const onClick = (event: MouseEvent) => {
-      const anchor = (event.target as HTMLElement | null)?.closest("a");
-      if (!anchor) return;
+  return null;
+}
 
-      const href = anchor.getAttribute("href") ?? "";
-      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("http")) return;
+function SimulationRoute() {
+  const { slug } = useParams();
+  return <SimulationPage slug={slug} />;
+}
 
-      const target = new URL(href, window.location.href);
-      if (target.origin !== window.location.origin) return;
-
-      const nextPath = normalizePath(target.pathname);
-      if (nextPath === normalizePath(window.location.pathname) && target.search === window.location.search) return;
-
-      event.preventDefault();
-      window.history.pushState({}, "", `${target.pathname}${target.search}${target.hash}`);
-      setPath(nextPath);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    document.addEventListener("click", onClick);
-
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-      document.removeEventListener("click", onClick);
-    };
-  }, []);
-
-  if (path === "/simulasi") {
-    return <CatalogPage />;
-  }
-
-  if (path.startsWith("/simulasi/")) {
-    const slug = path.replace(/^\/simulasi\/?/, "");
-    return <SimulationPage slug={slug || undefined} />;
-  }
-
-  if (path === "/") {
-    return <LandingPage />;
-  }
-
-  return <NotFoundPage />;
+function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/simulasi" element={<CatalogPage />} />
+        <Route path="/simulasi/:slug" element={<SimulationRoute />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

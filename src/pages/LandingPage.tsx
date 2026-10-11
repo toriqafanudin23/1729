@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import JXG from "jsxgraph";
+import { Link } from "react-router-dom";
 import { SimMath } from "../simulation/SimMath";
 import "../styles/jsxgraph.css";
 import "./LandingPage.css";
@@ -405,9 +406,9 @@ export default function Landing() {
     <div className="lp">
       <header className="lp-top">
         <div className="lp-wrap lp-top__in">
-          <a href="/" className="lp-brand" aria-label="1729 beranda">
+          <Link to="/" className="lp-brand" aria-label="1729 beranda">
             1729
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -423,9 +424,9 @@ export default function Landing() {
                 fungsi kuadrat sampai integral Riemann.
               </p>
               <div className="lp-cta">
-                <a href={HREF.start} className="lp-btn lp-btn--solid">
+                <Link to={HREF.start} className="lp-btn lp-btn--solid">
                   Mulai menjelajah <span aria-hidden>→</span>
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -458,9 +459,9 @@ export default function Landing() {
                     </p>
                     <h3>{f.title}</h3>
                     <p>{f.body}</p>
-                    <a href={f.href} className="lp-link">
+                    <Link to={f.href} className="lp-link">
                       Buka simulasi <span aria-hidden>→</span>
-                    </a>
+                    </Link>
                   </div>
                   <Board title={f.boardTitle} setup={f.setup} bbox={f.bbox} />
                 </article>
@@ -476,13 +477,13 @@ export default function Landing() {
             <h2 className="lp-h2">Satu tempat untuk banyak topik.</h2>
             <div className="lp-topics">
               {TOPICS.map((t, i) => (
-                <a href={t.href} className="lp-topic" key={t.name}>
+                <Link to={t.href} className="lp-topic" key={t.name}>
                   <span className="lp-topic__no">{String(i + 1).padStart(2, "0")}</span>
                   <span className="lp-topic__name">{t.name}</span>
                   <span className="lp-topic__sym" aria-hidden>
                     <SimMath tex={t.sym} />
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -494,9 +495,9 @@ export default function Landing() {
             <h2 className="lp-h2">Mulai dari satu grafik.</h2>
             <p className="lp-lead">Pilih sebuah simulasi, geser satu titik, dan lihat apa yang terjadi.</p>
             <div className="lp-cta lp-cta--center">
-              <a href={HREF.start} className="lp-btn lp-btn--solid">
+              <Link to={HREF.start} className="lp-btn lp-btn--solid">
                 Mulai menjelajah <span aria-hidden>→</span>
-              </a>
+              </Link>
             </div>
           </div>
         </section>

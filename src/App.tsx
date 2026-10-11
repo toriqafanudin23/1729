@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import CatalogPage from "./pages/CatalogPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import SimulationPage from "./pages/SimulationPage";
 
 const normalizePath = (pathname: string) => {
-  const trimmed = pathname.replace(/\/+$/, "") || "/";
-  return trimmed === "/simulasi" || trimmed.startsWith("/simulasi/") ? trimmed : "/";
+  return pathname.replace(/\/+$/, "") || "/";
 };
 
 function App() {
@@ -53,7 +53,11 @@ function App() {
     return <SimulationPage slug={slug || undefined} />;
   }
 
-  return <LandingPage />;
+  if (path === "/") {
+    return <LandingPage />;
+  }
+
+  return <NotFoundPage />;
 }
 
 export default App;

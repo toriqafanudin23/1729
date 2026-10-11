@@ -1,5 +1,6 @@
 import { Suspense, useEffect } from "react";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
+import NotFoundPage from "./NotFoundPage";
 import "./pages.css";
 
 /**
@@ -13,7 +14,7 @@ export default function SimulationPage({ slug }: { slug?: string }) {
   const sim = findSimulation(slug);
 
   useEffect(() => {
-    document.title = sim ? `${sim.title} · 1729` : "Simulasi tidak ditemukan · 1729";
+    if (sim) document.title = `${sim.title} · 1729`;
   }, [sim]);
 
   const header = (
@@ -30,19 +31,7 @@ export default function SimulationPage({ slug }: { slug?: string }) {
   );
 
   if (!sim) {
-    return (
-      <div className="sp">
-        {header}
-        <main className="sp-wrap sp-notfound">
-          <p className="sp-eyebrow">404</p>
-          <h1 className="sp-h1">Simulasi tidak ditemukan.</h1>
-          <p className="sp-lead">Alamat yang kamu buka tidak cocok dengan simulasi mana pun.</p>
-          <a href={CATALOG_PATH} className="sp-btn sp-btn--solid">
-            Kembali ke katalog
-          </a>
-        </main>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   const Simulation = sim.component;

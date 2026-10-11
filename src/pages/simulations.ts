@@ -150,7 +150,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Turunan",
     category: "Kalkulus",
     summary:
-      "Amati perubahan kemiringan garis singgung pada kurva dan lihat bagaimana turunan menjelaskan laju perubahan.",
+      "Saat titik Q mendekati P pada kurva, kemiringan tali busur PQ mendekati kemiringan garis singgung di P. Itulah nilai turunan.",
     concepts: ["Turunan", "Garis singgung", "Laju perubahan", "Kemonotonan"],
     glyph: "f′",
     component: lazy(() => import("../simulation/DerivativeSimulation").then((m) => ({ default: m.DerivativeSimulation }))),

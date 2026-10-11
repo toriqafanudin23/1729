@@ -16,7 +16,7 @@ const HREF = {
   quadratic: "/simulasi/fungsi-kuadrat",
   derivative: "/simulasi/turunan",
   vector: "/simulasi/vektor",
-  tangent: "/simulasi/garis-singgung",
+  tangent: "/simulasi/garis-singgung-dua-lingkaran",
 };
 
 /* ------------------------------------------------------------------ *
@@ -391,7 +391,6 @@ const TOPICS: { name: string; sym: string; href: string }[] = [
   { name: "Irisan Kerucut", sym: "e", href: HREF.conic },
   { name: "Trigonometri", sym: String.raw`\sin`, href: HREF.trigonometri },
   { name: "Garis Singgung", sym: String.raw`\nearrow`, href: HREF.tangent },
-  { name: "Matriks", sym: String.raw`\left[\vphantom{x}\right]`, href: "/simulasi/matriks-transformasi" },
   { name: "Plotter Grafik", sym: "f(x)", href: "/simulasi/plotter-grafik" },
   { name: "Sektor Lingkaran", sym: String.raw`\angle`, href: "/simulasi/sektor-lingkaran" },
   { name: "Transformasi Fungsi", sym: "y=f(x)", href: "/simulasi/transformasi-fungsi" },

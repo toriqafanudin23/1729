@@ -36,7 +36,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Parabola", "Diskriminan", "Puncak", "Persamaan kuadrat"],
     glyph: "ax²",
     component: lazy(() =>
-      import("../simulasi/QuadraticSimulationV3").then((m) => ({ default: m.QuadraticSimulationV3 })),
+      import("../simulation/QuadraticSimulation").then((m) => ({ default: m.QuadraticSimulation })),
     ),
   },
   {
@@ -118,7 +118,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Lingkaran", "Garis singgung persekutuan", "Konstruksi geometri"],
     glyph: "⊙⊙",
     component: lazy(() =>
-      import("../simulasi/TwoCircleTangentSimulation").then((m) => ({ default: m.TwoCircleTangentSimulation })),
+      import("../simulation/TwoCircleTangentSimulation").then((m) => ({ default: m.TwoCircleTangentSimulation })),
     ),
   },
   {
@@ -130,7 +130,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Translasi", "Peregangan", "Refleksi", "Grafik fungsi"],
     glyph: "y = f(x)",
     component: lazy(() =>
-      import("../simulasi/FunctionTransformationSimulation").then((m) => ({ default: m.FunctionTransformationSimulation })),
+      import("../simulation/FunctionTransformationSimulation").then((m) => ({ default: m.FunctionTransformationSimulation })),
     ),
   },
   {
@@ -142,7 +142,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Grafik fungsi", "Ekspresi", "Plot", "Analisis visual"],
     glyph: "f(x)",
     component: lazy(() =>
-      import("../simulasi/GraphPlotterSimulation").then((m) => ({ default: m.GraphPlotterSimulation })),
+      import("../simulation/GraphPlotterSimulation").then((m) => ({ default: m.GraphPlotterSimulation })),
     ),
   },
   {
@@ -153,7 +153,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Amati perubahan kemiringan garis singgung pada kurva dan lihat bagaimana turunan menjelaskan laju perubahan.",
     concepts: ["Turunan", "Garis singgung", "Laju perubahan", "Kemonotonan"],
     glyph: "f′",
-    component: lazy(() => import("../simulasi/DerivativeSimulation").then((m) => ({ default: m.DerivativeSimulation }))),
+    component: lazy(() => import("../simulation/DerivativeSimulation").then((m) => ({ default: m.DerivativeSimulation }))),
   },
   {
     slug: "integral",
@@ -163,7 +163,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Lihat bagaimana jumlah luas persegi panjang mendekati nilai integral ketika lebar partisinya makin kecil.",
     concepts: ["Integral", "Luas daerah", "Riemann", "Aproksimasi"],
     glyph: "∫",
-    component: lazy(() => import("../simulasi/IntegralSimulation").then((m) => ({ default: m.IntegralSimulation }))),
+    component: lazy(() => import("../simulation/IntegralSimulation").then((m) => ({ default: m.IntegralSimulation }))),
   },
 ];
 

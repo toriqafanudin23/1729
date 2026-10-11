@@ -57,7 +57,7 @@ export function useJsxBoard({
       // Perubahan ukuran ditangani sepenuhnya oleh ResizeObserver di bawah.
       // Pendengar bawaan JSXGraph (throttle) ikut mengubah kanvas dan kotak
       // batas secara terpisah sehingga bisa meninggalkan sisa area kosong.
-      resize: { enabled: false },
+      resize: { enabled: false, throttle: 100 },
       pan: { enabled: true, needShift: false, needTwoFingers: false },
       zoom: {
         wheel: true,

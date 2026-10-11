@@ -110,6 +110,30 @@ export const SIMULATIONS: SimulationMeta[] = [
     ),
   },
   {
+    slug: "titik-istimewa-segitiga",
+    title: "Titik Istimewa Segitiga",
+    category: "Geometri",
+    summary:
+      "Jelajahi titik berat, titik bagi, titik sumbu, dan titik tinggi beserta garis Euler dengan mengubah bentuk segitiga.",
+    concepts: ["Titik berat", "Titik bagi", "Titik sumbu", "Titik tinggi", "Garis Euler"],
+    glyph: "G · I · O · H",
+    component: lazy(() =>
+      import("../simulation/TriangleCentersSimulation").then((m) => ({ default: m.TriangleCentersSimulation })),
+    ),
+  },
+  {
+    slug: "teorema-pythagoras",
+    title: "Teorema Pythagoras",
+    category: "Geometri",
+    summary:
+      "Ubah panjang sisi dan sudut segitiga, amati hubungan a² + b² = c², lalu jelajahi buktinya melalui penataan ulang luas persegi.",
+    concepts: ["Teorema Pythagoras", "Segitiga siku-siku", "Luas persegi", "Tripel Pythagoras"],
+    glyph: "a² + b² = c²",
+    component: lazy(() =>
+      import("../simulation/PythagorasSimulation").then((m) => ({ default: m.PythagorasSimulation })),
+    ),
+  },
+  {
     slug: "garis-singgung-dua-lingkaran",
     title: "Garis Singgung Dua Lingkaran",
     category: "Geometri",

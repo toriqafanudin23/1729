@@ -310,6 +310,9 @@ html {
 .lp-board__title {
   color: var(--ink);
 }
+.lp-board__title .katex {
+  font-size: 1.08em;
+}
 
 .lp-board__readout {
   white-space: pre;
@@ -466,6 +469,9 @@ html {
   font-size: 19px;
   color: var(--soft);
   transition: color 0.18s ease;
+}
+.lp-topic__sym .katex {
+  font-size: 1em;
 }
 
 /* ----------------------------------------------------------------- Why --- */

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import JXG from "jsxgraph";
+import { SimMath } from "../simulation/SimMath";
 import "../styles/jsxgraph.css";
 import "./LandingPage.css";
 
@@ -337,7 +338,7 @@ function Board({ title, setup, bbox, className = "" }: BoardProps) {
     <figure className={`lp-board ${className}`}>
       <div id={domId} ref={canvasRef} className="lp-board__canvas" style={{ aspectRatio: String(ratio) }} />
       <figcaption className="lp-board__bar">
-        <span className="lp-board__title">{title}</span>
+        <span className="lp-board__title"><SimMath tex={title} /></span>
         <span className="lp-board__readout" ref={readoutRef} />
       </figcaption>
     </figure>
@@ -354,7 +355,7 @@ const FEATURES = [
     title: "Integral Riemann",
     body: "Luas di bawah kurva bukan lagi misteri. Tambah banyak persegi panjang, dan jumlahnya merapat ke nilai integral.",
     href: HREF.integral,
-    boardTitle: "f(x) = −¼(x − 3)² + 4",
+    boardTitle: String.raw`f(x)=-\displaystyle\frac{1}{4}(x-3)^2+4`,
     setup: setupRiemann,
     bbox: BBOX_RIEMANN,
   },
@@ -364,7 +365,7 @@ const FEATURES = [
     title: "Lingkaran satuan",
     body: "Sinus bukan sekadar tombol di kalkulator. Ia adalah tinggi sebuah titik yang berputar pada lingkaran. Ikuti perjalanannya, dan gelombang pun lahir.",
     href: HREF.trigonometri,
-    boardTitle: "y = sin θ",
+    boardTitle: String.raw`y=\sin\theta`,
     setup: setupTrig,
     bbox: BBOX_TRIG,
   },
@@ -374,26 +375,26 @@ const FEATURES = [
     title: "Irisan kerucut",
     body: "Elips adalah semua titik yang jumlah jaraknya ke dua fokus selalu sama. Lihat sendiri bahwa jumlah itu tak pernah bergeser.",
     href: HREF.conic,
-    boardTitle: "x²/25 + y²/9 = 1",
+    boardTitle: String.raw`\displaystyle\frac{x^2}{25}+\displaystyle\frac{y^2}{9}=1`,
     setup: setupConic,
     bbox: BBOX_CONIC,
   },
 ];
 
 const TOPICS: { name: string; sym: string; href: string }[] = [
-  { name: "Fungsi Kuadrat", sym: "ax²", href: HREF.quadratic },
+  { name: "Fungsi Kuadrat", sym: "ax^2", href: HREF.quadratic },
   { name: "Transformasi Geometri", sym: "T", href: "/simulasi/transformasi-geometri" },
-  { name: "Turunan", sym: "f′", href: HREF.derivative },
-  { name: "Integral Riemann", sym: "∫", href: HREF.integral },
-  { name: "Vektor", sym: "→", href: HREF.vector },
+  { name: "Turunan", sym: "f'", href: HREF.derivative },
+  { name: "Integral Riemann", sym: String.raw`\int`, href: HREF.integral },
+  { name: "Vektor", sym: String.raw`\overrightarrow{a}`, href: HREF.vector },
   { name: "Irisan Kerucut", sym: "e", href: HREF.conic },
-  { name: "Trigonometri", sym: "sin", href: HREF.trigonometri },
-  { name: "Garis Singgung", sym: "↗", href: HREF.tangent },
-  { name: "Matriks", sym: "[ ]", href: "/simulasi/matriks-transformasi" },
+  { name: "Trigonometri", sym: String.raw`\sin`, href: HREF.trigonometri },
+  { name: "Garis Singgung", sym: String.raw`\nearrow`, href: HREF.tangent },
+  { name: "Matriks", sym: String.raw`\left[\vphantom{x}\right]`, href: "/simulasi/matriks-transformasi" },
   { name: "Plotter Grafik", sym: "f(x)", href: "/simulasi/plotter-grafik" },
-  { name: "Sektor Lingkaran", sym: "◔", href: "/simulasi/sektor-lingkaran" },
-  { name: "Transformasi Fungsi", sym: "y = f(x)", href: "/simulasi/transformasi-fungsi" },
-  { name: "Dan terus bertambah", sym: "…", href: HREF.start },
+  { name: "Sektor Lingkaran", sym: String.raw`\angle`, href: "/simulasi/sektor-lingkaran" },
+  { name: "Transformasi Fungsi", sym: "y=f(x)", href: "/simulasi/transformasi-fungsi" },
+  { name: "Dan terus bertambah", sym: String.raw`\ldots`, href: HREF.start },
 ];
 
 /* ------------------------------------------------------------------ *
@@ -428,7 +429,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <Board className="lp-hero__board" title="f(x) = x²" setup={setupTangent} bbox={BBOX_TANGENT} />
+            <Board className="lp-hero__board" title="f(x)=x^2" setup={setupTangent} bbox={BBOX_TANGENT} />
           </div>
         </section>
 
@@ -479,7 +480,7 @@ export default function Landing() {
                   <span className="lp-topic__no">{String(i + 1).padStart(2, "0")}</span>
                   <span className="lp-topic__name">{t.name}</span>
                   <span className="lp-topic__sym" aria-hidden>
-                    {t.sym}
+                    <SimMath tex={t.sym} />
                   </span>
                 </a>
               ))}
@@ -505,6 +506,8 @@ export default function Landing() {
         <div className="lp-wrap lp-footer__in">
           <span className="lp-brand">1729</span>
           <span>Memahami matematika secara visual.</span>
+          <a href="mailto:pesan.math1729@gmail.com">pesan.math1729@gmail.com</a>
+          <a href="https://kelas1729.vercel.app/">Website lama</a>
         </div>
       </footer>
     </div>

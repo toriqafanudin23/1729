@@ -1,0 +1,572 @@
+/* ==========================================================================
+   1729 — landing page
+   Hitam-putih, slate, tipografi tenang.
+   Font (opsional, tambahkan di index.html atau lewat @import):
+   https://fonts.google.com/?query=Source+Serif+4  /  Inter  /  JetBrains+Mono
+   Tanpa font tersebut, tampilan tetap rapi dengan Georgia + font sistem.
+   ========================================================================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+.lp {
+  --ink: #0f172a; /* slate-900 */
+  --text: #334155; /* slate-700 */
+  --mute: #64748b; /* slate-500 */
+  --soft: #94a3b8; /* slate-400 */
+  --line-strong: #cbd5e1; /* slate-300 */
+  --line: #e2e8f0; /* slate-200 */
+  --wash: #f8fafc; /* slate-50 */
+  --paper: #ffffff;
+
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --max: 1120px;
+  --pad: clamp(20px, 5vw, 40px);
+
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.lp *,
+.lp *::before,
+.lp *::after {
+  box-sizing: border-box;
+}
+
+.lp a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lp h1,
+.lp h2,
+.lp h3,
+.lp p {
+  margin: 0;
+}
+
+.lp-wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+.lp-eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- Nav --- */
+
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.lp-nav__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.lp-brand {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+
+.lp-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  color: var(--mute);
+}
+
+.lp-nav__links a:not(.lp-btn):hover {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .lp-hide-sm {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------ Buttons --- */
+
+.lp .lp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 10px;
+  border: 1px solid var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.lp .lp-btn--solid {
+  background: var(--ink);
+  color: #fff;
+}
+.lp .lp-btn--solid:hover {
+  background: #1e293b;
+}
+
+.lp .lp-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.lp .lp-btn--ghost:hover {
+  border-color: var(--ink);
+}
+
+.lp .lp-btn--sm {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.lp-btn:focus-visible,
+.lp-link:focus-visible,
+.lp-topic:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- Hero --- */
+
+.lp-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(48px, 9vw, 112px) 0 clamp(56px, 8vw, 104px);
+}
+
+/* kertas grafik yang memudar */
+.lp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.6;
+  -webkit-mask-image: radial-gradient(ellipse 70% 75% at 72% 40%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 75% at 72% 40%, #000 0%, transparent 78%);
+  pointer-events: none;
+}
+
+.lp-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(32px, 6vw, 80px);
+  align-items: center;
+}
+
+.lp-hero h1 {
+  margin: 18px 0 22px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(40px, 6.2vw, 76px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.lp-lead {
+  max-width: 34em;
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+.lp-cta--center {
+  justify-content: center;
+}
+
+.lp-hero__board {
+  width: 100%;
+  max-width: 440px;
+  justify-self: end;
+}
+
+@media (max-width: 860px) {
+  .lp-hero__grid {
+    grid-template-columns: 1fr;
+  }
+  .lp-hero__board {
+    justify-self: center;
+    max-width: 400px;
+  }
+}
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-hero__copy > * {
+    animation: lp-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .lp-hero__copy > *:nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  .lp-hero__copy > *:nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  .lp-hero__copy > *:nth-child(4) {
+    animation-delay: 0.24s;
+  }
+  .lp-hero__board {
+    animation: lp-rise 0.9s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+
+/* -------------------------------------------------------------- Board --- */
+
+.lp-board {
+  margin: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 24px 48px -28px rgba(15, 23, 42, 0.28);
+}
+
+/* Papan bersifat dekoratif. Hapus dua baris ini jika ingin papan bisa disentuh. */
+.lp-board__canvas {
+  width: 100%;
+  pointer-events: none;
+  touch-action: pan-y !important;
+}
+
+.lp-board .jxgbox {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.lp-board .JXGtext,
+.lp-board text {
+  font-family: var(--mono) !important;
+}
+
+.lp-board__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.lp-board__title {
+  color: var(--ink);
+}
+
+.lp-board__readout {
+  white-space: pre;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ Sections --- */
+
+.lp-section {
+  padding: clamp(56px, 8vw, 112px) 0;
+}
+
+.lp-section--wash {
+  background: var(--wash);
+  border-block: 1px solid var(--line);
+}
+
+.lp-h2 {
+  margin-top: 14px;
+  max-width: 20em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.lp-statement {
+  max-width: 18em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(30px, 5vw, 60px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.lp-statement span {
+  color: var(--soft);
+}
+
+/* ------------------------------------------------------------ Features --- */
+
+.lp-features {
+  margin-top: clamp(32px, 5vw, 56px);
+}
+
+.lp-feature {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: clamp(28px, 6vw, 80px);
+  align-items: center;
+  padding: clamp(32px, 5vw, 64px) 0;
+  border-top: 1px solid var(--line);
+}
+
+.lp-feature:nth-child(even) .lp-feature__text {
+  order: 2;
+}
+
+.lp-feature__meta {
+  display: flex;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.lp-feature__meta span:last-child {
+  color: var(--mute);
+}
+
+.lp-feature h3 {
+  margin: 14px 0 12px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.lp-feature__text > p:not(.lp-feature__meta) {
+  max-width: 28em;
+  margin-bottom: 22px;
+}
+
+.lp-link {
+  display: inline-flex;
+  gap: 8px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line-strong);
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color 0.18s ease, gap 0.18s ease;
+}
+.lp-link:hover {
+  border-color: var(--ink);
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .lp-feature {
+    grid-template-columns: 1fr;
+  }
+  .lp-feature:nth-child(even) .lp-feature__text {
+    order: 0;
+  }
+}
+
+/* -------------------------------------------------------------- Topics --- */
+
+.lp-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  margin-top: clamp(32px, 5vw, 48px);
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
+}
+
+.lp-topic {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 20px 22px;
+  background: #fff;
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  transition: background 0.18s ease;
+}
+.lp-topic:hover {
+  background: var(--wash);
+}
+.lp-topic:hover .lp-topic__sym {
+  color: var(--ink);
+}
+
+.lp-topic__no {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--soft);
+}
+.lp-topic__name {
+  font-weight: 500;
+  color: var(--ink);
+}
+.lp-topic__sym {
+  margin-left: auto;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--soft);
+  transition: color 0.18s ease;
+}
+
+/* ----------------------------------------------------------------- Why --- */
+
+.lp-section--ink {
+  background: var(--ink);
+  color: #cbd5e1;
+}
+.lp-section--ink .lp-eyebrow {
+  color: var(--soft);
+}
+.lp-section--ink .lp-h2 {
+  color: #fff;
+}
+
+.lp-why {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: clamp(32px, 7vw, 96px);
+  align-items: start;
+}
+
+.lp-why__body {
+  display: grid;
+  gap: 24px;
+  font-size: clamp(16px, 1.5vw, 18px);
+}
+
+.lp-eq {
+  padding: 22px 0;
+  border-block: 1px solid #334155;
+  font-family: var(--serif);
+  font-size: clamp(24px, 3.4vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+@media (max-width: 860px) {
+  .lp-why {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------- Principles --- */
+
+.lp-principles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  margin-top: 32px;
+}
+
+.lp-principle {
+  padding-top: 20px;
+  border-top: 1px solid var(--ink);
+}
+.lp-principle__no {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--soft);
+}
+.lp-principle h3 {
+  margin: 10px 0 8px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .lp-principles {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------- Final --- */
+
+.lp-final {
+  text-align: center;
+}
+.lp-final .lp-h2,
+.lp-final .lp-lead {
+  margin-inline: auto;
+}
+.lp-final .lp-lead {
+  margin-top: 16px;
+}
+
+/* -------------------------------------------------------------- Footer --- */
+
+.lp-footer {
+  padding: 28px 0 40px;
+  font-size: 14px;
+  color: var(--mute);
+}
+.lp-footer__in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+}

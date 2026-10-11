@@ -1,0 +1,862 @@
+/* Simulasi fungsi kuadrat v2.
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh.
+   Wilayah grafik : wilayah input = 2fr : 1fr. */
+
+.qs2,
+.qs2 *,
+.qs2 *::before,
+.qs2 *::after {
+  box-sizing: border-box;
+}
+
+.qs2 {
+  --ink: #18313d;
+  --muted: #62727d;
+  --line: #d5e0e4;
+  --paper: #f3f7f5;
+  --a: #087f8c;
+  --b: #d16b36;
+  --c: #527a41;
+  --curve: #183e54;
+  --vertex: #927000;
+  --root: #b23a48;
+
+  /* slider tipis, bulatan kecil */
+  --track: 3px;
+  --thumb: 13px;
+  --step: 24px;
+
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 6px;
+  height: min(100dvh, 460px);
+  padding: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qs2 button {
+  touch-action: manipulation;
+  font: inherit;
+}
+
+.qs2 button:focus-visible,
+.qs2 input:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+}
+
+.qs2-hint,
+.qs2-insights {
+  display: none;
+}
+
+/* ───────── Pembagian 2 : 1 ───────── */
+
+.qs2-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ───────── Grafik ───────── */
+
+.qs2-graph {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.qs2-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.qs2-board {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fcfdfc;
+  touch-action: none;
+  cursor: grab;
+}
+
+.qs2-board:active {
+  cursor: grabbing;
+}
+
+/* Persamaan melayang di pojok kiri atas grafik */
+.qs2-eq {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  max-width: calc(100% - 52px);
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--a);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--curve);
+  font-family: "Cambria Math", Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+
+/* Alat tampilan melayang di pojok kanan atas */
+.qs2-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+}
+
+.qs2-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #aebdc2;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.qs2-tools button:hover {
+  border-color: var(--a);
+  background: #e8f3f1;
+}
+
+.qs2-legend {
+  display: flex;
+  gap: 4px 12px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.qs2-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.qs2-legend span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.qs2-legend i {
+  width: 14px;
+  height: 0;
+  border-top: 3px solid var(--curve);
+}
+
+.qs2-legend .lg-ref {
+  border-top: 2px dashed #9aa8b0;
+}
+
+.qs2-legend .lg-axis {
+  border-top: 2px dashed var(--b);
+}
+
+.qs2-legend b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.qs2-legend .dt-vertex {
+  background: var(--vertex);
+}
+
+.qs2-legend .dt-root {
+  background: var(--root);
+}
+
+.qs2-legend .dt-c {
+  background: var(--c);
+}
+
+/* ───────── Input ───────── */
+
+.qs2-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.qs2-sliders {
+  display: grid;
+  gap: 2px;
+}
+
+/* Satu baris: a  −  ────●────  +  1,5 */
+.qs2-slider {
+  display: grid;
+  grid-template-columns: 14px var(--step) minmax(0, 1fr) var(--step) 34px;
+  align-items: center;
+  column-gap: 4px;
+}
+
+.qs2-slider-a {
+  --sc: var(--a);
+}
+
+.qs2-slider-b {
+  --sc: var(--b);
+}
+
+.qs2-slider-c {
+  --sc: var(--c);
+}
+
+.qs2-slider-head {
+  display: contents;
+}
+
+.qs2-slider-head label {
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--sc);
+  font-family: "Cambria Math", Georgia, serif;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 800;
+}
+
+.qs2-slider-head label i {
+  font-style: italic;
+}
+
+.qs2-slider-head label small {
+  display: none;
+}
+
+.qs2-slider-head output {
+  grid-column: 5;
+  grid-row: 1;
+  color: var(--sc);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.qs2-slider > .qs2-step:first-of-type {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.qs2-slider > .qs2-range {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.qs2-slider > .qs2-step:last-of-type {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.qs2-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--step);
+  height: var(--step);
+  padding: 0;
+  border: 1px solid #aebdc2;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.qs2-step:hover:not(:disabled) {
+  border-color: var(--sc);
+  background: #f1f6f5;
+}
+
+.qs2-step:active:not(:disabled) {
+  background: #e0ecea;
+}
+
+.qs2-step:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Area sentuh 28px, tampilan visual hanya 3px */
+.qs2-range {
+  --fill: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.qs2-range::-webkit-slider-runnable-track {
+  height: var(--track);
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--sc) 0,
+    var(--sc) var(--fill),
+    var(--line) var(--fill),
+    var(--line) 100%
+  );
+}
+
+.qs2-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((var(--track) - var(--thumb)) / 2);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+}
+
+.qs2-range::-moz-range-track {
+  height: var(--track);
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.qs2-range::-moz-range-progress {
+  height: var(--track);
+  border-radius: 999px;
+  background: var(--sc);
+}
+
+.qs2-range::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--thumb);
+  height: var(--thumb);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+}
+
+.qs2-range:focus-visible {
+  outline: none;
+}
+
+.qs2-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
+}
+
+.qs2-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
+}
+
+@media (pointer: coarse) {
+  .qs2 {
+    --step: 26px;
+  }
+}
+
+/* ───────── Aksi ───────── */
+
+.qs2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.qs2-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid #aebdc2;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.qs2-reset:hover {
+  border-color: var(--a);
+  background: #e8f3f1;
+}
+
+/* Gaya grafik: disembunyikan di ponsel lanskap agar muat tanpa gulir */
+.qs2-style {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.qs2-style span {
+  margin-left: 4px;
+}
+
+.qs2-style b {
+  min-width: 14px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.qs2-style button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #aebdc2;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.qs2-warning {
+  margin: 0;
+  padding: 4px 7px;
+  border: 1px solid #e2c27a;
+  background: #fff7e0;
+  color: #6b5200;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* ───────── Hasil ───────── */
+
+.qs2-readouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.qs2-readouts > div {
+  min-width: 0;
+  padding: 4px 7px;
+  background: #fff;
+}
+
+.qs2-readouts dt {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.qs2-readouts dd {
+  margin: 0;
+  font-family: "Cambria Math", Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.qs2-readouts .ro-a dd {
+  color: var(--a);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.qs2-readouts .ro-b dd {
+  color: var(--b);
+}
+
+.qs2-readouts .ro-c dd {
+  color: var(--c);
+}
+
+.qs2-readouts .ro-vertex dd {
+  color: var(--vertex);
+}
+
+.qs2-readouts .ro-roots dd {
+  color: var(--root);
+}
+
+/* ───────── Layar sangat pendek (HP lanskap kecil) ───────── */
+
+@media (orientation: landscape) and (max-height: 360px) {
+  .qs2 {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .qs2-layout {
+    gap: 4px;
+  }
+
+  .qs2-inputs {
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .qs2-range {
+    height: 24px;
+  }
+
+  .qs2-readouts > div {
+    padding: 2px 6px;
+  }
+
+  .qs2-readouts dd {
+    font-size: 12px;
+  }
+}
+
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .qs2 {
+    --track: 4px;
+    --thumb: 16px;
+    --step: 28px;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    height: auto;
+    padding: 14px;
+    font-size: 13px;
+  }
+
+  .qs2-layout {
+    gap: 12px;
+    height: clamp(460px, 72vh, 700px);
+  }
+
+  .qs2-eq {
+    top: 10px;
+    left: 10px;
+    padding: 4px 12px;
+    border-left-width: 4px;
+    font-size: clamp(22px, 2.2vw, 30px);
+  }
+
+  .qs2-tools {
+    top: 10px;
+    right: 10px;
+    gap: 4px;
+  }
+
+  .qs2-tools button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .qs2-legend {
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .qs2-inputs {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .qs2-sliders {
+    gap: 12px;
+  }
+
+  /* Dua baris: label + nilai di atas, − slider + di bawah */
+  .qs2-slider {
+    grid-template-columns: var(--step) minmax(0, 1fr) var(--step);
+    row-gap: 2px;
+  }
+
+  .qs2-slider-head {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .qs2-slider-head label,
+  .qs2-slider-head output {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .qs2-slider-head label {
+    font-size: 21px;
+  }
+
+  .qs2-slider-head label small {
+    display: inline;
+    margin-left: 8px;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .qs2-slider-head output {
+    font-size: 17px;
+  }
+
+  .qs2-slider > .qs2-step:first-of-type {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .qs2-slider > .qs2-range {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .qs2-slider > .qs2-step:last-of-type {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .qs2-range {
+    height: 30px;
+  }
+
+  .qs2-reset {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .qs2-style {
+    display: inline-flex;
+  }
+
+  .qs2-readouts > div {
+    padding: 8px 11px;
+  }
+
+  .qs2-readouts dt {
+    font-size: 10px;
+  }
+
+  .qs2-readouts dd {
+    font-size: 16px;
+  }
+
+  .qs2-readouts .ro-a dd {
+    font-size: 13px;
+  }
+
+  .qs2-warning {
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+
+  .qs2-insights {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .qs2-insights li {
+    padding-left: 10px;
+    border-left: 3px solid var(--line);
+  }
+}
+
+/* Tinggi sedang (laptop pendek / tablet lanskap): gaya grafik ikut tampil */
+@media (orientation: landscape) and (min-height: 400px) and (max-height: 540px) {
+  .qs2-style {
+    display: inline-flex;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, input bawah ───────── */
+
+@media (orientation: portrait) and (max-width: 899px) {
+  .qs2 {
+    grid-template-rows: auto auto;
+    height: auto;
+    padding: 8px;
+  }
+
+  .qs2-hint {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 6px 9px;
+    border-left: 3px solid var(--a);
+    background: #e8f3f1;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .qs2-hint svg {
+    flex: 0 0 auto;
+    color: var(--a);
+  }
+
+  .qs2-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .qs2-graph {
+    height: clamp(260px, 50dvh, 440px);
+  }
+
+  .qs2-inputs {
+    overflow: visible;
+  }
+
+  .qs2-style {
+    display: inline-flex;
+  }
+}
+
+/* ───────── Layar penuh ───────── */
+
+.qs2.is-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  grid-template-rows: minmax(0, 1fr);
+  width: 100vw;
+  height: 100dvh;
+  padding: max(6px, env(safe-area-inset-top, 0px))
+    max(8px, env(safe-area-inset-right, 0px))
+    max(6px, env(safe-area-inset-bottom, 0px))
+    max(8px, env(safe-area-inset-left, 0px));
+  overflow: hidden;
+}
+
+.qs2.is-fs .qs2-layout {
+  height: 100%;
+}
+
+.qs2.is-fs .qs2-insights,
+.qs2.is-fs .qs2-hint {
+  display: none;
+}
+
+/* Layar penuh + potret: tetap 2 : 1, atas grafik, bawah input */
+@media (orientation: portrait) and (max-width: 899px) {
+  .qs2.is-fs .qs2-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .qs2.is-fs .qs2-graph {
+    height: auto;
+  }
+
+  .qs2.is-fs .qs2-inputs {
+    overflow-y: auto;
+  }
+}
+
+/* Layar penuh: grafik 100%, panel input tersembunyi dan muncul mengambang
+   di atas grafik lewat tombol toolbar (di bawah tombol pusatkan tampilan).
+   Ditaruh setelah aturan potret agar menimpanya. */
+.qs2.is-fs .qs2-layout {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.qs2.is-fs .qs2-graph {
+  height: 100%;
+}
+
+.qs2.is-fs .qs2-inputs.is-floating {
+  position: absolute;
+  top: 6px;
+  right: 42px;
+  z-index: 3;
+  display: none;
+  width: min(320px, calc(100% - 52px));
+  height: auto;
+  max-height: calc(100% - 12px);
+  overflow-y: auto;
+  border-color: #aebdc2;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+}
+
+.qs2.is-fs .qs2-inputs.is-floating.is-open {
+  display: flex;
+}
+
+.qs2-tools .qs2-toolbar-toggle[aria-pressed="true"] {
+  border-color: var(--a);
+  background: #d6ebe8;
+  color: var(--a);
+}
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .qs2.is-fs .qs2-inputs.is-floating {
+    top: 10px;
+    right: 54px;
+    width: min(360px, calc(100% - 70px));
+    max-height: calc(100% - 20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qs2 * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

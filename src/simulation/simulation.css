@@ -924,3 +924,35 @@
     animation: none !important;
   }
 }
+
+/* ===== Irisan kerucut (umum: pilihan segmen berwarna & baris tombol) ===== */
+.sim-seg--kinds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sim-seg--kinds .sim-seg__btn:hover {
+  border-color: var(--sim-accent);
+}
+.sim-seg--kinds .sim-seg__btn[aria-checked="true"] {
+  border-color: var(--sim-accent);
+  background: var(--sim-accent);
+  color: #fff;
+}
+.sim-btn-row {
+  display: flex;
+  gap: 6px;
+}
+.sim-btn-row .sim-text-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 4px;
+}
+@media (orientation: landscape) and (max-height: 380px) {
+  .sim-seg--kinds {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sim-seg--kinds .sim-seg__btn {
+    padding: 0 2px;
+    font-size: 11px;
+  }
+}

@@ -48,7 +48,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Translasi", "Rotasi", "Refleksi", "Dilatasi"],
     glyph: "T",
     component: lazy(() =>
-      import("../simulasi/TransformationSimulation").then((m) => ({ default: m.TransformationSimulation })),
+      import("../simulation/TransformationSimulation").then((m) => ({ default: m.TransformationSimulation })),
     ),
   },
   {
@@ -60,7 +60,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Sudut", "Sinus", "Kosinus", "Lingkaran satuan"],
     glyph: "sin",
     component: lazy(() =>
-      import("../simulasi/TrigonometrySimulation").then((m) => ({ default: m.TrigonometrySimulation })),
+      import("../simulation/TrigonometrySimulation").then((m) => ({ default: m.TrigonometrySimulation })),
     ),
   },
   {
@@ -71,7 +71,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Geser ujung dua vektor pada bidang koordinat dan amati penjumlahan, sudut, proyeksi, dan hasil kali titik berubah secara langsung.",
     concepts: ["Penjumlahan vektor", "Hasil kali titik", "Sudut antarvektor", "Proyeksi vektor"],
     glyph: "a·b",
-    component: lazy(() => import("../simulasi/VectorSimulation").then((m) => ({ default: m.VectorSimulation }))),
+    component: lazy(() => import("../simulation/VectorSimulation").then((m) => ({ default: m.VectorSimulation }))),
   },
   {
     slug: "sistem-linear",
@@ -82,7 +82,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Persamaan linear", "Interseksi", "Sistem", "Solusi"],
     glyph: "y=mx+c",
     component: lazy(() =>
-      import("../simulasi/LinearSystemSimulation").then((m) => ({ default: m.LinearSystemSimulation })),
+      import("../simulation/LinearSystemSimulation").then((m) => ({ default: m.LinearSystemSimulation })),
     ),
   },
   {
@@ -94,7 +94,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Elips", "Parabola", "Hiperbola", "Fokus"],
     glyph: "e",
     component: lazy(() =>
-      import("../simulasi/ConicSectionsSimulation").then((m) => ({ default: m.ConicSectionsSimulation })),
+      import("../simulation/ConicSectionsSimulation").then((m) => ({ default: m.ConicSectionsSimulation })),
     ),
   },
   {
@@ -106,7 +106,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Juring", "Busur", "Sudut pusat", "Lingkaran"],
     glyph: "◔",
     component: lazy(() =>
-      import("../simulasi/CircleSectorSimulation").then((m) => ({ default: m.CircleSectorSimulation })),
+      import("../simulation/CircleSectorSimulation").then((m) => ({ default: m.CircleSectorSimulation })),
     ),
   },
   {

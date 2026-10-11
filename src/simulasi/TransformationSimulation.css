@@ -1,412 +1,429 @@
-/* Simulasi transformasi geometri (disusun ulang, mengikuti VectorSimulation.css).
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. */
+/* Simulasi transformasi geometri — tema slate landing page 1729.
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar dan panel mengambang).
+   Grafik : panel = 2fr : 1fr. */
 
-.transformation-simulation,
-.transformation-simulation *,
-.transformation-simulation *::before,
-.transformation-simulation *::after {
+.tfs,
+.tfs *,
+.tfs *::before,
+.tfs *::after {
   box-sizing: border-box;
 }
 
-.transformation-simulation {
-  --tf-original: #087f8c;
-  --tf-image: #d16b36;
-  --tf-guide: #183e54;
-  --tf-ghost: #8d9ba3;
-  --ink: var(--sim-ink, #18313d);
-  --muted: var(--sim-muted, #62727d);
-  --line: var(--sim-line, #d5e0e4);
-  --paper: var(--sim-paper, #f3f7f5);
+.tfs {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
 
-  /* slider tipis, bulatan kecil */
+  --original: #2563eb;
+  --image: #ea580c;
+  --ghost: #94a3b8;
+  --guide: #7c3aed;
+
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (layar penuh: ikut safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
   --track: 3px;
-  --thumb: 13px;
-  --step: 22px;
+  --thumb: 14px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  background: var(--paper);
-  color: var(--ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.transformation-simulation h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.transformation-simulation h4 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.transformation-simulation button {
-  font-family: inherit;
+.tfs button {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.transformation-simulation button:disabled {
-  opacity: 0.45;
+.tfs button:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.transformation-simulation button:focus-visible,
-.transformation-simulation input:focus-visible {
-  outline: 2px solid var(--tf-original);
+.tfs button:focus-visible,
+.tfs input:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.tf-orientation-hint {
+.tfs-hint {
   display: none;
 }
 
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.transformation-simulation.is-tabbed {
-  grid-template-rows: minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.tf-main {
+.tfs-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.tf-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.tf-board-panel {
+.tfs-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
-.tf-stage {
+.tfs-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
-.tf-board {
+.tfs-board {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
-.tf-board:active {
+.tfs-board:active {
   cursor: grabbing;
 }
 
-.tf-board .JXGtext {
-  font-family: "Open Sans", sans-serif;
+.tfs-board .JXGtext {
+  font-family: var(--mono);
 }
 
-/* Rumus a · b dan θ melayang di kiri atas grafik */
-.tf-caption {
+/* keterangan langkah aktif, kiri atas */
+.tfs-caption {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
-  max-width: calc(100% - 50px);
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
   margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid var(--tf-guide);
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
-  color: var(--tf-guide);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-  pointer-events: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+  pointer-events: none;
 }
 
-/* Layar penuh, zoom, pusatkan: melayang di kanan atas */
-.tf-view-tools {
+/* toolbar mengambang, kanan atas */
+.tfs-tools {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
-.tf-view-tools button {
-  display: inline-flex;
+.tfs-tools button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.tfs-tools button:hover {
+  border-color: var(--ink);
+}
+.tfs-tools .tfs-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* ───────── Pemutar ───────── */
+
+.tfs-play {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 34px auto;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+.tfs-play-btn {
+  display: inline-grid;
+  place-items: center;
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
   cursor: pointer;
 }
-
-.tf-view-tools button:hover {
-  border-color: var(--tf-original);
-  background: #e8f3f1;
+.tfs-play-btn:hover:not(:disabled) {
+  background: #1e293b;
 }
 
-.tf-legend {
+.tfs-pct {
+  color: var(--image);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tfs-speed {
+  min-width: 36px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tfs-speed:hover {
+  border-color: var(--ink);
+}
+
+/* ───────── Legenda ───────── */
+
+.tfs-legend {
   display: flex;
   gap: 4px 12px;
-  padding: 3px 8px;
+  margin: 0;
+  padding: 4px 10px;
   border-top: 1px solid var(--line);
-  color: var(--muted);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
   font-size: 10px;
+  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
-
-.tf-legend::-webkit-scrollbar {
+.tfs-legend::-webkit-scrollbar {
   display: none;
 }
-
-.tf-legend span {
+.tfs-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
-.tf-legend i {
+.tfs-legend i {
   width: 14px;
   height: 9px;
   border: 2px solid;
+  border-radius: 2px;
 }
-
-.tf-legend .legend-original {
-  border-color: var(--tf-original);
-  background: rgba(8, 127, 140, 0.15);
-}
-
-.tf-legend .legend-image {
-  border-color: var(--tf-image);
-  background: rgba(209, 107, 54, 0.18);
-}
-
-.tf-legend .legend-ghost {
-  border-color: var(--tf-ghost);
-  border-style: dashed;
-}
-
-.tf-legend .legend-guide {
+.tfs-legend i.dash {
   height: 0;
   border-width: 2px 0 0;
-  border-color: var(--tf-guide);
   border-style: dashed;
+  border-radius: 0;
 }
 
-/* ───────── Pemutar animasi (di bawah grafik) ───────── */
+/* ───────── Panel ───────── */
 
-.tf-playback {
-  --tone: var(--tf-image);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 34px;
-  align-items: center;
+.tfs-panel {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  padding: 2px 8px;
-  border-top: 1px solid var(--line);
-}
-
-.tf-play-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--tf-original);
-  background: var(--tf-original);
-  color: #fff;
-  cursor: pointer;
-}
-
-.tf-play-button:hover:not(:disabled) {
-  background: #066b76;
-}
-
-.tf-progress-value {
-  color: var(--tf-image);
-  font-size: 11px;
-  font-weight: 800;
-  text-align: right;
-}
-
-.tf-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
 }
 
-/* ───────── Tab panel kanan ───────── */
-
-.tf-tabs {
+.tfs-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 0 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
 }
 
-.tf-tabs button {
+.tfs-tabs button {
   height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
   color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
-
-.tf-tabs button:first-child {
-  margin-left: 0;
+.tfs-tabs button:hover {
+  border-color: var(--ink);
 }
-
-.tf-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--tf-original);
-  background: var(--tf-original);
+.tfs-tabs button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
   color: #fff;
 }
 
-/* Isi panel: satu kartu putih; judul h3 tidak perlu (sudah ada di tab) */
-.transformation-simulation.is-tabbed .tf-side,
-.transformation-simulation.is-tabbed .tf-results {
+.tfs-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--line);
-  background: #fff;
+  padding: 2px 2px 4px 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 
-.transformation-simulation.is-tabbed .tf-side {
+.tfs-label {
+  margin: 2px 0 -2px;
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tfs-note,
+.tfs-empty {
+  margin: 0;
+  color: var(--mute);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ───────── Segmented ───────── */
+
+.tfs-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tfs-seg button {
+  flex: 1 1 auto;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.tfs-seg button:hover {
+  border-color: var(--ink);
+}
+.tfs-seg button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.tfs-seg-small button {
+  flex: 0 0 auto;
+  min-width: 30px;
+  min-height: 24px;
+  padding: 0 8px;
+}
+
+/* ───────── Baris slider:  x  −  ──●──  +  2 ───────── */
+
+.tfs-rows {
   display: grid;
-  align-content: start;
-  gap: 8px;
+  gap: 2px;
 }
 
-.transformation-simulation.is-tabbed .tf-results {
+.tfs-row {
+  --tone: var(--original);
   display: grid;
-  align-content: start;
-  gap: 8px;
-}
-
-.transformation-simulation.is-tabbed .tf-panel > h3,
-.transformation-simulation.is-tabbed .tf-wide > h3,
-.transformation-simulation.is-tabbed .tf-sample-head > h3,
-.transformation-simulation.is-tabbed .tf-side .tf-hint:not(.tf-hint-keep) {
-  display: none;
-}
-
-.transformation-simulation.is-tabbed
-  .tf-column[data-tab="point"]
-  [data-pane]:not([data-pane="point"]),
-.transformation-simulation.is-tabbed
-  .tf-column[data-tab="steps"]
-  [data-pane]:not([data-pane="steps"]),
-.transformation-simulation.is-tabbed
-  .tf-column[data-tab="view"]
-  [data-pane]:not([data-pane="view"]),
-.transformation-simulation.is-tabbed .tf-column[data-tab="point"] .tf-results,
-.transformation-simulation.is-tabbed .tf-column[data-tab="steps"] .tf-results,
-.transformation-simulation.is-tabbed .tf-column[data-tab="view"] .tf-results,
-.transformation-simulation.is-tabbed .tf-column[data-tab="result"] .tf-side {
-  display: none;
-}
-
-.tf-panel {
-  min-width: 0;
-}
-
-.tf-insights {
-  display: none;
-}
-
-/* ───────── Baris komponen: a₁  −  ──●──  +  [ 5 ] ───────── */
-
-.tf-rows {
-  display: grid;
-  gap: 0;
-}
-
-.tf-row {
-  --tone: var(--tf-original);
-  display: grid;
-  grid-template-columns: 26px var(--step) minmax(0, 1fr) var(--step) 44px;
+  grid-template-columns: 22px var(--step) minmax(0, 1fr) var(--step) 38px;
   align-items: center;
   column-gap: 4px;
   min-width: 0;
 }
-
-.tf-row-image {
-  --tone: var(--tf-image);
+.tfs-row-image {
+  --tone: var(--image);
 }
 
-.tf-row-hint {
-  display: none;
-  margin: 0;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.tf-row label {
+.tfs-row label {
   color: var(--tone);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 14px;
+  font-family: var(--serif);
+  font-size: 16px;
   font-style: italic;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.tf-nudge-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.tfs-row output {
+  color: var(--tone);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tfs-step {
+  display: inline-grid;
+  place-items: center;
   width: var(--step);
   height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
   color: var(--ink);
@@ -415,49 +432,16 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.tf-nudge-button:hover {
+.tfs-step:hover {
   border-color: var(--tone);
-  background: #f1f6f5;
+}
+.tfs-step:active {
+  background: var(--line);
 }
 
-.tf-nudge-button:active {
-  background: #e0ecea;
-}
-
-.tf-num {
-  width: 100%;
-  min-width: 0;
-  height: 24px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fff;
-  color: var(--tone);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  text-align: center;
-}
-
-@media (pointer: coarse) {
-  .transformation-simulation {
-    --step: 24px;
-  }
-
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .tf-num {
-    height: 28px;
-    font-size: 16px;
-  }
-
-  .tf-row {
-    grid-template-columns: 26px var(--step) minmax(0, 1fr) var(--step) 50px;
-  }
-}
-
-/* Area sentuh 28px, tampilan visual hanya 3px. Isi dari titik 0 (tengah). */
-.tf-range {
+/* area sentuh 28px, tampilan hanya garis tipis; isi dari titik 0 */
+.tfs-range {
+  --tone: var(--original);
   --lo: 50%;
   --hi: 50%;
   -webkit-appearance: none;
@@ -469,189 +453,129 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
-.tf-range::-webkit-slider-runnable-track {
+.tfs-range:disabled {
+  cursor: not-allowed;
+}
+.tfs-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--line) 0,
-    var(--line) var(--lo),
+    var(--line-strong) 0,
+    var(--line-strong) var(--lo),
     var(--tone) var(--lo),
     var(--tone) var(--hi),
-    var(--line) var(--hi),
-    var(--line) 100%
+    var(--line-strong) var(--hi),
+    var(--line-strong) 100%
   );
 }
-
-.tf-range::-webkit-slider-thumb {
+.tfs-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.tf-range::-moz-range-track {
+.tfs-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--line);
+  background: var(--line-strong);
 }
-
-.tf-range::-moz-range-progress {
+.tfs-range::-moz-range-progress {
   height: var(--track);
   border-radius: 999px;
   background: transparent;
 }
-
-.tf-range::-moz-range-thumb {
-  box-sizing: border-box;
+.tfs-range::-moz-range-thumb {
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--tone);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.tf-range:focus-visible {
+.tfs-range:focus-visible {
   outline: none;
 }
-
-.tf-range:focus-visible::-webkit-slider-thumb {
+.tfs-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--tone);
+}
+.tfs-range:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 2px var(--tone);
 }
 
-.tf-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--tone);
+/* slider progres: warna oranye (bayangan) */
+.tfs-progress {
+  --tone: var(--image);
+}
+
+@media (pointer: coarse) {
+  .tfs {
+    --step: 26px;
+  }
 }
 
 /* ───────── Kontrol umum ───────── */
 
-.tf-check {
+.tfs-check {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 28px;
-  margin-top: 4px;
+  min-height: 26px;
   color: var(--ink);
   font-size: 11px;
   cursor: pointer;
 }
-
-.tf-check-first {
-  margin-top: 0;
-}
-
-.tf-check input {
+.tfs-check input {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: var(--tf-original);
+  accent-color: var(--ink);
 }
 
-.tf-subtitle {
-  margin: 8px 0 4px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.tf-hint {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
-.tf-segmented {
+.tfs-actions {
   display: flex;
   flex-wrap: wrap;
-}
-
-.tf-segmented button {
-  flex: 1 1 auto;
-  min-height: 30px;
-  padding: 0 10px;
-  margin-top: -1px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tf-segmented button:hover {
-  background: #e8f3f1;
-}
-
-.tf-segmented button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--tf-original);
-  background: var(--tf-original);
-  color: #fff;
-}
-
-.tf-reset-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 6px;
 }
 
-.tf-reset-button {
+.tfs-btn {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   justify-content: center;
   gap: 6px;
   height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   background: #fff;
   color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.tfs-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.tfs-btn-solid {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.tfs-btn-solid:hover:not(:disabled) {
+  background: #1e293b;
 }
 
-.tf-reset-button:hover {
-  border-color: var(--tf-original);
-  background: #e8f3f1;
-}
+/* ───────── Daftar langkah ───────── */
 
-/* ───────── Daftar langkah dan penyusun ───────── */
-
-.tf-subtitle-gap {
-  margin-top: 10px;
-}
-
-.tf-subtitle-note {
-  font-weight: 600;
-}
-
-.tf-empty {
-  margin: 0;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.tf-hint-flat {
-  margin: 0;
-}
-
-.tf-hint-keep {
-  margin: 6px 0 0;
-}
-
-.tf-steps {
+.tfs-steps {
   display: grid;
   gap: 4px;
   margin: 0;
@@ -659,33 +583,35 @@
   list-style: none;
 }
 
-.tf-steps li {
+.tfs-steps li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   padding: 3px 4px;
   border: 1px solid var(--line);
+  border-radius: 8px;
   background: #fff;
 }
-
-.tf-steps li.is-active {
-  border-color: var(--tf-image);
-  background: #fdf3ec;
+.tfs-steps li.is-active {
+  border-color: var(--image);
+  background: #fff7ed;
 }
 
-.tf-step-index {
+.tfs-index {
   display: grid;
   place-items: center;
   width: 20px;
   height: 20px;
-  background: var(--tf-guide);
+  border-radius: 6px;
+  background: var(--ink);
   color: #fff;
+  font-family: var(--mono);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-.tf-step-label {
+.tfs-step-label {
   padding: 3px 2px;
   border: 0;
   background: none;
@@ -695,585 +621,415 @@
   text-align: left;
   cursor: pointer;
 }
-
-.tf-step-label b {
-  color: var(--tf-image);
+.tfs-step-label b {
+  color: var(--image);
+  font-weight: 600;
 }
 
-.tf-step-remove {
+.tfs-remove {
   width: 26px;
   height: 26px;
   border: 0;
   background: none;
-  color: var(--muted);
+  color: var(--mute);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
 }
-
-.tf-step-remove:hover {
-  color: #b23a48;
+.tfs-remove:hover {
+  color: #e11d48;
 }
 
-.tf-builder-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
+/* ───────── Hasil ───────── */
 
-.tf-add-button {
-  display: inline-flex;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--tf-original);
-  background: var(--tf-original);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tf-add-button:hover:not(:disabled) {
-  background: #066b76;
-}
-
-.tf-reset-row-gap {
-  margin-top: 10px;
-}
-
-.tf-segmented-small button {
-  flex: 0 0 auto;
-  min-width: 34px;
-  min-height: 26px;
-  padding: 0 8px;
-}
-
-/* ───────── Hasil: tabel, matriks, contoh perhitungan ───────── */
-
-.tf-wide {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-}
-
-.tf-wide h3 {
-  margin-bottom: 0;
-}
-
-.tf-table-wrap {
+.tfs-table-wrap {
   min-width: 0;
   overflow-x: auto;
 }
 
-.tf-table {
+.tfs-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
 }
-
-.tf-table th,
-.tf-table td {
+.tfs-table th,
+.tfs-table td {
   padding: 4px 5px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   white-space: nowrap;
 }
-
-.tf-table thead th {
-  color: var(--muted);
+.tfs-table thead th {
+  color: var(--mute);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
+}
+.tfs-table tbody th {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tfs-table td {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.c-original {
+  color: var(--original);
+}
+.c-current {
+  color: var(--mute);
+}
+.c-image {
+  color: var(--image);
 }
 
-.tf-table tbody th {
-  font-weight: 800;
-}
-
-.tf-table td {
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.cell-original {
-  color: var(--tf-original);
-}
-
-.cell-current {
-  color: var(--muted);
-}
-
-.cell-image {
-  color: var(--tf-image);
-}
-
-.tf-matrix-grid {
+.tfs-cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
-.tf-matrix-card {
+.tfs-card {
   display: grid;
   align-content: start;
   gap: 4px;
   min-width: 0;
   padding: 6px 8px;
   border: 1px solid var(--line);
-  background: var(--paper);
+  border-radius: 8px;
+  background: var(--wash);
 }
-
-.tf-matrix-card p {
+.tfs-card h4 {
   margin: 0;
-  color: var(--muted);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tfs-card p {
+  margin: 0;
+  color: var(--mute);
   font-size: 10px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
-
-.tf-matrix-card.is-active {
-  border-color: var(--tf-image);
-  background: #fdf3ec;
+.tfs-card.is-active {
+  border-color: var(--image);
+  background: #fff7ed;
+}
+.tfs-card-total {
+  border-color: var(--original);
+  background: #eff6ff;
 }
 
-.tf-matrix-card.tf-composite {
-  border-color: var(--tf-original);
-  background: #eaf5f4;
-}
-
-.tf-matrix-card h4,
-.tf-sample-head h3 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.tf-matrix {
+.tfs-matrix {
   display: inline-grid;
   gap: 2px 12px;
   justify-self: start;
   padding: 3px 10px;
-  border: 2px solid var(--tf-guide);
+  border: 2px solid var(--ink);
   border-top-color: transparent;
   border-bottom-color: transparent;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
   text-align: right;
 }
-
-.tf-matrix span {
+.tfs-matrix span {
   min-width: 2ch;
 }
 
-.tf-sample-head {
+.tfs-sample-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
+.tfs-sample-head .tfs-label {
+  margin: 0;
+}
 
-.tf-equation {
+.tfs-equation {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
-
-.tf-operator {
+.tfs-op {
+  color: var(--ink);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-/* Ponsel lanskap sangat pendek */
+/* ───────── Ponsel lanskap sangat pendek ───────── */
+
 @media (orientation: landscape) and (max-height: 360px) {
-  .transformation-simulation.is-tabbed {
+  .tfs {
     gap: 4px;
     padding: 4px;
   }
-
-  .transformation-simulation.is-tabbed .tf-main {
+  .tfs-layout {
     gap: 4px;
   }
-
-  .transformation-simulation.is-tabbed .tf-side,
-  .transformation-simulation.is-tabbed .tf-results {
+  .tfs-panel {
+    gap: 4px;
     padding: 6px;
   }
-
-  .tf-range {
+  .tfs-pane {
+    gap: 6px;
+  }
+  .tfs-range {
     height: 24px;
   }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .tfs {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .tfs-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .tfs-caption {
+    padding: 5px 14px;
+    font-size: 13px;
+  }
+  .tfs-play {
+    gap: 10px;
+    padding: 6px 12px;
+  }
+  .tfs-play-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .tfs-pct {
+    font-size: 12px;
+  }
+  .tfs-speed {
+    height: 30px;
+    font-size: 12px;
+  }
+  .tfs-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .tfs-panel {
+    gap: 10px;
+    padding: 14px;
+  }
+  .tfs-tabs button {
+    height: 34px;
+    font-size: 13px;
+  }
+  .tfs-pane {
+    gap: 12px;
+  }
+  .tfs-label {
+    font-size: 11px;
+  }
+  .tfs-note,
+  .tfs-empty {
+    font-size: 12px;
+  }
+  .tfs-seg button {
+    min-height: 34px;
+    font-size: 12px;
+  }
+  .tfs-seg-small button {
+    min-height: 28px;
+  }
+  .tfs-row {
+    grid-template-columns: 28px var(--step) minmax(0, 1fr) var(--step) 46px;
+  }
+  .tfs-row label {
+    font-size: 20px;
+  }
+  .tfs-row output {
+    font-size: 13px;
+  }
+  .tfs-range {
+    height: 32px;
+  }
+  .tfs-check {
+    min-height: 30px;
+    font-size: 12px;
+  }
+  .tfs-btn {
+    height: 34px;
+    font-size: 12px;
+  }
+  .tfs-step-label {
+    font-size: 12px;
+  }
+  .tfs-table {
+    font-size: 12px;
+  }
+  .tfs-table td {
+    font-size: 12px;
+  }
+  .tfs-card h4 {
+    font-size: 13px;
+  }
+  .tfs-card p {
+    font-size: 11px;
+  }
+  .tfs-matrix {
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, panel bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .transformation-simulation.is-tabbed:not(.is-fullscreen) {
+  .tfs {
     grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .transformation-simulation.is-tabbed:not(.is-fullscreen)
-    .tf-orientation-hint {
+  .tfs-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--tf-original);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .tf-orientation-hint svg {
+  .tfs-hint svg {
     flex: 0 0 auto;
-    color: var(--tf-original);
+    color: var(--mute);
   }
-
-  .transformation-simulation.is-tabbed:not(.is-fullscreen) .tf-main {
+  .tfs-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .transformation-simulation.is-tabbed:not(.is-fullscreen) .tf-board-panel {
-    height: clamp(250px, 46dvh, 420px);
+  .tfs-graph {
+    height: clamp(280px, 54dvh, 440px);
   }
-
-  .transformation-simulation.is-tabbed:not(.is-fullscreen) .tf-side,
-  .transformation-simulation.is-tabbed:not(.is-fullscreen) .tf-results {
+  .tfs-panel {
     overflow: visible;
   }
-
-  .transformation-simulation.is-tabbed:not(.is-fullscreen)
-    .tf-side
-    .tf-hint:not(.tf-hint-keep) {
-    display: block;
+  .tfs-pane {
+    overflow: visible;
   }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, keterangan, pemutar, dan panel
+   mengambang di atasnya. Ditaruh paling akhir agar menimpa aturan
+   potret dan desktop. */
 
-.transformation-simulation:not(.is-tabbed) {
-  --track: 4px;
-  --thumb: 16px;
-  --step: 28px;
-  gap: 12px;
-  padding: 14px;
-  font-size: 13px;
-}
+.tfs.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.transformation-simulation:not(.is-tabbed) .tf-main {
-  grid-template-rows: clamp(460px, 72vh, 700px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-column {
-  display: contents;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-tabs {
-  display: none;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-side {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  gap: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-panel {
-  padding: 14px;
-  border: 1px solid var(--line);
-  background: #fff;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-caption {
-  top: 10px;
-  left: 10px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: clamp(15px, 1.5vw, 20px);
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-view-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-view-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 11px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-row {
-  grid-template-columns: 34px var(--step) minmax(0, 1fr) var(--step) 56px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-row-hint {
-  display: block;
-  padding-left: 38px;
-  margin-top: -4px;
-  margin-bottom: 6px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-row label {
-  font-size: 19px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-range {
-  height: 30px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-num {
-  height: 30px;
-  font-size: 14px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-check {
-  min-height: 32px;
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-segmented button {
-  min-height: 36px;
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-reset-button {
-  height: 34px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-matrix-grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 10px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-matrix-card {
-  gap: 6px;
-  padding: 10px 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-matrix-card p {
-  font-size: 11px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-matrix {
-  font-size: 14px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-table {
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-table th,
-.transformation-simulation:not(.is-tabbed) .tf-table td {
-  padding: 7px 10px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-table td {
-  font-size: 14px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-playback {
-  gap: 10px;
-  padding: 4px 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-play-button {
-  width: 34px;
-  height: 34px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-progress-value {
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-step-label {
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-add-button {
-  height: 36px;
-  font-size: 12px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-segmented-small button {
-  min-height: 28px;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-insights {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-insights li {
-  padding-left: 10px;
-  border-left: 3px solid var(--line);
-}
-
-.transformation-simulation:not(.is-tabbed) .tf-insights strong {
-  color: var(--ink);
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.transformation-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: minmax(0, 1fr);
+  display: block;
   width: 100vw;
   height: 100dvh;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.transformation-simulation.is-fullscreen .tf-orientation-hint,
-.transformation-simulation.is-fullscreen .tf-insights {
+.tfs.is-fs .tfs-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .transformation-simulation.is-fullscreen {
-    --track: 4px;
-    --thumb: 15px;
-    --step: 26px;
-    font-size: 13px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-caption {
-    font-size: 17px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-row {
-    grid-template-columns: 30px var(--step) minmax(0, 1fr) var(--step) 52px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-row label {
-    font-size: 18px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-range {
-    height: 32px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-num {
-    height: 28px;
-  }
-
-  .transformation-simulation.is-fullscreen .tf-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .transformation-simulation.is-fullscreen .tf-main {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .transformation-simulation.is-fullscreen .tf-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, panel input (tab + isi) tersembunyi dan muncul
-   mengambang di atas grafik lewat tombol toolbar di bawah tombol pusatkan
-   tampilan. Pemutar animasi tetap menempel di bawah grafik.
-   Ditaruh setelah aturan potret agar menimpanya. */
-.transformation-simulation.is-fullscreen .tf-main {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.transformation-simulation.is-fullscreen .tf-board-panel {
+.tfs.is-fs .tfs-layout {
+  display: block;
   height: 100%;
 }
 
-.transformation-simulation.is-fullscreen .tf-column.is-floating {
+.tfs.is-fs .tfs-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.tfs.is-fs .tfs-stage {
+  height: 100%;
+}
+
+/* legenda disembunyikan agar layar bersih */
+.tfs.is-fs .tfs-legend {
+  display: none;
+}
+
+/* pemutar: kapsul mengambang di bawah, di kiri toolbar */
+.tfs.is-fs .tfs-play {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
+  z-index: 3;
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* panel: tersembunyi, muncul mengambang di kiri toolbar, di atas pemutar */
+.tfs.is-fs .tfs-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  width: min(360px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(330px, 58vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b) - 56px);
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
 }
-
-.transformation-simulation.is-fullscreen .tf-column.is-floating.is-open {
-  display: grid;
-}
-
-.tf-view-tools .tf-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--tf-original);
-  background: #d6ebe8;
-  color: var(--tf-original);
+.tfs.is-fs .tfs-panel.is-floating.is-open {
+  display: flex;
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .transformation-simulation.is-fullscreen .tf-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(400px, calc(100% - 70px));
+  .tfs.is-fs .tfs-play {
+    padding: 6px 14px;
+  }
+  .tfs.is-fs .tfs-panel.is-floating {
+    width: min(400px, 42vw);
+    max-height: calc(100% - var(--inset-t) - var(--inset-b) - 64px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .transformation-simulation * {
+  .tfs * {
     transition: none !important;
+    animation: none !important;
   }
 }

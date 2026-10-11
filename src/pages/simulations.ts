@@ -35,7 +35,9 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Ubah parameter parabola dan lihat pergeseran puncak, lebar kurva, serta titik potong dengan sumbu koordinat.",
     concepts: ["Parabola", "Diskriminan", "Puncak", "Persamaan kuadrat"],
     glyph: "ax²",
-    component: lazy(() => import("../simulasi/QuadraticSimulation").then((m) => ({ default: m.QuadraticSimulation }))),
+    component: lazy(() =>
+      import("../simulasi/QuadraticSimulationV3").then((m) => ({ default: m.QuadraticSimulationV3 })),
+    ),
   },
   {
     slug: "transformasi-geometri",

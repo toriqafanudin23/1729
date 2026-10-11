@@ -7,8 +7,8 @@ import {
   Play,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
 import {
   useEffect,
@@ -21,19 +21,12 @@ import {
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./TransformationSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi transformasi geometri (versi disusun ulang, mengikuti struktur
-   VectorSimulation).
-   Prioritas: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1.
-   - Layar kecil / layar penuh: panel kanan bertab (Titik, Langkah, Hasil,
-     Tampilan) agar semuanya muat tanpa gulir panjang.
-   - Desktop: panel input bertumpuk di kanan, hasil di bawah.
-   - Koordinat awal tiap titik bisa diatur lewat penggeser, kolom angka,
-     atau dengan menyeret titik di grafik. */
+/* Simulasi transformasi geometri — tema slate seperti landing page 1729.
+   Urutan desain: ponsel lanskap → desktop → ponsel potret.
+   Grafik : panel = 2 : 1. Panel punya tiga tab: Titik, Langkah, Hasil.
+   Layar penuh: grafik 100% layar; toolbar, pemutar, dan panel mengambang. */
 
 /* ---------- Tipe ---------- */
 
@@ -50,19 +43,19 @@ type Step =
 type StepType = Step["type"];
 
 type Draft = {
-  tx: string;
-  ty: string;
+  tx: number;
+  ty: number;
   axis: ReflectionAxis;
-  angle: string;
-  rcx: string;
-  rcy: string;
-  k: string;
-  dcx: string;
-  dcy: string;
+  angle: number;
+  rcx: number;
+  rcy: number;
+  k: number;
+  dcx: number;
+  dcy: number;
 };
 type DraftNumKey = Exclude<keyof Draft, "axis">;
 
-type PanelTab = "point" | "steps" | "result" | "view";
+type PanelTab = "point" | "steps" | "result";
 
 type DataCurve = {
   dataX: number[];
@@ -74,7 +67,6 @@ const panelTabs: { tab: PanelTab; label: string }[] = [
   { tab: "point", label: "Titik" },
   { tab: "steps", label: "Langkah" },
   { tab: "result", label: "Hasil" },
-  { tab: "view", label: "Tampilan" },
 ];
 
 /* ---------- Konstanta ---------- */
@@ -83,14 +75,13 @@ const MAX_STEPS = 5;
 const STEP_MS = 1600;
 const LIMIT = 9.5;
 const INITIAL_BOX: [number, number, number, number] = [-10, 10, 10, -10];
-/** Layar kecil atau pendek memakai panel bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
 
+/* Warna grafik (dipakai juga oleh legenda dan panel lewat CSS). */
 const colors = {
-  original: "#087f8c",
-  image: "#d16b36",
-  ghost: "#8d9ba3",
-  guide: "#183e54",
+  original: "#2563eb",
+  image: "#ea580c",
+  ghost: "#94a3b8",
+  guide: "#7c3aed",
 };
 
 const defaultVertices: Record<number, Vec[]> = {
@@ -192,15 +183,15 @@ const initialSteps: Step[] = [
 ];
 
 const initialDraft: Draft = {
-  tx: "3",
-  ty: "1",
+  tx: 3,
+  ty: 1,
   axis: "y",
-  angle: "90",
-  rcx: "0",
-  rcy: "0",
-  k: "2",
-  dcx: "0",
-  dcy: "0",
+  angle: 90,
+  rcx: 0,
+  rcy: 0,
+  k: 2,
+  dcx: 0,
+  dcy: 0,
 };
 
 /** Baris penggeser untuk membentuk langkah baru. */
@@ -216,14 +207,7 @@ const draftRows: Record<
   }[]
 > = {
   translation: [
-    {
-      key: "tx",
-      label: "Tx",
-      hint: "Geser mendatar",
-      min: -9,
-      max: 9,
-      step: 1,
-    },
+    { key: "tx", label: "Tx", hint: "Geser mendatar", min: -9, max: 9, step: 1 },
     { key: "ty", label: "Ty", hint: "Geser tegak", min: -9, max: 9, step: 1 },
   ],
   rotation: [
@@ -249,7 +233,9 @@ const draftRows: Record<
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
-const clampLimit = (value: number) => Math.min(LIMIT, Math.max(-LIMIT, value));
+const clampTo = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+const clampLimit = (value: number) => clampTo(value, -LIMIT, LIMIT);
 
 const identity = (): Mat => [
   [1, 0, 0],
@@ -350,8 +336,6 @@ function formatValue(value: number) {
 
 const formatCoord = ([x, y]: Vec) => `(${formatValue(x)}; ${formatValue(y)})`;
 
-const toField = (value: number) => String(cleanNumber(value)).replace(".", ",");
-
 const subscript = (n: number) =>
   String(n)
     .split("")
@@ -384,37 +368,9 @@ function describeStep(step: Step): { name: string; detail: string } {
   }
 }
 
-/** Teks angka bebas (untuk langkah baru) → angka; selain itu fallback. */
-function parseNumber(text: string, fallback = 0) {
-  const value = Number(text.trim().replace("−", "-").replace(",", "."));
-  return Number.isFinite(value) ? value : fallback;
-}
+/* ---------- Komponen kecil ---------- */
 
-/** Teks koordinat titik valid → angka dalam batas; selain itu null. */
-function parseField(text: string): number | null {
-  const normalized = text.trim().replace("−", "-").replace(",", ".");
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
-  const value = Number(normalized);
-  return Number.isFinite(value) ? clampLimit(value) : null;
-}
-
-/* ---------- Hook & komponen kecil ---------- */
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
+/** Tombol tahan-untuk-mengulang (− / + di samping slider). */
 function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
   const stepRef = useRef(onStep);
   stepRef.current = onStep;
@@ -436,7 +392,7 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
 
   return (direction: 1 | -1) => ({
     type: "button" as const,
-    className: "tf-nudge-button",
+    className: "tfs-step",
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       stop();
@@ -454,14 +410,14 @@ function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
     onBlur: stop,
     onContextMenu: (event: { preventDefault: () => void }) =>
       event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
+    // detail === 0 → aktivasi lewat keyboard
     onClick: (event: { detail: number }) => {
       if (event.detail === 0) stepRef.current(direction);
     },
   });
 }
 
-/** Satu baris: x  −  ──●──  +  [ 2 ] */
+/** Satu baris: x  −  ──●──  +  2 */
 function SliderField({
   label,
   hint,
@@ -470,9 +426,6 @@ function SliderField({
   max,
   step,
   value,
-  text,
-  onText,
-  onBlurText,
   onSlide,
   onNudge,
 }: {
@@ -483,62 +436,44 @@ function SliderField({
   max: number;
   step: number;
   value: number;
-  text: string;
-  onText: (value: string) => void;
-  onBlurText?: () => void;
   onSlide: (value: number) => void;
   onNudge: (direction: 1 | -1) => void;
 }) {
-  const inputId = `tf-field-${useId().replace(/:/g, "")}`;
+  const inputId = `tfs-field-${useId().replace(/:/g, "")}`;
   const bind = useHoldRepeat(onNudge);
 
   // Isi dari titik 0 (tengah) menuju nilai, karena rentang simetris.
-  const clamped = Math.min(max, Math.max(min, value));
-  const pct = ((clamped - min) / (max - min)) * 100;
+  const v = clampTo(value, min, max);
+  const pct = ((v - min) / (max - min)) * 100;
   const zero = ((0 - min) / (max - min)) * 100;
-  const rangeStyle = {
+  const style = {
     "--lo": `${Math.min(zero, pct)}%`,
     "--hi": `${Math.max(zero, pct)}%`,
   } as CSSProperties;
 
   return (
-    <div className="tf-row-wrap">
-      <div className={`tf-row tf-row-${tone}`}>
-        <label htmlFor={inputId} aria-label={`${label} (${hint})`}>
-          {label}
-        </label>
-        <button {...bind(-1)} aria-label={`Kurangi ${label}`}>
-          <Minus size={13} aria-hidden="true" />
-        </button>
-        <input
-          className="tf-range"
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={clamped}
-          style={rangeStyle}
-          aria-label={`Penggeser ${label}`}
-          aria-valuetext={`${label} sama dengan ${formatValue(value)}`}
-          onChange={(event) => onSlide(Number(event.currentTarget.value))}
-        />
-        <button {...bind(1)} aria-label={`Tambah ${label}`}>
-          <Plus size={13} aria-hidden="true" />
-        </button>
-        <input
-          id={inputId}
-          className="tf-num"
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          enterKeyHint="done"
-          value={text}
-          onChange={(event) => onText(event.currentTarget.value)}
-          onFocus={(event) => event.currentTarget.select()}
-          onBlur={onBlurText}
-        />
-      </div>
-      <p className="tf-row-hint">{hint}</p>
+    <div className={`tfs-row tfs-row-${tone}`} style={style}>
+      <label htmlFor={inputId} title={hint} aria-label={`${label} (${hint})`}>
+        {label}
+      </label>
+      <button {...bind(-1)} aria-label={`Kurangi ${label}`}>
+        <Minus size={13} aria-hidden="true" />
+      </button>
+      <input
+        id={inputId}
+        className="tfs-range"
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={v}
+        aria-valuetext={`${label} sama dengan ${formatValue(value)}`}
+        onChange={(event) => onSlide(Number(event.currentTarget.value))}
+      />
+      <button {...bind(1)} aria-label={`Tambah ${label}`}>
+        <Plus size={13} aria-hidden="true" />
+      </button>
+      <output htmlFor={inputId}>{formatValue(value)}</output>
     </div>
   );
 }
@@ -549,7 +484,7 @@ function MatrixView({ rows, label }: { rows: Mat; label: string }) {
     .join("; ");
   return (
     <div
-      className="tf-matrix"
+      className="tfs-matrix"
       role="img"
       aria-label={`${label}: ${description}`}
       style={{ gridTemplateColumns: `repeat(${rows[0].length}, auto)` }}
@@ -565,39 +500,30 @@ function MatrixView({ rows, label }: { rows: Mat; label: string }) {
 
 export function TransformationSimulation() {
   const baseId = useId().replace(/:/g, "");
-  const boardId = `tf-board-${baseId}`;
-  const boardTitleId = `tf-board-title-${baseId}`;
-  const coordsTitleId = `tf-coords-title-${baseId}`;
-  const matrixTitleId = `tf-matrix-title-${baseId}`;
-  const sampleTitleId = `tf-sample-title-${baseId}`;
-  const [tab, setTab] = useState<PanelTab>("point");
+  const boardId = `tfs-board-${baseId}`;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const nativeFullscreenRef = useRef(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
-  const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  const tabbed = smallScreen || isFullscreen;
+  const hostRef = useRef<HTMLDivElement | null>(null);
   const boardRef = useRef<ReturnType<typeof JXG.JSXGraph.initBoard> | null>(
     null,
   );
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
   const pointsRef = useRef<JXG.Point[]>([]);
-  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi oleh efek papan)
-  const syncSizeRef = useRef<((force?: boolean) => void) | null>(null);
+  const nativeFsRef = useRef(false);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
+
+  const [tab, setTab] = useState<PanelTab>("point");
+  const [isFs, setIsFs] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const [shape, setShape] = useStoredSimulationState("transformation.shape", 3);
   const [vertices, setVertices] = useStoredSimulationState<Vec[]>(
     "transformation.vertices",
-    defaultVertices[3].map((v) => [...v]),
+    defaultVertices[3].map((v) => [...v] as Vec),
   );
-  const [steps, setSteps] = useStoredSimulationState(
+  const [steps, setSteps] = useStoredSimulationState<Step[]>(
     "transformation.steps",
     initialSteps,
   );
-  const [progress, setProgress] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useStoredSimulationState("transformation.speed", 1);
   const [snap, setSnap] = useStoredSimulationState("transformation.snap", true);
   const [draftType, setDraftType] = useStoredSimulationState<StepType>(
@@ -605,17 +531,17 @@ export function TransformationSimulation() {
     "rotation",
   );
   const [draft, setDraft] = useStoredSimulationState<Draft>(
-    "transformation.draft",
+    "transformation.draft.v2",
     initialDraft,
   );
   const [sampleIndex, setSampleIndex] = useStoredSimulationState(
     "transformation.sample-index",
     0,
   );
+  const [progress, setProgress] = useState(0);
+  const [playing, setPlaying] = useState(false);
   /** Titik yang sedang diatur lewat penggeser (indeks 0..shape-1). */
   const [selected, setSelected] = useState(0);
-  /** Teks kolom angka yang sedang diketik (agar "−" tidak hilang). */
-  const [editing, setEditing] = useState<Record<string, string>>({});
 
   const verticesRef = useRef<Vec[]>(vertices);
   const stepsRef = useRef<Step[]>(steps);
@@ -625,6 +551,8 @@ export function TransformationSimulation() {
   const nextId = useRef(
     steps.reduce((next, step) => Math.max(next, step.id + 1), 3),
   );
+
+  /* ───────── Langkah dan progres ───────── */
 
   const setProgressValue = (value: number) => {
     const safe = Number.isFinite(value)
@@ -642,7 +570,7 @@ export function TransformationSimulation() {
     setProgressValue(Math.min(progressRef.current, next.length));
   };
 
-  const setField = (key: DraftNumKey, value: string) =>
+  const setDraftNum = (key: DraftNumKey, value: number) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
   const nudgeDraft = (
@@ -651,14 +579,15 @@ export function TransformationSimulation() {
     min: number,
     max: number,
     direction: 1 | -1,
-  ) => {
-    const current = parseNumber(draft[key]);
-    const next = Math.min(
-      max,
-      Math.max(min, Math.round((current + direction * step) * 100) / 100),
-    );
-    setField(key, toField(next));
-  };
+  ) =>
+    setDraft((current) => ({
+      ...current,
+      [key]: clampTo(
+        Math.round((current[key] + direction * step) * 100) / 100,
+        min,
+        max,
+      ),
+    }));
 
   const addStep = () => {
     if (stepsRef.current.length >= MAX_STEPS) return;
@@ -666,12 +595,7 @@ export function TransformationSimulation() {
     let step: Step;
     switch (draftType) {
       case "translation":
-        step = {
-          id,
-          type: "translation",
-          tx: parseNumber(draft.tx),
-          ty: parseNumber(draft.ty),
-        };
+        step = { id, type: "translation", tx: draft.tx, ty: draft.ty };
         break;
       case "reflection":
         step = { id, type: "reflection", axis: draft.axis };
@@ -680,18 +604,18 @@ export function TransformationSimulation() {
         step = {
           id,
           type: "rotation",
-          angle: parseNumber(draft.angle),
-          cx: parseNumber(draft.rcx),
-          cy: parseNumber(draft.rcy),
+          angle: draft.angle,
+          cx: draft.rcx,
+          cy: draft.rcy,
         };
         break;
       default:
         step = {
           id,
           type: "dilation",
-          k: parseNumber(draft.k, 1),
-          cx: parseNumber(draft.dcx),
-          cy: parseNumber(draft.dcy),
+          k: draft.k,
+          cx: draft.dcx,
+          cy: draft.dcy,
         };
     }
     updateSteps([...stepsRef.current, step]);
@@ -700,7 +624,7 @@ export function TransformationSimulation() {
   const removeStep = (id: number) =>
     updateSteps(stepsRef.current.filter((step) => step.id !== id));
 
-  /* ----- Titik awal ----- */
+  /* ───────── Titik awal ───────── */
 
   const applyVertices = (next: Vec[]) => {
     verticesRef.current = next;
@@ -718,28 +642,9 @@ export function TransformationSimulation() {
     applyVertices(next);
   };
 
-  const typeVertex = (index: number, axis: 0 | 1, text: string) => {
-    setEditing((current) => ({ ...current, [`${index}-${axis}`]: text }));
-    const value = parseField(text);
-    if (value !== null) setVertexCoord(index, axis, value);
-  };
-
-  const endTyping = (index: number, axis: 0 | 1) =>
-    setEditing((current) => {
-      const next = { ...current };
-      delete next[`${index}-${axis}`];
-      return next;
-    });
-
-  const slideVertex = (index: number, axis: 0 | 1, value: number) => {
-    endTyping(index, axis);
-    setVertexCoord(index, axis, value);
-  };
-
   const nudgeVertex = (index: number, axis: 0 | 1, direction: 1 | -1) => {
     const current = verticesRef.current[index]?.[axis] ?? 0;
     const delta = snapRef.current ? 1 : 0.1;
-    endTyping(index, axis);
     setVertexCoord(index, axis, cleanNumber(current + direction * delta));
   };
 
@@ -749,14 +654,11 @@ export function TransformationSimulation() {
     verticesRef.current = next;
     setVertices(next);
     setSelected(0);
-    setEditing({});
     setShape(count);
   };
 
-  const resetPoints = () => {
-    setEditing({});
+  const resetPoints = () =>
     applyVertices(defaultVertices[shape].map((v) => [...v] as Vec));
-  };
 
   const resetAll = () => {
     setPlaying(false);
@@ -766,6 +668,8 @@ export function TransformationSimulation() {
     setDraft(initialDraft);
     setProgressValue(0);
   };
+
+  /* ───────── Pemutar ───────── */
 
   const togglePlay = () => {
     if (playing) {
@@ -782,23 +686,30 @@ export function TransformationSimulation() {
     setPlaying(true);
   };
 
-  /* Tampilan: zoom, pusatkan, layar penuh */
+  const cycleSpeed = () => {
+    const next = speedOptions[(speedOptions.indexOf(speed) + 1) % speedOptions.length];
+    speedRef.current = next;
+    setSpeed(next);
+  };
+
+  /* ───────── Tampilan ───────── */
+
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(INITIAL_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(INITIAL_BOX, true);
 
-  const toggleFullscreen = async () => {
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (!isFullscreen) {
+    if (!isFs) {
       setPanelOpen(false);
-      setIsFullscreen(true);
+      setIsFs(true);
       if (el.requestFullscreen) {
         try {
           await el.requestFullscreen();
-          nativeFullscreenRef.current = true;
+          nativeFsRef.current = true;
         } catch {
-          // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
+          /* tetap pakai layar penuh CSS */
         }
       }
     } else {
@@ -809,25 +720,26 @@ export function TransformationSimulation() {
           /* diabaikan */
         }
       }
-      nativeFullscreenRef.current = false;
-      setIsFullscreen(false);
+      nativeFsRef.current = false;
+      setIsFs(false);
     }
   };
 
+  // Sinkron saat keluar lewat Esc / gestur sistem.
   useEffect(() => {
     const onChange = () => {
-      if (!document.fullscreenElement && nativeFullscreenRef.current) {
-        nativeFullscreenRef.current = false;
-        setIsFullscreen(false);
+      if (!document.fullscreenElement && nativeFsRef.current) {
+        nativeFsRef.current = false;
+        setIsFs(false);
       }
     };
     const onKey = (event: KeyboardEvent) => {
       if (
         event.key === "Escape" &&
         !document.fullscreenElement &&
-        !nativeFullscreenRef.current
+        !nativeFsRef.current
       ) {
-        setIsFullscreen(false);
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -838,11 +750,10 @@ export function TransformationSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
   useEffect(() => {
-    if (!isFullscreen) return;
-    if (!window.matchMedia("(pointer: coarse)").matches) return;
-    const orientation = (
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
       screen as unknown as {
         orientation?: {
           lock?: (mode: "landscape") => Promise<void>;
@@ -850,18 +761,19 @@ export function TransformationSimulation() {
         };
       }
     ).orientation;
-    if (typeof orientation?.lock !== "function") return;
-    orientation.lock("landscape").catch(() => undefined);
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
     return () => {
       try {
-        orientation.unlock?.();
+        o.unlock?.();
       } catch {
         /* abaikan */
       }
     };
-  }, [isFullscreen]);
+  }, [isFs]);
 
-  /* Papan JSXGraph */
+  /* ───────── Papan JSXGraph ───────── */
+
   useEffect(() => {
     const count = shape;
     const names = vertexNames(count);
@@ -888,40 +800,24 @@ export function TransformationSimulation() {
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
+      highlight: false,
     });
 
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
-      highlight: false,
-    };
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
+    const axis = { strokeColor: "#94a3b8", strokeWidth: 1.25, highlight: false, ticks };
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
     /* Titik asal (bisa digeser) */
     const originals = names.map(
@@ -1147,7 +1043,6 @@ export function TransformationSimulation() {
       );
       verticesRef.current = next;
       setVertices(next);
-      setEditing({});
     };
     originals.forEach((point, i) => {
       point.on("down", () => setSelected(i));
@@ -1171,17 +1066,18 @@ export function TransformationSimulation() {
 
     board.update();
 
-    // Saat ukuran kontainer berubah (putar layar, layar penuh, ganti mode),
-    // pertahankan skala dan titik tengah tampilan agar grafik tidak melompat.
+    // Saat ukuran kontainer berubah (putar layar, layar penuh), pertahankan
+    // skala dan titik tengah tampilan agar grafik tidak melompat.
     let last = {
-      w: containerRef.current?.clientWidth ?? 0,
-      h: containerRef.current?.clientHeight ?? 0,
+      w: hostRef.current?.clientWidth ?? 0,
+      h: hostRef.current?.clientHeight ?? 0,
     };
     const sync = (force = false) => {
-      const el = containerRef.current;
-      if (!el || el.clientWidth <= 0 || el.clientHeight <= 0) return;
+      const el = hostRef.current;
+      if (!el) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
+      if (w <= 0 || h <= 0) return;
       if (!force && w === last.w && h === last.h) return;
 
       const bb = board.getBoundingBox();
@@ -1201,12 +1097,12 @@ export function TransformationSimulation() {
       last = { w, h };
       board.update();
     };
-    syncSizeRef.current = sync;
+    syncRef.current = sync;
     const observer = new ResizeObserver(() => sync());
-    if (containerRef.current) observer.observe(containerRef.current);
+    if (hostRef.current) observer.observe(hostRef.current);
 
     return () => {
-      syncSizeRef.current = null;
+      syncRef.current = null;
       observer.disconnect();
       JXG.JSXGraph.freeBoard(board);
       boardRef.current = null;
@@ -1215,10 +1111,9 @@ export function TransformationSimulation() {
   }, [boardId, shape]);
 
   // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
-  // CSS lalu layar penuh asli). Sinkronkan ulang ukuran papan setelah
-  // transisi selesai agar grafik langsung terisi penuh.
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi.
   useEffect(() => {
-    const run = () => syncSizeRef.current?.(true);
+    const run = () => syncRef.current?.(true);
     const raf = requestAnimationFrame(() => requestAnimationFrame(run));
     const t1 = window.setTimeout(run, 150);
     const t2 = window.setTimeout(run, 450);
@@ -1231,7 +1126,7 @@ export function TransformationSimulation() {
       document.removeEventListener("fullscreenchange", run);
       window.removeEventListener("resize", run);
     };
-  }, [isFullscreen, tabbed]);
+  }, [isFs]);
 
   /* Tempel ke grid */
   useEffect(() => {
@@ -1247,8 +1142,7 @@ export function TransformationSimulation() {
     let frame = 0;
     let last = performance.now();
     const tick = (now: number) => {
-      /* Timestamp rAF bisa lebih kecil dari performance.now() pada frame
-         pertama sehingga delta negatif; jepit agar progres tidak mundur. */
+      // Jepit delta agar progres tidak mundur / melompat saat tab tertidur.
       const delta = Math.max(0, Math.min(now - last, 64));
       last = now;
       const total = stepsRef.current.length;
@@ -1272,7 +1166,7 @@ export function TransformationSimulation() {
     return () => cancelAnimationFrame(frame);
   }, [playing]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Turunan untuk tampilan ───────── */
 
   const total = steps.length;
   const names = vertexNames(shape);
@@ -1310,92 +1204,81 @@ export function TransformationSimulation() {
     "--hi": `${progressPct}%`,
   } as CSSProperties;
 
-  const coordText = (axis: 0 | 1) =>
-    editing[`${sel}-${axis}`] ?? toField(selVertex[axis]);
+  const vertexStep = snap ? 1 : 0.1;
 
   return (
-    <div
-      ref={rootRef}
-      className={`transformation-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFullscreen ? " is-fullscreen" : ""}`}
-    >
-      <p className="tf-orientation-hint">
+    <div ref={rootRef} className={`tfs${isFs ? " is-fs" : ""}`}>
+      <p className="tfs-hint">
         <Smartphone size={14} aria-hidden="true" />
         <span>
-          Miringkan ponsel ke mode lanskap agar bidang koordinat dan panel isian
-          tampil berdampingan.
+          Miringkan ponsel ke mode lanskap agar grafik dan panel tampil
+          berdampingan.
         </span>
       </p>
 
-      <div className="tf-main">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="tf-board-panel" aria-labelledby={boardTitleId}>
-          <h3 id={boardTitleId} className="tf-sr-only">
-            Bidang koordinat
-          </h3>
-          <div className="tf-stage">
+      <div className="tfs-layout">
+        {/* ───── Grafik ───── */}
+        <section className="tfs-graph" aria-label="Bidang koordinat">
+          <div className="tfs-stage">
             <div
-              className="tf-board"
               id={boardId}
-              ref={containerRef}
-              aria-label="Bidang koordinat interaktif. Seret titik atau poligon asal berwarna biru kehijauan untuk mengubah posisinya; bayangan hasil transformasi berwarna oranye. Seret area kosong untuk menggeser bidang, gulir atau cubit untuk memperbesar atau memperkecil."
+              ref={hostRef}
+              className="tfs-board"
+              aria-label="Bidang koordinat interaktif. Seret titik atau bangun asal berwarna biru untuk mengubah posisinya; bayangan berwarna oranye. Seret area kosong untuk menggeser bidang, gulir atau cubit untuk memperbesar."
             />
-            <p className="tf-caption" aria-live="polite">
+
+            <p className="tfs-caption" aria-live="polite">
               {caption}
             </p>
-            <div className="tf-view-tools" role="group" aria-label="Tampilan">
+
+            <div className="tfs-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFullscreen}
-                aria-label={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFullscreen ? (
-                  <Minimize2 size={15} aria-hidden="true" />
+                {isFs ? (
+                  <Minimize2 size={16} aria-hidden="true" />
                 ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
+                  <Maximize2 size={16} aria-hidden="true" />
                 )}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                onClick={resetView}
+                onClick={center}
                 aria-label="Pusatkan tampilan"
                 title="Pusatkan tampilan"
               >
-                <Crosshair size={15} aria-hidden="true" />
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFullscreen && (
+              {isFs && (
                 <button
                   type="button"
-                  className="tf-toolbar-toggle"
+                  className="tfs-toggle"
                   onClick={() => setPanelOpen((open) => !open)}
                   aria-pressed={panelOpen}
-                  aria-controls={`tf-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`tfs-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="tf-playback">
+          <div className="tfs-play">
             <button
               type="button"
-              className="tf-play-button"
+              className="tfs-play-btn"
               onClick={togglePlay}
               disabled={total === 0}
               aria-label={playing ? "Jeda" : isDone ? "Putar ulang" : "Mainkan"}
@@ -1410,7 +1293,7 @@ export function TransformationSimulation() {
               )}
             </button>
             <input
-              className="tf-range tf-progress"
+              className="tfs-range tfs-progress"
               type="range"
               min="0"
               max={total}
@@ -1425,36 +1308,46 @@ export function TransformationSimulation() {
                 setProgressValue(Number(event.currentTarget.value));
               }}
             />
-            <span className="tf-progress-value" aria-hidden="true">
+            <span className="tfs-pct" aria-hidden="true">
               {Math.round(progressPct)}%
             </span>
+            <button
+              type="button"
+              className="tfs-speed"
+              onClick={cycleSpeed}
+              aria-label={`Kecepatan ${String(speed).replace(".", ",")} kali, ketuk untuk mengganti`}
+              title="Kecepatan animasi"
+            >
+              {String(speed).replace(".", ",")}×
+            </button>
           </div>
 
-          <div className="tf-legend" aria-label="Legenda grafik">
-            <span>
-              <i className="legend-original" /> bangun asal
-            </span>
-            <span>
-              <i className="legend-image" /> bayangan
-            </span>
-            <span>
-              <i className="legend-ghost" /> hasil antara
-            </span>
-            <span>
-              <i className="legend-guide" /> cermin / pusat / vektor
-            </span>
-          </div>
+          <ul className="tfs-legend" aria-label="Legenda grafik">
+            <li>
+              <i style={{ borderColor: colors.original, background: "rgba(37,99,235,0.15)" }} />{" "}
+              bangun asal
+            </li>
+            <li>
+              <i style={{ borderColor: colors.image, background: "rgba(234,88,12,0.18)" }} /> bayangan
+            </li>
+            <li>
+              <i className="dash" style={{ borderColor: colors.ghost }} /> hasil antara
+            </li>
+            <li>
+              <i className="dash" style={{ borderColor: colors.guide }} /> cermin / pusat / vektor
+            </li>
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`tf-column-${baseId}`}
-          className={`tf-column${isFullscreen ? " is-floating" : ""}${
-            isFullscreen && panelOpen ? " is-open" : ""
+        {/* ───── Panel ───── */}
+        <section
+          id={`tfs-panel-${baseId}`}
+          className={`tfs-panel${isFs ? " is-floating" : ""}${
+            isFs && panelOpen ? " is-open" : ""
           }`}
-          data-tab={tab}
+          aria-label="Pengaturan transformasi"
         >
-          <div className="tf-tabs" role="group" aria-label="Bagian panel">
+          <div className="tfs-tabs" role="group" aria-label="Bagian panel">
             {panelTabs.map((item) => (
               <button
                 key={item.tab}
@@ -1467,35 +1360,25 @@ export function TransformationSimulation() {
             ))}
           </div>
 
-          <section className="tf-side" aria-label="Pengaturan transformasi">
-            {/* ── Titik awal ── */}
-            <div className="tf-panel" data-pane="point">
-              <h3>Bangun asal</h3>
-              <div
-                className="tf-segmented"
-                role="group"
-                aria-label="Bentuk bangun"
-              >
-                {shapeOptions.map((option) => (
-                  <button
-                    key={option.count}
-                    type="button"
-                    aria-pressed={shape === option.count}
-                    onClick={() => changeShape(option.count)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          <div className="tfs-pane">
+            {/* ── Titik ── */}
+            {tab === "point" && (
+              <>
+                <div className="tfs-seg" role="group" aria-label="Bentuk bangun">
+                  {shapeOptions.map((option) => (
+                    <button
+                      key={option.count}
+                      type="button"
+                      aria-pressed={shape === option.count}
+                      onClick={() => changeShape(option.count)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
 
-              {shape > 1 && (
-                <>
-                  <p className="tf-subtitle">Titik yang diatur</p>
-                  <div
-                    className="tf-segmented"
-                    role="group"
-                    aria-label="Pilih titik"
-                  >
+                {shape > 1 && (
+                  <div className="tfs-seg" role="group" aria-label="Pilih titik">
                     {names.map((name, i) => (
                       <button
                         key={name}
@@ -1507,405 +1390,281 @@ export function TransformationSimulation() {
                       </button>
                     ))}
                   </div>
-                </>
-              )}
+                )}
 
-              <p className="tf-subtitle">
-                Koordinat awal {names[sel]}
-                <span className="tf-subtitle-note">
-                  {" "}
-                  (batas −{formatValue(LIMIT)} s.d. {formatValue(LIMIT)})
-                </span>
-              </p>
-              <div className="tf-rows">
-                <SliderField
-                  label="x"
-                  hint={`Absis titik ${names[sel]}`}
-                  tone="original"
-                  min={-LIMIT}
-                  max={LIMIT}
-                  step={snap ? 1 : 0.1}
-                  value={selVertex[0]}
-                  text={coordText(0)}
-                  onText={(v) => typeVertex(sel, 0, v)}
-                  onBlurText={() => endTyping(sel, 0)}
-                  onSlide={(v) => slideVertex(sel, 0, v)}
-                  onNudge={(d) => nudgeVertex(sel, 0, d)}
-                />
-                <SliderField
-                  label="y"
-                  hint={`Ordinat titik ${names[sel]}`}
-                  tone="original"
-                  min={-LIMIT}
-                  max={LIMIT}
-                  step={snap ? 1 : 0.1}
-                  value={selVertex[1]}
-                  text={coordText(1)}
-                  onText={(v) => typeVertex(sel, 1, v)}
-                  onBlurText={() => endTyping(sel, 1)}
-                  onSlide={(v) => slideVertex(sel, 1, v)}
-                  onNudge={(d) => nudgeVertex(sel, 1, d)}
-                />
-              </div>
+                <p className="tfs-label">Koordinat awal {names[sel]}</p>
+                <div className="tfs-rows">
+                  <SliderField
+                    label="x"
+                    hint={`Absis titik ${names[sel]}`}
+                    tone="original"
+                    min={-LIMIT}
+                    max={LIMIT}
+                    step={vertexStep}
+                    value={selVertex[0]}
+                    onSlide={(v) => setVertexCoord(sel, 0, v)}
+                    onNudge={(d) => nudgeVertex(sel, 0, d)}
+                  />
+                  <SliderField
+                    label="y"
+                    hint={`Ordinat titik ${names[sel]}`}
+                    tone="original"
+                    min={-LIMIT}
+                    max={LIMIT}
+                    step={vertexStep}
+                    value={selVertex[1]}
+                    onSlide={(v) => setVertexCoord(sel, 1, v)}
+                    onNudge={(d) => nudgeVertex(sel, 1, d)}
+                  />
+                </div>
 
-              <label className="tf-check">
-                <input
-                  type="checkbox"
-                  checked={snap}
-                  onChange={(event) => setSnap(event.currentTarget.checked)}
-                />
-                Tempel ke bilangan bulat
-              </label>
-              <p className="tf-hint">
-                Atur dengan penggeser atau ketik angkanya, atau seret titik biru
-                di grafik.
-              </p>
-              <div className="tf-reset-row">
-                <button
-                  type="button"
-                  className="tf-reset-button"
-                  onClick={resetPoints}
-                >
-                  <RotateCcw size={14} aria-hidden="true" />
+                <label className="tfs-check">
+                  <input
+                    type="checkbox"
+                    checked={snap}
+                    onChange={(event) => setSnap(event.currentTarget.checked)}
+                  />
+                  Tempel ke bilangan bulat
+                </label>
+
+                <button type="button" className="tfs-btn" onClick={resetPoints}>
+                  <RotateCcw size={13} aria-hidden="true" />
                   <span>Posisi awal bangun</span>
                 </button>
-              </div>
-            </div>
+              </>
+            )}
 
-            {/* ── Urutan dan penambahan langkah ── */}
-            <div className="tf-panel" data-pane="steps">
-              <h3>
-                Urutan transformasi{" "}
-                <small>
-                  ({total}/{MAX_STEPS})
-                </small>
-              </h3>
-              {total === 0 ? (
-                <p className="tf-empty">Belum ada langkah.</p>
-              ) : (
-                <ol className="tf-steps">
-                  {steps.map((step, i) => {
-                    const info = describeStep(step);
-                    return (
-                      <li
-                        key={step.id}
-                        className={i === activeIndex ? "is-active" : undefined}
-                      >
-                        <span className="tf-step-index">{i + 1}</span>
-                        <button
-                          type="button"
-                          className="tf-step-label"
-                          title="Tampilkan hasil sampai langkah ini"
-                          onClick={() => {
-                            setPlaying(false);
-                            setProgressValue(i + 1);
-                          }}
-                        >
-                          <b>{info.name}</b> {info.detail}
-                        </button>
-                        <button
-                          type="button"
-                          className="tf-step-remove"
-                          aria-label={`Hapus langkah ${i + 1}: ${info.name}`}
-                          onClick={() => removeStep(step.id)}
-                        >
-                          ×
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-              )}
-
-              <p className="tf-subtitle tf-subtitle-gap">Tambah langkah</p>
-              <div
-                className="tf-segmented"
-                role="group"
-                aria-label="Jenis transformasi"
-              >
-                {typeOptions.map((option) => (
-                  <button
-                    key={option.type}
-                    type="button"
-                    aria-pressed={draftType === option.type}
-                    onClick={() => setDraftType(option.type)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-
-              {draftType === "reflection" ? (
-                <>
-                  <p className="tf-subtitle">Cermin</p>
-                  <div
-                    className="tf-segmented"
-                    role="group"
-                    aria-label="Garis cermin"
-                  >
-                    {(Object.keys(axisShort) as ReflectionAxis[]).map(
-                      (axis) => (
-                        <button
-                          key={axis}
-                          type="button"
-                          aria-pressed={draft.axis === axis}
-                          onClick={() =>
-                            setDraft((current) => ({ ...current, axis }))
-                          }
-                        >
-                          {axisShort[axis]}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="tf-rows tf-rows-draft">
-                  {draftRows[draftType].map((row) => (
-                    <SliderField
-                      key={`${draftType}-${row.key}`}
-                      label={row.label}
-                      hint={row.hint}
-                      tone="image"
-                      min={row.min}
-                      max={row.max}
-                      step={row.step}
-                      value={parseNumber(draft[row.key])}
-                      text={draft[row.key]}
-                      onText={(v) => setField(row.key, v)}
-                      onSlide={(v) => setField(row.key, toField(v))}
-                      onNudge={(d) =>
-                        nudgeDraft(row.key, row.step, row.min, row.max, d)
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className="tf-builder-actions">
-                <button
-                  type="button"
-                  className="tf-add-button"
-                  onClick={addStep}
-                  disabled={total >= MAX_STEPS}
-                >
-                  <Plus size={14} aria-hidden="true" />
-                  <span>Tambah langkah</span>
-                </button>
-                <button
-                  type="button"
-                  className="tf-reset-button"
-                  onClick={() => updateSteps([])}
-                  disabled={total === 0}
-                >
-                  Kosongkan
-                </button>
-              </div>
-              {total >= MAX_STEPS && (
-                <p className="tf-hint tf-hint-keep">
-                  Maksimal {MAX_STEPS} langkah.
+            {/* ── Langkah ── */}
+            {tab === "steps" && (
+              <>
+                <p className="tfs-label">
+                  Urutan transformasi ({total}/{MAX_STEPS})
                 </p>
-              )}
-            </div>
-
-            {/* ── Tampilan ── */}
-            <div className="tf-panel" data-pane="view">
-              <h3>Kecepatan dan tampilan</h3>
-              <p className="tf-subtitle">Kecepatan animasi</p>
-              <div
-                className="tf-segmented"
-                role="group"
-                aria-label="Kecepatan animasi"
-              >
-                {speedOptions.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={speed === value}
-                    onClick={() => {
-                      speedRef.current = value;
-                      setSpeed(value);
-                    }}
-                  >
-                    {String(value).replace(".", ",")}×
-                  </button>
-                ))}
-              </div>
-              <div className="tf-reset-row tf-reset-row-gap">
-                <button
-                  type="button"
-                  className="tf-reset-button"
-                  onClick={resetAll}
-                >
-                  <RotateCcw size={14} aria-hidden="true" />
-                  <span>Atur ulang semua</span>
-                </button>
-                <GraphAppearanceControls
-                  appearance={appearance}
-                  onStep={onStep}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* ───── Hasil ───── */}
-          <div className="tf-results">
-            <section
-              className="tf-panel tf-wide"
-              data-pane="result"
-              aria-labelledby={coordsTitleId}
-            >
-              <h3 id={coordsTitleId}>Koordinat titik</h3>
-              <div className="tf-table-wrap">
-                <table className="tf-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Titik</th>
-                      <th scope="col">Awal</th>
-                      <th scope="col">Saat ini</th>
-                      <th scope="col">Akhir</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {names.map((name, i) => {
-                      const origin: Vec = vertices[i] ?? [0, 0];
+                {total === 0 ? (
+                  <p className="tfs-empty">Belum ada langkah.</p>
+                ) : (
+                  <ol className="tfs-steps">
+                    {steps.map((step, i) => {
+                      const info = describeStep(step);
                       return (
-                        <tr key={name}>
-                          <th scope="row">
-                            {name} → {name}′
-                          </th>
-                          <td className="cell-original">
-                            {formatCoord(origin)}
-                          </td>
-                          <td className="cell-current">
-                            {formatCoord(applyMat(currentMatrix, origin))}
-                          </td>
-                          <td className="cell-image">
-                            {formatCoord(applyMat(finalMatrix, origin))}
-                          </td>
-                        </tr>
+                        <li
+                          key={step.id}
+                          className={i === activeIndex ? "is-active" : undefined}
+                        >
+                          <span className="tfs-index">{i + 1}</span>
+                          <button
+                            type="button"
+                            className="tfs-step-label"
+                            title="Tampilkan hasil sampai langkah ini"
+                            onClick={() => {
+                              setPlaying(false);
+                              setProgressValue(i + 1);
+                            }}
+                          >
+                            <b>{info.name}</b> {info.detail}
+                          </button>
+                          <button
+                            type="button"
+                            className="tfs-remove"
+                            aria-label={`Hapus langkah ${i + 1}: ${info.name}`}
+                            onClick={() => removeStep(step.id)}
+                          >
+                            ×
+                          </button>
+                        </li>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                  </ol>
+                )}
 
-            <section
-              className="tf-panel tf-wide"
-              data-pane="result"
-              aria-labelledby={matrixTitleId}
-            >
-              <h3 id={matrixTitleId}>Matriks transformasi</h3>
-              <p className="tf-hint tf-hint-flat">
-                Dipakai matriks homogen 3 × 3 agar semua transformasi dapat
-                ditulis dalam satu bentuk. Kolom ketiga menyimpan pergeseran.
-              </p>
-              <div className="tf-matrix-grid">
-                {steps.map((step, i) => {
-                  const info = describeStep(step);
-                  return (
-                    <article
-                      key={step.id}
-                      className={`tf-matrix-card${
-                        i === activeIndex ? " is-active" : ""
-                      }`}
+                <p className="tfs-label">Tambah langkah</p>
+                <div className="tfs-seg" role="group" aria-label="Jenis transformasi">
+                  {typeOptions.map((option) => (
+                    <button
+                      key={option.type}
+                      type="button"
+                      aria-pressed={draftType === option.type}
+                      onClick={() => setDraftType(option.type)}
                     >
-                      <h4>
-                        M{subscript(i + 1)} · {info.name}
-                      </h4>
-                      <p>{info.detail}</p>
-                      <MatrixView
-                        rows={stepMatrix(step, 1)}
-                        label={`Matriks M${i + 1}`}
-                      />
-                    </article>
-                  );
-                })}
-                <article className="tf-matrix-card tf-composite">
-                  <h4>Matriks komposisi</h4>
-                  <p>
-                    {compositeFormula}
-                    {total > 1 && " (dibaca dari kanan ke kiri)"}
-                  </p>
-                  <MatrixView rows={finalMatrix} label="Matriks komposisi" />
-                </article>
-              </div>
-            </section>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
 
-            <section
-              className="tf-panel tf-wide"
-              data-pane="result"
-              aria-labelledby={sampleTitleId}
-            >
-              <div className="tf-sample-head">
-                <h3 id={sampleTitleId}>Contoh perhitungan</h3>
-                {shape > 1 && (
-                  <div
-                    className="tf-segmented tf-segmented-small"
-                    role="group"
-                    aria-label="Titik contoh"
-                  >
-                    {names.map((name, i) => (
+                {draftType === "reflection" ? (
+                  <div className="tfs-seg" role="group" aria-label="Garis cermin">
+                    {(Object.keys(axisShort) as ReflectionAxis[]).map((axis) => (
                       <button
-                        key={name}
+                        key={axis}
                         type="button"
-                        aria-pressed={sample === i}
-                        onClick={() => setSampleIndex(i)}
+                        aria-pressed={draft.axis === axis}
+                        onClick={() => setDraft((current) => ({ ...current, axis }))}
                       >
-                        {name}
+                        {axisShort[axis]}
                       </button>
                     ))}
                   </div>
+                ) : (
+                  <div className="tfs-rows">
+                    {draftRows[draftType].map((row) => (
+                      <SliderField
+                        key={`${draftType}-${row.key}`}
+                        label={row.label}
+                        hint={row.hint}
+                        tone="image"
+                        min={row.min}
+                        max={row.max}
+                        step={row.step}
+                        value={draft[row.key]}
+                        onSlide={(v) => setDraftNum(row.key, v)}
+                        onNudge={(d) =>
+                          nudgeDraft(row.key, row.step, row.min, row.max, d)
+                        }
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
-              <div className="tf-equation">
-                <MatrixView
-                  rows={[[sampleEnd[0]], [sampleEnd[1]], [1]]}
-                  label={`Koordinat ${names[sample]}′`}
-                />
-                <span className="tf-operator">=</span>
-                <MatrixView rows={finalMatrix} label="Matriks komposisi" />
-                <span className="tf-operator">×</span>
-                <MatrixView
-                  rows={[[sampleStart[0]], [sampleStart[1]], [1]]}
-                  label={`Koordinat ${names[sample]}`}
-                />
-              </div>
-              <p className="tf-hint tf-hint-flat">
-                {names[sample]}
-                {formatCoord(sampleStart)} → {names[sample]}′
-                {formatCoord(sampleEnd)}
-              </p>
-            </section>
-          </div>
-        </div>
-      </div>
 
-      <ul className="tf-insights">
-        <li>
-          <strong>Translasi</strong> menggeser setiap titik sejauh vektor (a,
-          b): (x, y) → (x + a, y + b).
-        </li>
-        <li>
-          <strong>Refleksi</strong> mencerminkan titik terhadap garis cermin;
-          terhadap sumbu x: (x, y) → (x, −y), terhadap sumbu y: (x, y) → (−x,
-          y).
-        </li>
-        <li>
-          <strong>Rotasi</strong> sebesar θ berpusat di O: (x, y) → (x cos θ − y
-          sin θ, x sin θ + y cos θ).
-        </li>
-        <li>
-          <strong>Dilatasi</strong> faktor k berpusat di O: (x, y) → (kx, ky).
-          Jika |k| &gt; 1 bangun membesar, jika |k| &lt; 1 mengecil, dan jika k
-          negatif bangun berbalik.
-        </li>
-        <li>
-          <strong>Komposisi</strong> bergantung pada urutan: M = Mₙ · … · M₂ ·
-          M₁. Coba tukar urutan langkah untuk melihat hasil yang berbeda.
-        </li>
-      </ul>
+                <div className="tfs-actions">
+                  <button
+                    type="button"
+                    className="tfs-btn tfs-btn-solid"
+                    onClick={addStep}
+                    disabled={total >= MAX_STEPS}
+                  >
+                    <Plus size={14} aria-hidden="true" />
+                    <span>Tambah</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="tfs-btn"
+                    onClick={() => updateSteps([])}
+                    disabled={total === 0}
+                  >
+                    Kosongkan
+                  </button>
+                  <button type="button" className="tfs-btn" onClick={resetAll}>
+                    <RotateCcw size={13} aria-hidden="true" />
+                    <span>Atur ulang</span>
+                  </button>
+                </div>
+                {total >= MAX_STEPS && (
+                  <p className="tfs-note">Maksimal {MAX_STEPS} langkah.</p>
+                )}
+              </>
+            )}
+
+            {/* ── Hasil ── */}
+            {tab === "result" && (
+              <>
+                <p className="tfs-label">Koordinat titik</p>
+                <div className="tfs-table-wrap">
+                  <table className="tfs-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Titik</th>
+                        <th scope="col">Awal</th>
+                        <th scope="col">Saat ini</th>
+                        <th scope="col">Akhir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {names.map((name, i) => {
+                        const origin: Vec = vertices[i] ?? [0, 0];
+                        return (
+                          <tr key={name}>
+                            <th scope="row">
+                              {name} → {name}′
+                            </th>
+                            <td className="c-original">{formatCoord(origin)}</td>
+                            <td className="c-current">
+                              {formatCoord(applyMat(currentMatrix, origin))}
+                            </td>
+                            <td className="c-image">
+                              {formatCoord(applyMat(finalMatrix, origin))}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className="tfs-label">Matriks transformasi</p>
+                <p className="tfs-note">
+                  Matriks homogen 3 × 3; kolom ketiga menyimpan pergeseran.
+                </p>
+                <div className="tfs-cards">
+                  {steps.map((step, i) => {
+                    const info = describeStep(step);
+                    return (
+                      <article
+                        key={step.id}
+                        className={`tfs-card${i === activeIndex ? " is-active" : ""}`}
+                      >
+                        <h4>
+                          M{subscript(i + 1)} · {info.name}
+                        </h4>
+                        <p>{info.detail}</p>
+                        <MatrixView
+                          rows={stepMatrix(step, 1)}
+                          label={`Matriks M${i + 1}`}
+                        />
+                      </article>
+                    );
+                  })}
+                  <article className="tfs-card tfs-card-total">
+                    <h4>Matriks komposisi</h4>
+                    <p>
+                      {compositeFormula}
+                      {total > 1 && " (dibaca dari kanan ke kiri)"}
+                    </p>
+                    <MatrixView rows={finalMatrix} label="Matriks komposisi" />
+                  </article>
+                </div>
+
+                <div className="tfs-sample-head">
+                  <p className="tfs-label">Contoh perhitungan</p>
+                  {shape > 1 && (
+                    <div className="tfs-seg tfs-seg-small" role="group" aria-label="Titik contoh">
+                      {names.map((name, i) => (
+                        <button
+                          key={name}
+                          type="button"
+                          aria-pressed={sample === i}
+                          onClick={() => setSampleIndex(i)}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="tfs-equation">
+                  <MatrixView
+                    rows={[[sampleEnd[0]], [sampleEnd[1]], [1]]}
+                    label={`Koordinat ${names[sample]}′`}
+                  />
+                  <span className="tfs-op">=</span>
+                  <MatrixView rows={finalMatrix} label="Matriks komposisi" />
+                  <span className="tfs-op">×</span>
+                  <MatrixView
+                    rows={[[sampleStart[0]], [sampleStart[1]], [1]]}
+                    label={`Koordinat ${names[sample]}`}
+                  />
+                </div>
+                <p className="tfs-note">
+                  {names[sample]}
+                  {formatCoord(sampleStart)} → {names[sample]}′
+                  {formatCoord(sampleEnd)}
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
+
+export default TransformationSimulation;

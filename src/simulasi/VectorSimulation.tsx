@@ -5,8 +5,8 @@ import {
   Minus,
   Plus,
   RotateCcw,
-  Smartphone,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
 import {
   useEffect,
@@ -19,56 +19,50 @@ import {
 import JXG from "jsxgraph";
 import "../styles/jsxgraph.css";
 import "./VectorSimulation.css";
-import { GraphAppearanceControls } from "./GraphAppearanceControls";
-import { useGraphAppearance } from "./simulationBoard";
 import { useStoredSimulationState } from "./useStoredSimulationState";
 
-/* Simulasi vektor (versi disusun ulang).
-   Prioritas: ponsel lanskap → desktop → ponsel potret.
-   Wilayah grafik : wilayah input = 2 : 1.
-   - Layar kecil / layar penuh: panel kanan bertab (Vektor, Contoh,
-     Tampilan, Hasil) agar semuanya muat tanpa gulir panjang.
-   - Desktop: tiga panel input bertumpuk di kanan, hasil di bawah. */
+/* Simulasi vektor — tema slate seperti landing page 1729 dan simulasi
+   fungsi kuadrat. Urutan desain: ponsel lanskap → desktop → ponsel potret.
+   Layar penuh: grafik 100% layar, toolbar dan panel pengatur mengambang. */
 
-/* ---------- Tipe ---------- */
+/* ───────── Tipe ───────── */
 
 type Vec = [number, number];
-type ProjectionMode = "a" | "b" | "off";
-type FieldKey = "a1" | "a2" | "b1" | "b2";
-type Fields = Record<FieldKey, string>;
-type PanelTab = "vector" | "preset" | "view" | "result";
-
-const panelTabs: { tab: PanelTab; label: string }[] = [
-  { tab: "vector", label: "Vektor" },
-  { tab: "preset", label: "Contoh" },
-  { tab: "view", label: "Tampilan" },
-  { tab: "result", label: "Hasil" },
-];
-
+type Board = ReturnType<typeof JXG.JSXGraph.initBoard>;
+type Projection = "a" | "b" | "off";
+type Tab = "vector" | "view" | "result";
+type CompKey = "a1" | "a2" | "b1" | "b2";
 type DataCurve = {
   dataX: number[];
   dataY: number[];
   updateDataArray: () => void;
 };
 
-/* ---------- Konstanta ---------- */
+/* ───────── Konstanta ───────── */
 
 const EPS = 1e-9;
-const LIMIT = 9.5;
+const LIMIT = 9;
 const ARC_STEPS = 48;
-const INITIAL_BOX: [number, number, number, number] = [-10, 10, 10, -10];
-/** Layar kecil atau pendek memakai panel bertab. */
-const TABBED_QUERY = "(max-width: 899px), (max-height: 540px)";
-
-const colors = {
-  a: "#087f8c",
-  b: "#d16b36",
-  sum: "#183e54",
-  proj: "#c08a00",
-};
+const initialBox: [number, number, number, number] = [-10, 10, 10, -10];
 
 const defaultA: Vec = [5, 1];
 const defaultB: Vec = [2, 4];
+
+/* Warna grafik: dipakai juga oleh legenda dan hasil di panel. */
+const color = {
+  a: "#2563eb",
+  b: "#ea580c",
+  sum: "#059669",
+  proj: "#7c3aed",
+  angle: "#e11d48",
+};
+
+const comps: { key: CompKey; label: string; vec: "a" | "b"; i: 0 | 1 }[] = [
+  { key: "a1", label: "a₁", vec: "a", i: 0 },
+  { key: "a2", label: "a₂", vec: "a", i: 1 },
+  { key: "b1", label: "b₁", vec: "b", i: 0 },
+  { key: "b2", label: "b₂", vec: "b", i: 1 },
+];
 
 const presets: { label: string; a: Vec; b: Vec }[] = [
   { label: "Lancip", a: [5, 1], b: [2, 4] },
@@ -78,298 +72,226 @@ const presets: { label: string; a: Vec; b: Vec }[] = [
   { label: "Berlawanan", a: [4, 2], b: [-2, -1] },
 ];
 
-const projectionOptions: { mode: ProjectionMode; label: string }[] = [
-  { mode: "a", label: "a pada b" },
-  { mode: "b", label: "b pada a" },
-  { mode: "off", label: "Sembunyikan" },
+const tabs: { tab: Tab; label: string }[] = [
+  { tab: "vector", label: "Vektor" },
+  { tab: "view", label: "Tampilan" },
+  { tab: "result", label: "Hasil" },
 ];
 
-/* ---------- Matematika ---------- */
+const projections: { mode: Projection; label: string }[] = [
+  { mode: "a", label: "a pada b" },
+  { mode: "b", label: "b pada a" },
+  { mode: "off", label: "Mati" },
+];
 
-const toDegrees = (radians: number) => (radians * 180) / Math.PI;
-const length = ([x, y]: Vec) => Math.hypot(x, y);
+/* ───────── Matematika ───────── */
+
+const toDegrees = (rad: number) => (rad * 180) / Math.PI;
+const len = ([x, y]: Vec) => Math.hypot(x, y);
 const dotOf = (u: Vec, v: Vec) => u[0] * v[0] + u[1] * v[1];
+const clamp = (v: number, min = -LIMIT, max = LIMIT) =>
+  Math.min(max, Math.max(min, v));
 
-/** Proyeksi `vec` pada `onto`; null jika `onto` adalah vektor nol. */
+function clean(v: number) {
+  const r = Math.round(v * 1000) / 1000;
+  return Math.abs(r) < 1e-9 ? 0 : r;
+}
+
+/** Proyeksi `vec` pada `onto`; null bila `onto` vektor nol. */
 function projectOnto(vec: Vec, onto: Vec) {
-  const lo = length(onto);
+  const lo = len(onto);
   if (lo < EPS) return null;
   const dot = dotOf(vec, onto);
   const k = dot / (lo * lo);
-  const vector: Vec = [k * onto[0], k * onto[1]];
-  return { scalar: dot / lo, vector, k };
+  return { scalar: dot / lo, vector: [k * onto[0], k * onto[1]] as Vec, k };
 }
 
 function analyze(a: Vec, b: Vec) {
-  const la = length(a);
-  const lb = length(b);
+  const la = len(a);
+  const lb = len(b);
   const dot = dotOf(a, b);
   const defined = la > EPS && lb > EPS;
-  const cos = defined ? Math.max(-1, Math.min(1, dot / (la * lb))) : Number.NaN;
+  const cos = defined ? clamp(dot / (la * lb), -1, 1) : NaN;
   return {
     la,
     lb,
     dot,
     defined,
-    cos,
-    angle: defined ? toDegrees(Math.acos(cos)) : Number.NaN,
+    angle: defined ? toDegrees(Math.acos(cos)) : NaN,
     sum: [a[0] + b[0], a[1] + b[1]] as Vec,
     diff: [a[0] - b[0], a[1] - b[1]] as Vec,
     aOnB: projectOnto(a, b),
     bOnA: projectOnto(b, a),
+    cos,
   };
 }
 
-function relationText(info: ReturnType<typeof analyze>) {
+function relation(info: ReturnType<typeof analyze>) {
   if (!info.defined) return "Salah satu vektor adalah vektor nol.";
   if (Math.abs(info.dot) < 1e-9) return "a · b = 0: kedua vektor tegak lurus.";
-  if (info.cos > 1 - 1e-9) return "a · b > 0: kedua vektor searah (θ = 0°).";
-  if (info.cos < -1 + 1e-9) {
-    return "a · b < 0: kedua vektor berlawanan arah (θ = 180°).";
-  }
-  if (info.dot > 0) return "a · b > 0: sudut antara kedua vektor lancip.";
-  return "a · b < 0: sudut antara kedua vektor tumpul.";
+  if (info.cos > 1 - 1e-9) return "a · b > 0: searah (θ = 0°).";
+  if (info.cos < -1 + 1e-9) return "a · b < 0: berlawanan arah (θ = 180°).";
+  return info.dot > 0
+    ? "a · b > 0: sudut θ lancip."
+    : "a · b < 0: sudut θ tumpul.";
 }
 
-/* ---------- Format ---------- */
+/* ───────── Format ───────── */
 
-function cleanNumber(value: number) {
-  const rounded = Math.round(value * 1000) / 1000;
-  return Math.abs(rounded) < 1e-9 ? 0 : rounded;
-}
+const fmt = (v: number) =>
+  !Number.isFinite(v)
+    ? "—"
+    : new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 })
+        .format(clean(v))
+        .replace("-", "−");
 
-function formatValue(value: number) {
-  if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 3 })
-    .format(cleanNumber(value))
-    .replace("-", "−");
-}
+const coord = ([x, y]: Vec) => `(${fmt(x)}; ${fmt(y)})`;
 
-const formatCoord = ([x, y]: Vec) => `(${formatValue(x)}; ${formatValue(y)})`;
-const par = (value: number) =>
-  value < 0 ? `(${formatValue(value)})` : formatValue(value);
-
-const toField = (value: number) => String(cleanNumber(value)).replace(".", ",");
-
-const toFields = (a: Vec, b: Vec): Fields => ({
-  a1: toField(a[0]),
-  a2: toField(a[1]),
-  b1: toField(b[0]),
-  b2: toField(b[1]),
-});
-
-/** Teks angka valid → angka; selain itu null (mis. "−" yang belum selesai). */
-function parseField(text: string): number | null {
-  const normalized = text.trim().replace("−", "-").replace(",", ".");
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
-  const value = Number(normalized);
-  return Number.isFinite(value)
-    ? Math.min(LIMIT, Math.max(-LIMIT, value))
-    : null;
-}
-
-/* ---------- Hook & komponen kecil ---------- */
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const onChange = () => setMatches(media.matches);
-    onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
-
-/** Tombol tahan-untuk-mengulang (−/+ di samping slider). */
-function useHoldRepeat(onStep: (direction: 1 | -1) => void) {
-  const stepRef = useRef(onStep);
-  stepRef.current = onStep;
-  const timers = useRef<{ delay?: number; repeat?: number }>({});
-
-  const stop = () => {
-    window.clearTimeout(timers.current.delay);
-    window.clearInterval(timers.current.repeat);
-    timers.current = {};
-  };
-
-  useEffect(
-    () => () => {
-      window.clearTimeout(timers.current.delay);
-      window.clearInterval(timers.current.repeat);
-    },
-    [],
-  );
-
-  return (direction: 1 | -1) => ({
-    type: "button" as const,
-    className: "vs-nudge-button",
-    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      stop();
-      stepRef.current(direction);
-      timers.current.delay = window.setTimeout(() => {
-        timers.current.repeat = window.setInterval(
-          () => stepRef.current(direction),
-          80,
-        );
-      }, 450);
-    },
-    onPointerUp: stop,
-    onPointerLeave: stop,
-    onPointerCancel: stop,
-    onBlur: stop,
-    onContextMenu: (event: { preventDefault: () => void }) =>
-      event.preventDefault(),
-    // detail === 0 → aktivasi lewat keyboard (Enter/Spasi)
-    onClick: (event: { detail: number }) => {
-      if (event.detail === 0) stepRef.current(direction);
-    },
-  });
-}
-
-/** Satu baris komponen: a₁  −  ──●──  +  [ 5 ] */
-function SliderField({
-  label,
-  axis,
-  tone,
-  value,
-  text,
-  snap,
-  onText,
-  onSlide,
-  onNudge,
-}: {
-  label: string;
-  axis: string;
-  tone: "a" | "b";
-  value: number;
-  text: string;
-  snap: boolean;
-  onText: (value: string) => void;
-  onSlide: (value: number) => void;
-  onNudge: (direction: 1 | -1) => void;
-}) {
-  const inputId = `vs-field-${useId().replace(/:/g, "")}`;
-  const bind = useHoldRepeat(onNudge);
-
-  // Isi dari titik 0 (tengah) menuju nilai, karena komponen bisa negatif.
-  const clamped = Math.min(LIMIT, Math.max(-LIMIT, value));
-  const pct = ((clamped + LIMIT) / (2 * LIMIT)) * 100;
-  const rangeStyle = {
-    "--lo": `${Math.min(50, pct)}%`,
-    "--hi": `${Math.max(50, pct)}%`,
-  } as CSSProperties;
-
-  return (
-    <div className={`vs-row vs-row-${tone}`}>
-      <label htmlFor={inputId} aria-label={`${label} (${axis})`}>
-        {label}
-        <small>{axis}</small>
-      </label>
-      <button {...bind(-1)} aria-label={`Kurangi ${label} 1`}>
-        <Minus size={13} aria-hidden="true" />
-      </button>
-      <input
-        className="vs-range"
-        type="range"
-        min={-LIMIT}
-        max={LIMIT}
-        step={snap ? 0.5 : 0.1}
-        value={clamped}
-        style={rangeStyle}
-        aria-label={`Penggeser ${label}`}
-        aria-valuetext={`${label} sama dengan ${formatValue(value)}`}
-        onChange={(event) => onSlide(Number(event.currentTarget.value))}
-      />
-      <button {...bind(1)} aria-label={`Tambah ${label} 1`}>
-        <Plus size={13} aria-hidden="true" />
-      </button>
-      <input
-        id={inputId}
-        className="vs-num"
-        type="text"
-        inputMode="decimal"
-        autoComplete="off"
-        enterKeyHint="done"
-        value={text}
-        onChange={(event) => onText(event.currentTarget.value)}
-        onFocus={(event) => event.currentTarget.select()}
-      />
-    </div>
-  );
-}
-
-/* ---------- Komponen utama ---------- */
+/* ───────── Komponen ───────── */
 
 export function VectorSimulation() {
   const baseId = useId().replace(/:/g, "");
   const boardId = `vs-board-${baseId}`;
-  const calcTitleId = `vs-calc-title-${baseId}`;
-  const tableTitleId = `vs-table-title-${baseId}`;
-  const [tab, setTab] = useState<PanelTab>("vector");
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const nativeFullscreenRef = useRef(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  // Panel input hanya dipakai di layar penuh: tersembunyi, muncul mengambang.
-  const [panelOpen, setPanelOpen] = useState(false);
-  const smallScreen = useMediaQuery(TABBED_QUERY);
-  const tabbed = smallScreen || isFullscreen;
-  const boardRef = useRef<ReturnType<typeof JXG.JSXGraph.initBoard> | null>(
-    null,
-  );
-  const { appearance, onStep } = useGraphAppearance([boardRef]);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const boardRef = useRef<Board | null>(null);
   const pointsRef = useRef<JXG.Point[]>([]);
+  const nativeFsRef = useRef(false);
+  // Menyamakan ukuran papan JSXGraph dengan kontainernya (diisi efek papan)
+  const syncRef = useRef<((force?: boolean) => void) | null>(null);
+  const holdRef = useRef<{ delay?: number; repeat?: number }>({});
 
   const [vecA, setVecA] = useStoredSimulationState<Vec>("vector.a", defaultA);
   const [vecB, setVecB] = useStoredSimulationState<Vec>("vector.b", defaultB);
-  const [fields, setFields] = useStoredSimulationState<Fields>(
-    "vector.fields",
-    toFields(defaultA, defaultB),
-  );
   const [snap, setSnap] = useStoredSimulationState("vector.snap", true);
-  const [showSum, setShowSum] = useStoredSimulationState(
-    "vector.show-sum",
-    true,
-  );
+  const [showSum, setShowSum] = useStoredSimulationState("vector.show-sum", true);
   const [showAngle, setShowAngle] = useStoredSimulationState(
     "vector.show-angle",
     true,
   );
-  const [projection, setProjection] = useStoredSimulationState<ProjectionMode>(
+  const [projection, setProjection] = useStoredSimulationState<Projection>(
     "vector.projection",
     "a",
   );
+  const [tab, setTab] = useState<Tab>("vector");
+  const [isFs, setIsFs] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
-  const vectorsRef = useRef<{ a: Vec; b: Vec }>({ a: vecA, b: vecB });
-  const showSumRef = useRef(showSum);
-  const showAngleRef = useRef(showAngle);
-  const projectionRef = useRef(projection);
-  const snapRef = useRef(snap);
+  // Nilai terkini untuk dibaca papan JSXGraph tanpa membuat ulang papan.
+  const vecRef = useRef<{ a: Vec; b: Vec }>({ a: vecA, b: vecB });
+  const flagsRef = useRef({
+    sum: showSum,
+    angle: showAngle,
+    proj: projection,
+    snap,
+  });
 
   const refresh = () => boardRef.current?.update();
 
-  /* Tampilan: zoom, pusatkan, layar penuh */
+  /* ───────── Vektor ───────── */
+
+  const setVectors = (a: Vec, b: Vec) => {
+    vecRef.current = { a, b };
+    setVecA(a);
+    setVecB(b);
+    pointsRef.current[0]?.setPosition(JXG.COORDS_BY_USER, a);
+    pointsRef.current[1]?.setPosition(JXG.COORDS_BY_USER, b);
+    refresh();
+  };
+
+  const setComp = (key: CompKey, value: number) => {
+    const { a, b } = vecRef.current;
+    const nextA: Vec = [...a];
+    const nextB: Vec = [...b];
+    const v = clean(clamp(value));
+    if (key === "a1") nextA[0] = v;
+    else if (key === "a2") nextA[1] = v;
+    else if (key === "b1") nextB[0] = v;
+    else nextB[1] = v;
+    setVectors(nextA, nextB);
+  };
+
+  const step = (key: CompKey, dir: 1 | -1) => {
+    const { a, b } = vecRef.current;
+    const cur = key === "a1" ? a[0] : key === "a2" ? a[1] : key === "b1" ? b[0] : b[1];
+    setComp(key, cur + dir * (flagsRef.current.snap ? 1 : 0.1));
+  };
+
+  const stopHold = () => {
+    window.clearTimeout(holdRef.current.delay);
+    window.clearInterval(holdRef.current.repeat);
+    holdRef.current = {};
+  };
+
+  // Tahan − / + untuk mengubah nilai terus-menerus.
+  const startHold =
+    (key: CompKey, dir: 1 | -1) => (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      stopHold();
+      step(key, dir);
+      holdRef.current.delay = window.setTimeout(() => {
+        holdRef.current.repeat = window.setInterval(() => step(key, dir), 80);
+      }, 400);
+    };
+
+  useEffect(() => stopHold, []);
+
+  /* ───────── Tampilan ───────── */
+
+  const toggleSum = () => {
+    const next = !flagsRef.current.sum;
+    flagsRef.current.sum = next;
+    setShowSum(next);
+    refresh();
+  };
+
+  const toggleAngle = () => {
+    const next = !flagsRef.current.angle;
+    flagsRef.current.angle = next;
+    setShowAngle(next);
+    refresh();
+  };
+
+  const toggleSnap = () => {
+    const next = !flagsRef.current.snap;
+    flagsRef.current.snap = next;
+    setSnap(next);
+    pointsRef.current.forEach((p) => p.setAttribute({ snapToGrid: next }));
+  };
+
+  const pickProjection = (mode: Projection) => {
+    flagsRef.current.proj = mode;
+    setProjection(mode);
+    refresh();
+  };
+
   const zoomIn = () => boardRef.current?.zoomIn();
   const zoomOut = () => boardRef.current?.zoomOut();
-  const resetView = () => boardRef.current?.setBoundingBox(INITIAL_BOX, true);
+  const center = () => boardRef.current?.setBoundingBox(initialBox, true);
 
-  const toggleFullscreen = async () => {
+  const reset = () => {
+    flagsRef.current = { sum: true, angle: true, proj: "a", snap: true };
+    setShowSum(true);
+    setShowAngle(true);
+    setProjection("a");
+    setSnap(true);
+    pointsRef.current.forEach((p) => p.setAttribute({ snapToGrid: true }));
+    setVectors([...defaultA], [...defaultB]);
+    center();
+  };
+
+  const toggleFs = async () => {
     const el = rootRef.current;
     if (!el) return;
-    if (!isFullscreen) {
+    if (!isFs) {
       setPanelOpen(false);
-      setIsFullscreen(true);
+      setIsFs(true);
       if (el.requestFullscreen) {
         try {
           await el.requestFullscreen();
-          nativeFullscreenRef.current = true;
+          nativeFsRef.current = true;
         } catch {
-          // Gagal masuk fullscreen asli: tetap pakai mode layar penuh CSS.
+          /* tetap pakai layar penuh CSS */
         }
       }
     } else {
@@ -380,25 +302,44 @@ export function VectorSimulation() {
           /* diabaikan */
         }
       }
-      nativeFullscreenRef.current = false;
-      setIsFullscreen(false);
+      nativeFsRef.current = false;
+      setIsFs(false);
     }
   };
 
+  // Layar sentuh: kunci ke lanskap saat layar penuh (bila diizinkan browser).
   useEffect(() => {
-    const onChange = () => {
-      if (!document.fullscreenElement && nativeFullscreenRef.current) {
-        nativeFullscreenRef.current = false;
-        setIsFullscreen(false);
+    if (!isFs || !window.matchMedia("(pointer: coarse)").matches) return;
+    const o = (
+      screen as unknown as {
+        orientation?: {
+          lock?: (m: "landscape") => Promise<void>;
+          unlock?: () => void;
+        };
+      }
+    ).orientation;
+    if (typeof o?.lock !== "function") return;
+    o.lock("landscape").catch(() => undefined);
+    return () => {
+      try {
+        o.unlock?.();
+      } catch {
+        /* abaikan */
       }
     };
-    const onKey = (event: KeyboardEvent) => {
-      if (
-        event.key === "Escape" &&
-        !document.fullscreenElement &&
-        !nativeFullscreenRef.current
-      ) {
-        setIsFullscreen(false);
+  }, [isFs]);
+
+  // Sinkron saat keluar lewat Esc / gestur sistem.
+  useEffect(() => {
+    const onChange = () => {
+      if (!document.fullscreenElement && nativeFsRef.current) {
+        nativeFsRef.current = false;
+        setIsFs(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement && !nativeFsRef.current) {
+        setIsFs(false);
       }
     };
     document.addEventListener("fullscreenchange", onChange);
@@ -409,292 +350,169 @@ export function VectorSimulation() {
     };
   }, []);
 
-  // Di layar sentuh, layar penuh dikunci ke lanskap bila browser mengizinkan.
-  useEffect(() => {
-    if (!isFullscreen) return;
-    if (!window.matchMedia("(pointer: coarse)").matches) return;
-    const orientation = (
-      screen as unknown as {
-        orientation?: {
-          lock?: (mode: "landscape") => Promise<void>;
-          unlock?: () => void;
-        };
-      }
-    ).orientation;
-    if (typeof orientation?.lock !== "function") return;
-    orientation.lock("landscape").catch(() => undefined);
-    return () => {
-      try {
-        orientation.unlock?.();
-      } catch {
-        /* abaikan */
-      }
-    };
-  }, [isFullscreen]);
+  /* ───────── Papan JSXGraph ───────── */
 
-  /** Menetapkan vektor dari luar papan (contoh, reset, kolom angka). */
-  const setVectors = (a: Vec, b: Vec, syncFields: boolean) => {
-    vectorsRef.current = { a, b };
-    setVecA(a);
-    setVecB(b);
-    if (syncFields) setFields(toFields(a, b));
-    pointsRef.current[0]?.setPosition(JXG.COORDS_BY_USER, a);
-    pointsRef.current[1]?.setPosition(JXG.COORDS_BY_USER, b);
-    refresh();
-  };
-
-  const changeField = (key: FieldKey, text: string) => {
-    setFields((current) => ({ ...current, [key]: text }));
-    const value = parseField(text);
-    if (value === null) return;
-    const { a, b } = vectorsRef.current;
-    const nextA: Vec = [...a];
-    const nextB: Vec = [...b];
-    if (key === "a1") nextA[0] = value;
-    else if (key === "a2") nextA[1] = value;
-    else if (key === "b1") nextB[0] = value;
-    else nextB[1] = value;
-    setVectors(nextA, nextB, false);
-  };
-
-  const nudgeField = (key: FieldKey, direction: 1 | -1) => {
-    const { a, b } = vectorsRef.current;
-    const current =
-      key === "a1" ? a[0] : key === "a2" ? a[1] : key === "b1" ? b[0] : b[1];
-    const next = Math.min(
-      LIMIT,
-      Math.max(-LIMIT, cleanNumber(current + direction)),
-    );
-    changeField(key, toField(next));
-  };
-
-  const toggleSum = (checked: boolean) => {
-    showSumRef.current = checked;
-    setShowSum(checked);
-    refresh();
-  };
-
-  const toggleAngle = (checked: boolean) => {
-    showAngleRef.current = checked;
-    setShowAngle(checked);
-    refresh();
-  };
-
-  const selectProjection = (mode: ProjectionMode) => {
-    projectionRef.current = mode;
-    setProjection(mode);
-    refresh();
-  };
-
-  const resetAll = () => {
-    showSumRef.current = true;
-    setShowSum(true);
-    showAngleRef.current = true;
-    setShowAngle(true);
-    projectionRef.current = "a";
-    setProjection("a");
-    setVectors([...defaultA], [...defaultB], true);
-  };
-
-  /* Papan JSXGraph */
   useEffect(() => {
     const board = JXG.JSXGraph.initBoard(boardId, {
-      boundingbox: INITIAL_BOX,
+      boundingbox: initialBox,
       axis: false,
       showCopyright: false,
       showNavigation: false,
       keepAspectRatio: true,
-      // Geser dengan tahan klik kiri (atau satu jari) pada area kosong;
-      // zoom dengan roda mouse atau pinch.
       pan: { enabled: true, needShift: false, needTwoFingers: false },
-      zoom: {
-        wheel: true,
-        needShift: false,
-        factorX: 1.15,
-        factorY: 1.15,
-        min: 0.25,
-        max: 8,
-      },
+      zoom: { wheel: true, needShift: false, factorX: 1.15, factorY: 1.15, min: 0.25, max: 8 },
     });
     boardRef.current = board;
 
     board.create("grid", [], {
-      strokeColor: "#dbe5e8",
-      strokeOpacity: 0.9,
+      strokeColor: "#94a3b8",
+      strokeOpacity: 0.28,
       strokeWidth: 1,
+      highlight: false,
     });
 
-    const axisStyle = {
-      strokeColor: "#63727d",
-      strokeWidth: 1.2,
-      highlight: false,
-    };
     const ticks = {
       insertTicks: true,
       minTicksDistance: 32,
-      minorTicks: 1,
+      minorTicks: 0,
       majorHeight: 6,
+      strokeColor: "#94a3b8",
       drawLabels: true,
-      label: { fontSize: 9, strokeColor: "#63727d" },
+      label: { fontSize: 10, strokeColor: "#64748b" },
     };
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [1, 0],
-      ],
-      { ...axisStyle, ticks },
-    );
-    board.create(
-      "axis",
-      [
-        [0, 0],
-        [0, 1],
-      ],
-      { ...axisStyle, ticks },
-    );
+    const axis = { strokeColor: "#94a3b8", strokeWidth: 1.25, highlight: false, ticks };
+    board.create("axis", [[0, 0], [1, 0]], axis);
+    board.create("axis", [[0, 0], [0, 1]], axis);
 
     /* Ujung vektor a dan b (bisa digeser) */
-    const start = vectorsRef.current;
-    const makePoint = (name: string, at: Vec, color: string) =>
+    const start = vecRef.current;
+    const makePoint = (name: string, at: Vec, fill: string) =>
       board.create("point", [at[0], at[1]], {
         name,
         withLabel: true,
-        size: 4,
-        fillColor: color,
+        size: 5,
+        fillColor: fill,
         strokeColor: "#ffffff",
         strokeWidth: 2,
-        snapToGrid: snapRef.current,
+        snapToGrid: flagsRef.current.snap,
         snapSizeX: 1,
         snapSizeY: 1,
         highlight: false,
-        label: { offset: [10, 10], fontSize: 14, strokeColor: color },
+        label: { offset: [10, 10], fontSize: 14, strokeColor: fill },
       }) as JXG.Point;
-    const pa = makePoint("a", start.a, colors.a);
-    const pb = makePoint("b", start.b, colors.b);
+    const pa = makePoint("a", start.a, color.a);
+    const pb = makePoint("b", start.b, color.b);
     pointsRef.current = [pa, pb];
 
     const A = (): Vec => [pa.X(), pa.Y()];
     const B = (): Vec => [pb.X(), pb.Y()];
 
-    /* Kurva berdasarkan titik-titik; NaN menyembunyikannya */
+    /* Kurva dari daftar titik; NaN menyembunyikannya */
     const makeCurve = (
-      strokeColor: string,
-      strokeWidth: number,
+      stroke: string,
+      width: number,
       dash: number,
       build: () => Vec[] | null,
     ) => {
       const curve = board.create("curve", [[0], [0]], {
-        strokeColor,
-        strokeWidth,
+        strokeColor: stroke,
+        strokeWidth: width,
         dash,
         highlight: false,
         fixed: true,
       }) as unknown as DataCurve;
       curve.updateDataArray = () => {
-        const points = build();
-        if (
-          !points ||
-          points.length === 0 ||
-          points.some((p) => !Number.isFinite(p[0]) || !Number.isFinite(p[1]))
-        ) {
-          curve.dataX = [Number.NaN];
-          curve.dataY = [Number.NaN];
+        const pts = build();
+        if (!pts || pts.length === 0 || pts.some((p) => !Number.isFinite(p[0]) || !Number.isFinite(p[1]))) {
+          curve.dataX = [NaN];
+          curve.dataY = [NaN];
           return;
         }
-        curve.dataX = points.map((p) => p[0]);
-        curve.dataY = points.map((p) => p[1]);
+        curve.dataX = pts.map((p) => p[0]);
+        curve.dataY = pts.map((p) => p[1]);
       };
       return curve;
     };
 
-    /* Penjumlahan: jajar genjang dan vektor a + b */
-    const sumVisible = () => showSumRef.current;
-    const sumPoint = (): Vec => {
-      const a = A();
-      const b = B();
-      return [a[0] + b[0], a[1] + b[1]];
-    };
-
-    makeCurve(colors.sum, 1.8, 3, () =>
-      sumVisible() ? [A(), sumPoint(), B()] : null,
-    );
-
-    const sumEnd = (coord: 0 | 1) => () =>
-      sumVisible() && length(sumPoint()) > 1e-6 ? sumPoint()[coord] : 1000;
-    board.create(
-      "segment",
-      [
-        [0, 0],
-        [sumEnd(0), sumEnd(1)],
-      ],
-      {
-        strokeColor: colors.sum,
-        strokeWidth: 3.5,
-        lastArrow: { type: 2, size: 0.5 },
+    /* Anak panah dari titik asal; ujung 1000 = disembunyikan di luar papan */
+    const arrow = (
+      x: () => number,
+      y: () => number,
+      stroke: string,
+      width = 3.5,
+      opacity = 1,
+    ) =>
+      board.create("segment", [[0, 0], [x, y]], {
+        strokeColor: stroke,
+        strokeWidth: width,
+        strokeOpacity: opacity,
+        lastArrow: { type: 2, size: 4 },
         highlight: false,
         fixed: true,
-      },
-    );
+      });
+
+    /* Penjumlahan: jajar genjang dan vektor a + b */
+    const sumOn = () => flagsRef.current.sum;
+    const sumPoint = (): Vec => [A()[0] + B()[0], A()[1] + B()[1]];
+
+    makeCurve(color.sum, 1.75, 3, () => (sumOn() ? [A(), sumPoint(), B()] : null));
+    const sumEnd = (i: 0 | 1) => () =>
+      sumOn() && len(sumPoint()) > 1e-6 ? sumPoint()[i] : 1000;
+    arrow(sumEnd(0), sumEnd(1), color.sum);
     board.create(
       "text",
       [
-        () => (sumVisible() ? sumPoint()[0] + 0.3 : 1000),
-        () => (sumVisible() ? sumPoint()[1] + 0.6 : 1000),
+        () => (sumOn() ? sumPoint()[0] + 0.3 : 1000),
+        () => (sumOn() ? sumPoint()[1] + 0.6 : 1000),
         "a + b",
       ],
-      {
-        fontSize: 13,
-        strokeColor: colors.sum,
-        highlight: false,
-        fixed: true,
-      },
+      { fontSize: 13, strokeColor: color.sum, highlight: false, fixed: true },
     );
 
+    /* Anak panah vektor a dan b */
+    arrow(() => pa.X(), () => pa.Y(), color.a);
+    arrow(() => pb.X(), () => pb.Y(), color.b);
+
     /* Proyeksi */
-    const projectionInfo = () => {
-      const mode = projectionRef.current;
+    const projInfo = () => {
+      const mode = flagsRef.current.proj;
       if (mode === "off") return null;
       const vec = mode === "a" ? A() : B();
       const onto = mode === "a" ? B() : A();
-      const result = projectOnto(vec, onto);
-      if (!result) return null;
-      return { vec, onto, foot: result.vector, k: result.k };
+      const res = projectOnto(vec, onto);
+      return res ? { vec, onto, foot: res.vector, k: res.k } : null;
     };
 
-    makeCurve(colors.proj, 1.2, 3, () => {
-      const info = projectionInfo();
+    // garis tempat proyeksi jatuh
+    makeCurve(color.proj, 1.25, 3, () => {
+      const info = projInfo();
       if (!info) return null;
-      const lo = length(info.onto);
+      const lo = len(info.onto);
       const u: Vec = [info.onto[0] / lo, info.onto[1] / lo];
-      // Garis proyeksi dibuat cukup panjang untuk area yang terlihat.
-      const reach =
-        2 * Math.max(...board.getBoundingBox().map((v) => Math.abs(v))) + 10;
+      const reach = 2 * Math.max(...board.getBoundingBox().map((v) => Math.abs(v))) + 10;
       return [
         [-reach * u[0], -reach * u[1]],
         [reach * u[0], reach * u[1]],
       ];
     });
 
-    makeCurve(colors.proj, 2, 2, () => {
-      const info = projectionInfo();
+    // garis tegak lurus dari ujung vektor ke kaki proyeksi
+    makeCurve(color.proj, 2, 2, () => {
+      const info = projInfo();
       if (!info) return null;
-      return Math.hypot(
-        info.vec[0] - info.foot[0],
-        info.vec[1] - info.foot[1],
-      ) > 1e-6
+      return Math.hypot(info.vec[0] - info.foot[0], info.vec[1] - info.foot[1]) > 1e-6
         ? [info.vec, info.foot]
         : null;
     });
 
-    /* Tanda siku-siku di kaki proyeksi */
-    makeCurve(colors.proj, 1.5, 0, () => {
-      const info = projectionInfo();
+    // tanda siku-siku di kaki proyeksi
+    makeCurve(color.proj, 1.5, 0, () => {
+      const info = projInfo();
       if (!info) return null;
-      const lo = length(info.onto);
+      const lo = len(info.onto);
       const tip: Vec = [info.vec[0] - info.foot[0], info.vec[1] - info.foot[1]];
-      const lt = length(tip);
-      const lf = length(info.foot);
+      const lt = len(tip);
+      const lf = len(info.foot);
       if (lt < 1e-6 || lf < 1e-6) return null;
       const u: Vec = [info.onto[0] / lo, info.onto[1] / lo];
       const w: Vec = [tip[0] / lt, tip[1] / lt];
@@ -709,82 +527,65 @@ export function VectorSimulation() {
       ];
     });
 
-    const footCoord = (coord: 0 | 1) => () => {
-      const info = projectionInfo();
-      return info && length(info.foot) > 1e-6 ? info.foot[coord] : 1000;
+    // vektor proyeksi dari titik asal
+    const footEnd = (i: 0 | 1) => () => {
+      const info = projInfo();
+      return info && len(info.foot) > 1e-6 ? info.foot[i] : 1000;
     };
-    board.create(
-      "segment",
-      [
-        [0, 0],
-        [footCoord(0), footCoord(1)],
-      ],
-      {
-        strokeColor: colors.proj,
-        strokeWidth: 5,
-        strokeOpacity: 0.9,
-        lastArrow: { type: 2, size: 4 },
-        highlight: false,
-        fixed: true,
-      },
-    );
+    arrow(footEnd(0), footEnd(1), color.proj, 5, 0.85);
 
     /* Sudut antara a dan b */
     const arcInfo = () => {
-      if (!showAngleRef.current) return null;
+      if (!flagsRef.current.angle) return null;
       const a = A();
       const b = B();
-      const la = length(a);
-      const lb = length(b);
+      const la = len(a);
+      const lb = len(b);
       if (la < EPS || lb < EPS) return null;
       const startAngle = Math.atan2(a[1], a[0]);
       let delta = Math.atan2(b[1], b[0]) - startAngle;
       while (delta > Math.PI) delta -= 2 * Math.PI;
       while (delta <= -Math.PI) delta += 2 * Math.PI;
       if (Math.abs(delta) < 1e-6) return null;
-      const radius = Math.min(1.5, Math.max(0.35, 0.45 * Math.min(la, lb)));
       return {
         startAngle,
         delta,
-        radius,
+        radius: Math.min(1.5, Math.max(0.35, 0.45 * Math.min(la, lb))),
         mid: startAngle + delta / 2,
         degrees: toDegrees(Math.abs(delta)),
       };
     };
 
-    makeCurve(colors.sum, 2, 0, () => {
+    makeCurve(color.angle, 2, 0, () => {
       const info = arcInfo();
       if (!info) return null;
-      const points: Vec[] = [];
+      const pts: Vec[] = [];
       for (let i = 0; i <= ARC_STEPS; i += 1) {
-        const angle = info.startAngle + (info.delta * i) / ARC_STEPS;
-        points.push([
-          info.radius * Math.cos(angle),
-          info.radius * Math.sin(angle),
-        ]);
+        const t = info.startAngle + (info.delta * i) / ARC_STEPS;
+        pts.push([info.radius * Math.cos(t), info.radius * Math.sin(t)]);
       }
-      return points;
+      return pts;
     });
 
-    const angleLabel = (coord: 0 | 1) => () => {
+    const angleAt = (i: 0 | 1) => () => {
       const info = arcInfo();
       if (!info) return 1000;
       const r = info.radius + 0.9;
-      return coord === 0 ? r * Math.cos(info.mid) : r * Math.sin(info.mid);
+      return i === 0 ? r * Math.cos(info.mid) : r * Math.sin(info.mid);
     };
     board.create(
       "text",
       [
-        angleLabel(0),
-        angleLabel(1),
+        angleAt(0),
+        angleAt(1),
         () => {
           const info = arcInfo();
-          return info ? `θ = ${formatValue(info.degrees)}°` : "";
+          return info ? `θ = ${fmt(info.degrees)}°` : "";
         },
       ],
       {
         fontSize: 12,
-        strokeColor: colors.sum,
+        strokeColor: color.angle,
         anchorX: "middle",
         anchorY: "middle",
         highlight: false,
@@ -792,51 +593,38 @@ export function VectorSimulation() {
       },
     );
 
-    /* Anak panah vektor a dan b */
-    const arrow = (end: JXG.Point, color: string) =>
-      board.create(
-        "segment",
-        [
-          [0, 0],
-          [() => end.X(), () => end.Y()],
-        ],
-        {
-          strokeColor: color,
-          strokeWidth: 3.5,
-          lastArrow: { type: 2, size: 4 },
-          highlight: false,
-          fixed: true,
-        },
-      );
-    arrow(pa, colors.a);
-    arrow(pb, colors.b);
-
-    /* Sinkronisasi saat ujung vektor digeser */
+    /* Sinkronisasi saat ujung vektor digeser (dibatasi ±LIMIT) */
+    const readPoint = (p: JXG.Point): Vec => {
+      const x = clamp(p.X());
+      const y = clamp(p.Y());
+      if (x !== p.X() || y !== p.Y()) p.setPosition(JXG.COORDS_BY_USER, [x, y]);
+      return [clean(x), clean(y)];
+    };
     const syncFromBoard = () => {
-      const a: Vec = [cleanNumber(pa.X()), cleanNumber(pa.Y())];
-      const b: Vec = [cleanNumber(pb.X()), cleanNumber(pb.Y())];
-      vectorsRef.current = { a, b };
+      const a = readPoint(pa);
+      const b = readPoint(pb);
+      vecRef.current = { a, b };
       setVecA(a);
       setVecB(b);
-      setFields(toFields(a, b));
     };
     pa.on("drag", syncFromBoard);
     pb.on("drag", syncFromBoard);
 
     board.update();
 
-    // Saat ukuran kontainer berubah (putar layar, layar penuh, ganti mode),
-    // pertahankan skala dan titik tengah tampilan agar grafik tidak melompat.
+    // Saat ukuran berubah (layar penuh / putar layar): pertahankan skala
+    // dan titik tengah agar grafik tidak melompat.
     let last = {
-      w: containerRef.current?.clientWidth ?? 0,
-      h: containerRef.current?.clientHeight ?? 0,
+      w: hostRef.current?.clientWidth ?? 0,
+      h: hostRef.current?.clientHeight ?? 0,
     };
-    const observer = new ResizeObserver(() => {
-      const el = containerRef.current;
-      if (!el || el.clientWidth <= 0 || el.clientHeight <= 0) return;
+    const sync = (force = false) => {
+      const el = hostRef.current;
+      if (!el) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
-      if (w === last.w && h === last.h) return;
+      if (w <= 0 || h <= 0) return;
+      if (!force && w === last.w && h === last.h) return;
 
       const bb = board.getBoundingBox();
       const spanX = bb[2] - bb[0];
@@ -854,420 +642,286 @@ export function VectorSimulation() {
       }
       last = { w, h };
       board.update();
-    });
-    if (containerRef.current) observer.observe(containerRef.current);
+    };
+    syncRef.current = sync;
+    const observer = new ResizeObserver(() => sync());
+    if (hostRef.current) observer.observe(hostRef.current);
 
     return () => {
+      syncRef.current = null;
       observer.disconnect();
       JXG.JSXGraph.freeBoard(board);
       boardRef.current = null;
       pointsRef.current = [];
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
-  /* Tempel ke grid */
+  // Masuk/keluar layar penuh mengubah ukuran kontainer dua kali (tata letak
+  // CSS, lalu layar penuh asli). Sinkronkan ulang setelah transisi agar
+  // grafik langsung terisi penuh.
   useEffect(() => {
-    snapRef.current = snap;
-    pointsRef.current.forEach((point) =>
-      point.setAttribute({ snapToGrid: snap }),
-    );
-  }, [snap]);
+    const run = () => syncRef.current?.(true);
+    const raf = requestAnimationFrame(() => requestAnimationFrame(run));
+    const t1 = window.setTimeout(run, 150);
+    const t2 = window.setTimeout(run, 450);
+    document.addEventListener("fullscreenchange", run);
+    window.addEventListener("resize", run);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.removeEventListener("fullscreenchange", run);
+      window.removeEventListener("resize", run);
+    };
+  }, [isFs]);
 
-  /* ---------- Turunan untuk tampilan ---------- */
+  /* ───────── Nilai turunan ───────── */
 
   const info = analyze(vecA, vecB);
-  const caption = `a${formatCoord(vecA)} · b${formatCoord(vecB)} = ${formatValue(info.dot)}${
-    info.defined ? `, θ = ${formatValue(info.angle)}°` : ""
-  }`;
+  const caption = `a · b = ${fmt(info.dot)}${info.defined ? `  ·  θ = ${fmt(info.angle)}°` : ""}`;
+  const projText = (p: ReturnType<typeof projectOnto>) =>
+    p ? `${fmt(p.scalar)} → ${coord(p.vector)}` : "—";
 
-  const tableRows: { name: string; vector: Vec | null; size: number }[] = [
-    { name: "a", vector: vecA, size: info.la },
-    { name: "b", vector: vecB, size: info.lb },
-    { name: "a + b", vector: info.sum, size: length(info.sum) },
-    { name: "a − b", vector: info.diff, size: length(info.diff) },
-    {
-      name: "Proyeksi a pada b",
-      vector: info.aOnB?.vector ?? null,
-      size: info.aOnB ? Math.abs(info.aOnB.scalar) : Number.NaN,
+  const stepProps = (key: CompKey, label: string, dir: 1 | -1, disabled: boolean) => ({
+    type: "button" as const,
+    className: "vs-step",
+    disabled,
+    "aria-label": `${dir === 1 ? "Tambah" : "Kurangi"} ${label}`,
+    onPointerDown: startHold(key, dir),
+    onPointerUp: stopHold,
+    onPointerLeave: stopHold,
+    onPointerCancel: stopHold,
+    onBlur: stopHold,
+    onContextMenu: (e: { preventDefault: () => void }) => e.preventDefault(),
+    // detail === 0 → aktivasi lewat keyboard
+    onClick: (e: { detail: number }) => {
+      if (e.detail === 0) step(key, dir);
     },
-    {
-      name: "Proyeksi b pada a",
-      vector: info.bOnA?.vector ?? null,
-      size: info.bOnA ? Math.abs(info.bOnA.scalar) : Number.NaN,
-    },
-  ];
+  });
 
-  const fieldRows: {
-    key: FieldKey;
-    label: string;
-    axis: string;
-    tone: "a" | "b";
-    value: number;
-  }[] = [
-    { key: "a1", label: "a₁", axis: "x", tone: "a", value: vecA[0] },
-    { key: "a2", label: "a₂", axis: "y", tone: "a", value: vecA[1] },
-    { key: "b1", label: "b₁", axis: "x", tone: "b", value: vecB[0] },
-    { key: "b2", label: "b₂", axis: "y", tone: "b", value: vecB[1] },
-  ];
+  const pane = (name: Tab) => `vs-pane${tab === name ? " is-on" : ""}`;
 
   return (
-    <div
-      ref={rootRef}
-      className={`vector-simulation simulation-fullscreen-frame${
-        tabbed ? " is-tabbed" : ""
-      }${isFullscreen ? " is-fullscreen" : ""}`}
-    >
-      <p className="vs-orientation-hint">
+    <div ref={rootRef} className={`vs${isFs ? " is-fs" : ""}`}>
+      <p className="vs-hint">
         <Smartphone size={14} aria-hidden="true" />
-        <span>
-          Miringkan ponsel ke mode lanskap agar bidang koordinat dan panel isian
-          tampil berdampingan.
-        </span>
+        <span>Miringkan ponsel ke mode lanskap agar grafik dan slider nyaman dipakai.</span>
       </p>
 
-      <div className="vs-main">
-        {/* ───── Wilayah grafik (2 bagian) ───── */}
-        <section className="vs-board-panel" aria-label="Bidang koordinat">
+      <div className="vs-layout">
+        {/* ───── Grafik ───── */}
+        <section className="vs-graph" aria-label="Bidang koordinat vektor">
           <div className="vs-stage">
             <div
-              className="vs-board"
               id={boardId}
-              ref={containerRef}
-              aria-label="Bidang koordinat interaktif. Seret ujung vektor a (biru kehijauan) atau vektor b (oranye) untuk mengubah posisinya. Seret area kosong untuk menggeser bidang, gulir atau cubit untuk memperbesar atau memperkecil."
+              ref={hostRef}
+              className="vs-board"
+              aria-label="Bidang koordinat. Seret ujung vektor a (biru) atau b (oranye) untuk mengubahnya. Seret area kosong untuk menggeser, gulir atau cubit untuk memperbesar."
             />
-            <p className="vs-caption" aria-live="polite">
+
+            <p className="vs-eq" aria-live="polite">
               {caption}
             </p>
-            <div className="vs-view-tools" role="group" aria-label="Tampilan">
+
+            <div className="vs-tools" role="group" aria-label="Alat tampilan">
               <button
                 type="button"
-                onClick={toggleFullscreen}
-                aria-pressed={isFullscreen}
-                aria-label={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
-                title={isFullscreen ? "Keluar layar penuh" : "Layar penuh"}
+                onClick={toggleFs}
+                aria-pressed={isFs}
+                aria-label={isFs ? "Keluar layar penuh" : "Layar penuh"}
+                title={isFs ? "Keluar layar penuh" : "Layar penuh"}
               >
-                {isFullscreen ? (
-                  <Minimize2 size={15} aria-hidden="true" />
-                ) : (
-                  <Maximize2 size={15} aria-hidden="true" />
-                )}
+                {isFs ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}
               </button>
-              <button type="button" onClick={zoomIn} aria-label="Perbesar">
-                <Plus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomIn} aria-label="Perbesar" title="Perbesar">
+                <Plus size={17} aria-hidden="true" />
               </button>
-              <button type="button" onClick={zoomOut} aria-label="Perkecil">
-                <Minus size={16} aria-hidden="true" />
+              <button type="button" onClick={zoomOut} aria-label="Perkecil" title="Perkecil">
+                <Minus size={17} aria-hidden="true" />
               </button>
-              <button
-                type="button"
-                onClick={resetView}
-                aria-label="Pusatkan tampilan"
-                title="Pusatkan tampilan"
-              >
-                <Crosshair size={15} aria-hidden="true" />
+              <button type="button" onClick={center} aria-label="Pusatkan tampilan" title="Pusatkan tampilan">
+                <Crosshair size={16} aria-hidden="true" />
               </button>
-              {isFullscreen && (
+              {isFs && (
                 <button
                   type="button"
-                  className="vs-toolbar-toggle"
-                  onClick={() => setPanelOpen((open) => !open)}
+                  className="vs-toggle"
+                  onClick={() => setPanelOpen((o) => !o)}
                   aria-pressed={panelOpen}
-                  aria-controls={`vs-column-${baseId}`}
-                  aria-label={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
-                  title={
-                    panelOpen ? "Sembunyikan toolbar" : "Tampilkan toolbar"
-                  }
+                  aria-controls={`vs-panel-${baseId}`}
+                  aria-label={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
+                  title={panelOpen ? "Sembunyikan pengatur" : "Tampilkan pengatur"}
                 >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <SlidersHorizontal size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
-          <div className="vs-legend" aria-label="Legenda grafik">
-            <span>
-              <i className="legend-a" /> vektor a
-            </span>
-            <span>
-              <i className="legend-b" /> vektor b
-            </span>
-            <span>
-              <i className="legend-sum" /> a + b dan sudut θ
-            </span>
-            <span>
-              <i className="legend-proj" /> proyeksi
-            </span>
-          </div>
+
+          <ul className="vs-legend" aria-label="Legenda grafik">
+            <li><i style={{ borderColor: color.a }} /> vektor a</li>
+            <li><i style={{ borderColor: color.b }} /> vektor b</li>
+            <li><i style={{ borderColor: color.sum }} /> a + b</li>
+            <li><i className="dash" style={{ borderColor: color.proj }} /> proyeksi</li>
+            <li><i style={{ borderColor: color.angle }} /> sudut θ</li>
+          </ul>
         </section>
 
-        {/* ───── Wilayah input (1 bagian) ───── */}
-        <div
-          id={`vs-column-${baseId}`}
-          className={`vs-column${isFullscreen ? " is-floating" : ""}${
-            isFullscreen && panelOpen ? " is-open" : ""
-          }`}
-          data-tab={tab}
+        {/* ───── Pengatur ───── */}
+        <section
+          id={`vs-panel-${baseId}`}
+          className={`vs-panel${isFs ? " is-floating" : ""}${isFs && panelOpen ? " is-open" : ""}`}
+          aria-label="Pengatur vektor"
         >
-          <div className="vs-tabs" role="group" aria-label="Bagian panel">
-            {panelTabs.map((item) => (
+          <div className="vs-tabs" role="group" aria-label="Bagian pengatur">
+            {tabs.map((t) => (
               <button
-                key={item.tab}
+                key={t.tab}
                 type="button"
-                aria-pressed={tab === item.tab}
-                onClick={() => setTab(item.tab)}
+                aria-pressed={tab === t.tab}
+                onClick={() => setTab(t.tab)}
               >
-                {item.label}
+                {t.label}
               </button>
             ))}
           </div>
 
-          <section className="vs-side" aria-label="Pengaturan vektor">
-            <div className="vs-panel" data-pane="vector">
-              <h3>Komponen vektor</h3>
-              <div className="vs-rows">
-                {fieldRows.map((row) => (
-                  <SliderField
-                    key={row.key}
-                    label={row.label}
-                    axis={row.axis}
-                    tone={row.tone}
-                    value={row.value}
-                    text={fields[row.key]}
-                    snap={snap}
-                    onText={(v) => changeField(row.key, v)}
-                    onSlide={(v) => changeField(row.key, toField(v))}
-                    onNudge={(d) => nudgeField(row.key, d)}
-                  />
-                ))}
-              </div>
-              <label className="vs-check">
-                <input
-                  type="checkbox"
-                  checked={snap}
-                  onChange={(event) => setSnap(event.currentTarget.checked)}
-                />
-                Tempel ke bilangan bulat saat menyeret
-              </label>
-              <p className="vs-hint">
-                Seret ujung vektor di grafik, atau ubah komponennya di sini.
-                Nilai dibatasi antara −{formatValue(LIMIT)} dan{" "}
-                {formatValue(LIMIT)}.
-              </p>
+          {/* Vektor */}
+          <div className={pane("vector")}>
+            <div className="vs-sliders">
+              {comps.map(({ key, label, vec, i }) => {
+                const value = (vec === "a" ? vecA : vecB)[i];
+                const shown = clamp(value);
+                const pct = ((shown + LIMIT) / (2 * LIMIT)) * 100;
+                const id = `vs-${baseId}-${key}`;
+                const style = {
+                  "--lo": `${Math.min(50, pct)}%`,
+                  "--hi": `${Math.max(50, pct)}%`,
+                  "--sc": vec === "a" ? color.a : color.b,
+                } as CSSProperties;
+                return (
+                  <div className="vs-slider" style={style} key={key}>
+                    <label htmlFor={id}>{label}</label>
+                    <button {...stepProps(key, label, -1, shown <= -LIMIT)}>
+                      <Minus size={14} aria-hidden="true" />
+                    </button>
+                    <input
+                      id={id}
+                      className="vs-range"
+                      type="range"
+                      min={-LIMIT}
+                      max={LIMIT}
+                      step={snap ? 1 : 0.1}
+                      value={shown}
+                      aria-valuetext={`${label} sama dengan ${fmt(value)}`}
+                      onChange={(e) => setComp(key, Number(e.currentTarget.value))}
+                    />
+                    <button {...stepProps(key, label, 1, shown >= LIMIT)}>
+                      <Plus size={14} aria-hidden="true" />
+                    </button>
+                    <output htmlFor={id} aria-live="polite">
+                      {fmt(value)}
+                    </output>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="vs-panel" data-pane="preset">
-              <h3>Contoh posisi</h3>
-              <div
-                className="vs-segmented"
-                role="group"
-                aria-label="Contoh posisi dua vektor"
-              >
-                {presets.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() =>
-                      setVectors([...preset.a], [...preset.b], true)
-                    }
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="vs-panel" data-pane="view">
-              <h3>Tampilan</h3>
-              <label className="vs-check vs-check-first">
-                <input
-                  type="checkbox"
-                  checked={showSum}
-                  onChange={(event) => toggleSum(event.currentTarget.checked)}
-                />
-                Penjumlahan a + b (jajar genjang)
-              </label>
-              <label className="vs-check">
-                <input
-                  type="checkbox"
-                  checked={showAngle}
-                  onChange={(event) => toggleAngle(event.currentTarget.checked)}
-                />
-                Sudut θ antara a dan b
-              </label>
-              <p className="vs-subtitle">Proyeksi</p>
-              <div
-                className="vs-segmented"
-                role="group"
-                aria-label="Arah proyeksi"
-              >
-                {projectionOptions.map((option) => (
-                  <button
-                    key={option.mode}
-                    type="button"
-                    aria-pressed={projection === option.mode}
-                    onClick={() => selectProjection(option.mode)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="vs-reset-row" data-pane="view">
-              <button
-                type="button"
-                className="vs-reset-button"
-                onClick={resetAll}
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                <span>Atur ulang semua</span>
-              </button>
-              <GraphAppearanceControls
-                appearance={appearance}
-                onStep={onStep}
-              />
-            </div>
-          </section>
-
-          <div className="vs-results" data-pane="result">
-            <section className="vs-panel vs-wide" aria-labelledby={calcTitleId}>
-              <h3 id={calcTitleId}>Hasil perhitungan</h3>
-              <div className="vs-card-grid">
-                <article className="vs-card">
-                  <h4>Penjumlahan vektor</h4>
-                  <p className="vs-formula">
-                    a + b = ({par(vecA[0])} + {par(vecB[0])}; {par(vecA[1])} +{" "}
-                    {par(vecB[1])}) = {formatCoord(info.sum)}
-                  </p>
-                  <p>
-                    |a + b| = {formatValue(length(info.sum))}; a − b ={" "}
-                    {formatCoord(info.diff)}
-                  </p>
-                </article>
-
-                <article className="vs-card vs-card-result">
-                  <h4>Hasil kali titik</h4>
-                  <p className="vs-formula">
-                    a · b = {par(vecA[0])}·{par(vecB[0])} + {par(vecA[1])}·
-                    {par(vecB[1])} = {formatValue(info.dot)}
-                  </p>
-                  <p>{relationText(info)}</p>
-                  <p>
-                    |a| = {formatValue(info.la)}; |b| = {formatValue(info.lb)}
-                  </p>
-                </article>
-
-                <article className="vs-card">
-                  <h4>Sudut antara a dan b</h4>
-                  <p className="vs-formula">
-                    cos θ = (a · b) / (|a| |b|) = {formatValue(info.cos)}
-                  </p>
-                  <p>
-                    {info.defined
-                      ? `θ = ${formatValue(info.angle)}°`
-                      : "Sudut tidak terdefinisi karena ada vektor nol."}
-                  </p>
-                </article>
-
-                <article
-                  className={`vs-card${projection === "a" ? " is-active" : ""}`}
+            <p className="vs-label">Contoh posisi</p>
+            <div className="vs-chips" role="group" aria-label="Contoh posisi dua vektor">
+              {presets.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="vs-chip"
+                  onClick={() => setVectors([...p.a], [...p.b])}
                 >
-                  <h4>Proyeksi a pada b</h4>
-                  {info.aOnB ? (
-                    <>
-                      <p className="vs-formula">
-                        skalar = (a · b) / |b| = {formatValue(info.aOnB.scalar)}
-                      </p>
-                      <p>
-                        vektor = ((a · b) / |b|²) b ={" "}
-                        {formatCoord(info.aOnB.vector)}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="vs-formula">
-                      Tidak terdefinisi (b adalah vektor nol).
-                    </p>
-                  )}
-                </article>
-
-                <article
-                  className={`vs-card${projection === "b" ? " is-active" : ""}`}
-                >
-                  <h4>Proyeksi b pada a</h4>
-                  {info.bOnA ? (
-                    <>
-                      <p className="vs-formula">
-                        skalar = (a · b) / |a| = {formatValue(info.bOnA.scalar)}
-                      </p>
-                      <p>
-                        vektor = ((a · b) / |a|²) a ={" "}
-                        {formatCoord(info.bOnA.vector)}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="vs-formula">
-                      Tidak terdefinisi (a adalah vektor nol).
-                    </p>
-                  )}
-                </article>
-              </div>
-            </section>
-
-            <section
-              className="vs-panel vs-wide"
-              aria-labelledby={tableTitleId}
-            >
-              <h3 id={tableTitleId}>Komponen dan panjang</h3>
-              <div className="vs-table-wrap">
-                <table className="vs-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Vektor</th>
-                      <th scope="col">Komponen</th>
-                      <th scope="col">Panjang</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableRows.map((row) => (
-                      <tr key={row.name}>
-                        <th scope="row">{row.name}</th>
-                        <td className="vs-cell-main">
-                          {row.vector ? formatCoord(row.vector) : "—"}
-                        </td>
-                        <td className="vs-cell-muted">
-                          {formatValue(row.size)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
 
-      <ul className="vs-insights">
-        <li>
-          <strong>Penjumlahan</strong>: a + b = (a₁ + b₁; a₂ + b₂). Secara
-          geometri, a + b adalah diagonal jajar genjang yang dibentuk a dan b.
-        </li>
-        <li>
-          <strong>Hasil kali titik</strong>: a · b = a₁b₁ + a₂b₂ = |a| |b| cos
-          θ. Hasilnya berupa bilangan, bukan vektor, dan a · b = b · a.
-        </li>
-        <li>
-          <strong>Sudut</strong>: cos θ = (a · b) / (|a| |b|). Jika a · b = 0
-          kedua vektor tegak lurus; jika positif θ lancip; jika negatif θ
-          tumpul.
-        </li>
-        <li>
-          <strong>Proyeksi</strong>: panjang proyeksi skalar a pada b adalah (a
-          · b) / |b|, dan proyeksi vektornya ((a · b) / |b|²) b. Tandanya
-          negatif bila θ tumpul.
-        </li>
-      </ul>
+          {/* Tampilan */}
+          <div className={pane("view")}>
+            <p className="vs-label">Tampilkan</p>
+            <div className="vs-chips" role="group" aria-label="Elemen grafik">
+              <button type="button" className="vs-chip" aria-pressed={showSum} onClick={toggleSum}>
+                a + b
+              </button>
+              <button type="button" className="vs-chip" aria-pressed={showAngle} onClick={toggleAngle}>
+                Sudut θ
+              </button>
+              <button type="button" className="vs-chip" aria-pressed={snap} onClick={toggleSnap}>
+                Tempel ke grid
+              </button>
+            </div>
+
+            <p className="vs-label">Proyeksi</p>
+            <div className="vs-seg" role="group" aria-label="Arah proyeksi">
+              {projections.map((p) => (
+                <button
+                  key={p.mode}
+                  type="button"
+                  aria-pressed={projection === p.mode}
+                  onClick={() => pickProjection(p.mode)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <button type="button" className="vs-reset" onClick={reset}>
+              <RotateCcw size={13} aria-hidden="true" />
+              <span>Atur ulang</span>
+            </button>
+          </div>
+
+          {/* Hasil */}
+          <div className={pane("result")}>
+            <p className="vs-note" role="status">
+              {relation(info)}
+            </p>
+            <dl className="vs-readouts" aria-live="polite">
+              <div>
+                <dt>a · b</dt>
+                <dd>{fmt(info.dot)}</dd>
+              </div>
+              <div>
+                <dt>Sudut θ</dt>
+                <dd style={{ color: color.angle }}>{info.defined ? `${fmt(info.angle)}°` : "—"}</dd>
+              </div>
+              <div>
+                <dt>|a|</dt>
+                <dd style={{ color: color.a }}>{fmt(info.la)}</dd>
+              </div>
+              <div>
+                <dt>|b|</dt>
+                <dd style={{ color: color.b }}>{fmt(info.lb)}</dd>
+              </div>
+              <div>
+                <dt>a + b</dt>
+                <dd style={{ color: color.sum }}>{coord(info.sum)}</dd>
+              </div>
+              <div>
+                <dt>a − b</dt>
+                <dd>{coord(info.diff)}</dd>
+              </div>
+              <div className="wide">
+                <dt>a pada b (skalar → vektor)</dt>
+                <dd style={{ color: color.proj }}>{projText(info.aOnB)}</dd>
+              </div>
+              <div className="wide">
+                <dt>b pada a (skalar → vektor)</dt>
+                <dd style={{ color: color.proj }}>{projText(info.bOnA)}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
+
+export default VectorSimulation;

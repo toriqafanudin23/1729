@@ -1,601 +1,411 @@
-/* Simulasi sistem linear (disusun ulang mengikuti VectorSimulation).
-   Urutan: (1) ponsel lanskap = dasar (kelas .is-tabbed, panel bertab),
-   (2) potret, (3) desktop (tanpa .is-tabbed), (4) layar penuh.
-   Wilayah grafik : wilayah input = 2fr : 1fr.
-   Kelas .is-tabbed dipasang oleh komponen saat layar kecil/pendek atau
-   saat layar penuh. Memakai variabel --sim-*, --gold dari TrigonometrySimulation.css. */
+/* Simulasi sistem linear — tema slate landing page 1729.
+   Urutan: (1) ponsel lanskap = dasar, (2) desktop/tablet lanskap,
+   (3) potret, (4) layar penuh (grafik 100%, toolbar mengambang).
+   Grafik : pengatur = 2fr : 1fr. */
 
-.linear-simulation,
-.linear-simulation *,
-.linear-simulation *::before,
-.linear-simulation *::after {
+.ls,
+.ls *,
+.ls *::before,
+.ls *::after {
   box-sizing: border-box;
 }
 
-.linear-simulation {
-  --lin-accent: #087f8c;
-  --lin-bad: #b23a48;
-  --lin-ok: #2c7a3f;
-  --lin-opt: #e0a100;
-  --ink: var(--sim-ink, #18313d);
-  --muted: var(--sim-muted, #62727d);
-  --line: var(--sim-line, #d5e0e4);
-  --paper: var(--sim-paper, #f3f7f5);
+.ls {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
+  --ok: #059669;
+  --bad: #e11d48;
 
-  /* slider tipis, bulatan kecil */
-  --track: 2px;
-  --thumb: 12px;
-  --step: 22px;
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* jarak elemen mengambang dari tepi (diperbesar di layar penuh: safe area) */
+  --inset-t: 8px;
+  --inset-r: 8px;
+  --inset-b: 8px;
+  --inset-l: 8px;
+
+  --btn: 34px;
+  --step: 24px;
+  --track: 3px;
+  --thumb: 14px;
+  --field: 28px;
 
   display: grid;
-  gap: 6px;
-  padding: 6px;
-  border-top: 3px solid var(--gold);
-  background: var(--paper);
-  color: var(--ink);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: min(100dvh, 440px);
+  padding: 8px;
+  background: var(--wash);
+  color: var(--text);
+  font-family: var(--sans);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-.linear-simulation h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.linear-simulation h4 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.linear-simulation button,
-.linear-simulation select {
-  font-family: inherit;
+.ls button,
+.ls select,
+.ls input {
+  font: inherit;
   touch-action: manipulation;
 }
 
-.linear-simulation button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.linear-simulation button:focus-visible,
-.linear-simulation input:focus-visible,
-.linear-simulation select:focus-visible,
-.linear-simulation summary:focus-visible {
-  outline: 2px solid var(--lin-accent);
+.ls button:focus-visible,
+.ls input:focus-visible,
+.ls select:focus-visible,
+.ls-board:focus-visible {
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
-.lin-orientation-hint {
+.ls-hint {
   display: none;
 }
 
-/* ───────── Pilihan mode ───────── */
+/* ───────── Pembagian 2 : 1 ───────── */
 
-.lin-modes {
-  display: flex;
-  overflow-x: auto;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  scrollbar-width: none;
-}
-
-.lin-modes::-webkit-scrollbar {
-  display: none;
-}
-
-.lin-modes button {
-  flex: 1 1 0;
-  min-width: max-content;
-  height: 28px;
-  padding: 0 10px;
-  border: 0;
-  border-left: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.lin-modes button:first-child {
-  border-left: 0;
-}
-
-.lin-modes button:hover {
-  background: #e8f3f1;
-}
-
-.lin-modes button[aria-selected="true"] {
-  background: var(--lin-accent);
-  color: #fff;
-}
-
-/* ───────── Tata letak utama (dasar = bertab, ponsel lanskap) ───────── */
-
-.linear-simulation.is-tabbed {
-  grid-template-rows: auto minmax(0, 1fr);
-  height: min(100dvh, 460px);
-}
-
-.lin-main {
+.ls-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 6px;
-  min-width: 0;
-  min-height: 0;
+  gap: 8px;
   height: 100%;
-}
-
-.lin-column {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 5px;
   min-width: 0;
   min-height: 0;
 }
 
 /* ───────── Grafik ───────── */
 
-.lin-board-panel {
+.ls-graph {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: 12px;
   background: #fff;
 }
 
-.lin-stage {
+.ls-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
-  height: 100%;
 }
 
-.lin-board {
+.ls-board {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #fcfdfc;
+  background: #fff;
   touch-action: none;
   cursor: grab;
 }
-
-.lin-board:active {
+.ls-board:active {
   cursor: grabbing;
 }
-
-.lin-board:focus-visible {
-  outline: 2px solid var(--lin-accent);
+.ls-board:focus-visible {
   outline-offset: -2px;
 }
 
-.lin-board .JXGtext {
-  font-family: "Open Sans", sans-serif;
-}
-
-/* Ringkasan hasil melayang di kiri atas grafik */
-.lin-caption {
+/* hasil singkat: chip di kiri atas */
+.ls-eq {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: var(--inset-t);
+  left: var(--inset-l);
   z-index: 2;
-  max-width: calc(100% - 50px);
+  max-width: calc(100% - var(--btn) - var(--inset-l) - var(--inset-r) - 8px);
   margin: 0;
-  padding: 2px 8px;
-  border-left: 3px solid #183e54;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.9);
-  color: #183e54;
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.3;
-  pointer-events: none;
-  overflow-wrap: anywhere;
-}
-
-/* Layar penuh, zoom, pusatkan, unduh: melayang di kanan atas */
-.lin-view-tools {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
-  display: grid;
-  gap: 3px;
-}
-
-.lin-view-tools button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   color: var(--ink);
-  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  pointer-events: none;
 }
-
-.lin-view-tools button:hover {
-  border-color: var(--lin-accent);
-  background: #e8f3f1;
-}
-
-.lin-legend {
-  display: flex;
-  gap: 4px 12px;
-  padding: 3px 8px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 10.5px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.lin-legend::-webkit-scrollbar {
+.ls-eq:empty {
   display: none;
 }
 
-.lin-legend span {
+/* Toolbar mengambang, kanan atas */
+.ls-tools {
+  position: absolute;
+  top: var(--inset-t);
+  right: var(--inset-r);
+  z-index: 4;
+  display: grid;
+  gap: 4px;
+}
+
+.ls-tools button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--btn);
+  height: var(--btn);
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.ls-tools button:hover {
+  border-color: var(--ink);
+}
+.ls-tools .ls-toggle[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Legenda */
+.ls-legend {
+  display: flex;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 4px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 10px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ls-legend::-webkit-scrollbar {
+  display: none;
+}
+.ls-legend li {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-
-.lin-legend i {
+.ls-legend i {
   width: 14px;
   height: 0;
-  border-top: 3px solid #183e54;
+  border-top: 3px solid;
 }
-
-.lin-legend b {
-  width: 9px;
-  height: 9px;
+.ls-legend i.dash {
+  border-top-width: 2px;
+  border-top-style: dashed;
+}
+.ls-legend b {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
-
-.lin-legend .dot-inter {
-  background: #b23a48;
+.ls-legend b.sq {
+  border-radius: 2px;
 }
-
-.lin-legend .dot-region {
-  border-radius: 0;
-  background: rgba(79, 159, 209, 0.45);
-  border: 1px solid #4f9fd1;
-}
-
-.lin-legend .dot-vertex {
-  background: #183e54;
-}
-
-.lin-legend .dot-opt {
-  background: var(--lin-opt);
-}
-
-.lin-legend .dot-test {
-  border-radius: 0;
+.ls-legend b.ring {
+  border: 2px solid var(--ink);
   background: #fff;
-  border: 2px solid #183e54;
 }
 
-/* ───────── Tab panel kanan ───────── */
+/* ───────── Pengatur ───────── */
 
-.lin-tabs {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-}
-
-.lin-tabs button {
-  height: 28px;
-  padding: 0 2px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lin-tabs button:first-child {
-  margin-left: 0;
-}
-
-.lin-tabs button[aria-pressed="true"] {
-  position: relative;
-  border-color: var(--lin-accent);
-  background: var(--lin-accent);
-  color: #fff;
-}
-
-/* Isi panel: satu kartu putih; judul h3 tidak perlu (sudah ada di tab) */
-.linear-simulation.is-tabbed .lin-side,
-.linear-simulation.is-tabbed .lin-results {
+.ls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
   min-height: 0;
-  padding: 8px;
-  border: 1px solid var(--line);
-  background: #fff;
+  padding: 10px;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
   scrollbar-width: thin;
 }
 
-.linear-simulation.is-tabbed .lin-side,
-.linear-simulation.is-tabbed .lin-results {
+/* Pilihan jenis, tab, dan segmen: satu gaya */
+.ls-modes,
+.ls-tabs,
+.ls-seg {
   display: grid;
-  align-content: start;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+}
+.ls-modes button,
+.ls-tabs button,
+.ls-seg button {
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ls-modes button {
+  font-size: 10px;
+}
+.ls-modes button:hover,
+.ls-tabs button:hover,
+.ls-seg button:hover {
+  color: var(--ink);
+}
+.ls-modes button[aria-pressed="true"],
+.ls-tabs button[aria-pressed="true"],
+.ls-seg button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+
+.ls-pane {
+  display: none;
+  flex-direction: column;
   gap: 8px;
 }
-
-.linear-simulation.is-tabbed .lin-panel > h3 {
-  display: none;
+.ls-pane.is-on {
+  display: flex;
 }
 
-.linear-simulation.is-tabbed
-  .lin-column[data-tab="lines"]
-  [data-pane]:not([data-pane="lines"]),
-.linear-simulation.is-tabbed
-  .lin-column[data-tab="goal"]
-  [data-pane]:not([data-pane="goal"]),
-.linear-simulation.is-tabbed
-  .lin-column[data-tab="preset"]
-  [data-pane]:not([data-pane="preset"]),
-.linear-simulation.is-tabbed
-  .lin-column[data-tab="view"]
-  [data-pane]:not([data-pane="view"]),
-.linear-simulation.is-tabbed
-  .lin-column[data-tab="result"]
-  [data-pane]:not([data-pane="result"]),
-.linear-simulation.is-tabbed .lin-column[data-tab="result"] .lin-side {
-  display: none;
+.ls-label {
+  margin: 0;
+  color: var(--mute);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.lin-panel {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-
-/* ───────── Baris persamaan / kendala ───────── */
-
-.lin-eqs {
+/* Baris persamaan:  ● [a] x + [b] y  ≤  [c]  × */
+.ls-rows {
   display: grid;
   gap: 6px;
 }
-
-.lin-row {
+.ls-row {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 4px 6px;
-  min-width: 0;
-}
-
-.lin-lhs,
-.lin-rhs {
-  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-
-.lin-swatch {
-  display: inline-block;
-  flex: none;
-  width: 11px;
-  height: 11px;
-  margin-right: 3px;
-  border-radius: 3px;
-  vertical-align: -1px;
+.ls-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
-
-.lin-row .lin-swatch {
-  margin-right: 0;
-}
-
-.lin-sym,
-.lin-op-static {
-  color: var(--ink);
-  font-family: "Cambria Math", Georgia, serif;
+.ls-sym {
+  color: var(--text);
+  font-family: var(--serif);
   font-size: 14px;
-  font-weight: 700;
+  font-style: italic;
+  font-weight: 600;
   white-space: nowrap;
 }
-
-.lin-num {
-  width: 42px;
-  min-width: 0;
-  height: 28px;
-  padding: 0 3px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
-  background: #fcfdfc;
-  color: var(--ink);
-  font-family: "Cambria Math", "Courier New", monospace;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
+.ls-eqsign {
+  font-style: normal;
+  padding: 0 4px;
 }
 
-.lin-op {
-  height: 28px;
-  padding: 0 2px;
-  border: 1px solid #aebdc2;
-  border-radius: 0;
+.ls-num,
+.ls-op {
+  height: var(--field);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
   background: #fff;
   color: var(--ink);
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ls-num {
+  width: 42px;
+  min-width: 0;
+  padding: 0 4px;
+  text-align: center;
+}
+.ls-op {
+  width: 44px;
+  padding: 0 2px;
   cursor: pointer;
 }
+.ls-num:hover,
+.ls-op:hover {
+  border-color: var(--soft);
+}
 
-.lin-icon-btn {
-  width: 24px;
-  height: 24px;
+.ls-x {
+  display: inline-grid;
+  place-items: center;
+  width: var(--field);
+  height: var(--field);
+  margin-left: auto;
   padding: 0;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--mute);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
 }
-
-.lin-icon-btn:hover {
-  border-color: #aebdc2;
-  background: var(--paper);
-  color: var(--lin-bad);
+.ls-x:hover {
+  border-color: var(--bad);
+  color: var(--bad);
 }
 
-.lin-inline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-}
-
-.lin-btn {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lin-btn:hover:not(:disabled) {
-  border-color: var(--lin-accent);
-  background: #e8f3f1;
-}
-
-.lin-subtitle {
-  margin: 0;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.lin-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  color: var(--ink);
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.lin-check input {
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--lin-accent);
-}
-
-.lin-note {
-  margin: 0;
-  color: var(--muted);
-  font-size: 10.5px;
-  line-height: 1.35;
-}
-
-.lin-segmented {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.lin-segmented button {
-  flex: 1 1 auto;
-  min-height: 30px;
-  padding: 0 10px;
-  margin-top: -1px;
-  margin-left: -1px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lin-segmented button:hover {
-  background: #e8f3f1;
-}
-
-.lin-reset-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.lin-reset-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #aebdc2;
-  background: #fff;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lin-reset-button:hover {
-  border-color: var(--lin-accent);
-  background: #e8f3f1;
-}
-
-/* ───────── Slider garis selidik: −  ──●──  +  [ 12 ] ───────── */
-
-.lin-level {
+/* Slider garis selidik: z − ──●── + [ 12 ] */
+.ls-slider {
   display: grid;
-  grid-template-columns: 16px var(--step) minmax(0, 1fr) var(--step) 44px;
+  grid-template-columns: 14px var(--step) minmax(0, 1fr) var(--step) 46px;
   align-items: center;
   column-gap: 4px;
-  min-width: 0;
 }
-
-.lin-level > span {
-  color: #7a5600;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 15px;
+.ls-slider label {
+  color: var(--sc);
+  font-family: var(--serif);
+  font-size: 16px;
   font-style: italic;
-  font-weight: 800;
+  font-weight: 700;
 }
-
-.lin-level .lin-num {
+.ls-slider .ls-num {
   width: 100%;
-  height: 24px;
-  color: #7a5600;
+  color: var(--sc);
 }
 
-.lin-nudge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.ls-step {
+  display: inline-grid;
+  place-items: center;
   width: var(--step);
   height: var(--step);
   padding: 0;
-  border: 1px solid #aebdc2;
+  border: 1px solid var(--line-strong);
   border-radius: 50%;
   background: #fff;
   color: var(--ink);
@@ -604,19 +414,16 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
-
-.lin-nudge:hover {
-  border-color: var(--lin-opt);
-  background: #f1f6f5;
+.ls-step:hover:not(:disabled) {
+  border-color: var(--sc);
+}
+.ls-step:active:not(:disabled) {
+  background: var(--line);
 }
 
-.lin-nudge:active {
-  background: #e0ecea;
-}
-
-/* Area sentuh 28px, tampilan visual hanya 2px */
-.lin-range {
-  --fill: 0%;
+/* area sentuh 28px, tampilan hanya garis tipis */
+.ls-range {
+  --fill: 50%;
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -626,568 +433,500 @@
   cursor: pointer;
   touch-action: pan-y;
 }
-
-.lin-range::-webkit-slider-runnable-track {
+.ls-range::-webkit-slider-runnable-track {
   height: var(--track);
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--lin-opt) 0,
-    var(--lin-opt) var(--fill),
-    var(--line) var(--fill),
-    var(--line) 100%
+    var(--sc) 0,
+    var(--sc) var(--fill),
+    var(--line-strong) var(--fill),
+    var(--line-strong) 100%
   );
 }
-
-.lin-range::-webkit-slider-thumb {
+.ls-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  box-sizing: border-box;
   width: var(--thumb);
   height: var(--thumb);
   margin-top: calc((var(--track) - var(--thumb)) / 2);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--lin-opt);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.lin-range::-moz-range-track {
+.ls-range::-moz-range-track {
   height: var(--track);
   border-radius: 999px;
-  background: var(--line);
+  background: var(--line-strong);
 }
-
-.lin-range::-moz-range-progress {
+.ls-range::-moz-range-progress {
   height: var(--track);
   border-radius: 999px;
-  background: var(--lin-opt);
+  background: var(--sc);
 }
-
-.lin-range::-moz-range-thumb {
-  box-sizing: border-box;
+.ls-range::-moz-range-thumb {
   width: var(--thumb);
   height: var(--thumb);
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--lin-opt);
-  box-shadow: 0 0 0 1px rgba(24, 49, 61, 0.28);
+  background: var(--sc);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3);
 }
-
-.lin-range:focus-visible {
+.ls-range:focus-visible {
   outline: none;
 }
-
-.lin-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--lin-opt);
+.ls-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
 }
-
-.lin-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--lin-opt);
+.ls-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--sc);
 }
 
 @media (pointer: coarse) {
-  .linear-simulation {
-    --step: 24px;
-  }
-
-  /* 16px mencegah iOS memperbesar halaman saat kolom difokuskan */
-  .lin-num {
-    height: 30px;
-    font-size: 16px;
-  }
-
-  .lin-level .lin-num {
-    height: 28px;
-  }
-
-  .lin-level {
-    grid-template-columns: 16px var(--step) minmax(0, 1fr) var(--step) 50px;
+  .ls {
+    --step: 26px;
+    --field: 30px;
   }
 }
 
-/* ───────── Hasil ───────── */
-
-.lin-cards {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+/* Chip pilihan */
+.ls-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
-
-.lin-card {
-  display: grid;
-  align-content: start;
-  gap: 3px;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-}
-
-.lin-card h4 {
-  color: var(--muted);
+.ls-chip {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.ls-chip:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.ls-chip[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.ls-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-.lin-card p {
+.ls-note {
   margin: 0;
-  color: #183e54;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12.5px;
-  font-weight: 700;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+  color: var(--ink);
+  font-size: 11px;
   line-height: 1.35;
+}
+.ls-note:empty {
+  display: none;
+}
+.ls-muted {
+  margin: 0;
+  color: var(--mute);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+/* Hasil */
+.ls-readouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+.ls-readouts > div {
+  min-width: 0;
+  padding: 4px 8px;
+  background: #fff;
+}
+.ls-readouts > div.wide {
+  grid-column: 1 / -1;
+}
+.ls-readouts dt {
+  color: var(--mute);
+  font-size: 9px;
+  line-height: 1.2;
+}
+.ls-readouts dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
-.lin-card small {
-  margin-left: 8px;
-  color: var(--muted);
-  font-family: "Open Sans", sans-serif;
+.ls-checks {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 600;
+  line-height: 1.35;
+  list-style: none;
+}
+.ls-checks .ls-swatch {
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: baseline;
+}
+.ls-ok {
+  color: var(--ok);
+}
+.ls-bad {
+  color: var(--bad);
 }
 
-.lin-card p.lin-muted,
-.lin-muted {
-  color: var(--muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10.5px;
-  font-weight: 400;
-}
-
-.lin-points {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 12px;
-}
-
-.lin-ok {
-  color: var(--lin-ok);
-}
-
-.lin-bad {
-  color: var(--lin-bad);
-}
-
-.lin-table-wrap {
-  min-width: 0;
+.ls-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  background: #fff;
+  border-radius: 8px;
 }
-
-.lin-table {
+.ls-table {
   width: 100%;
   border-collapse: collapse;
+  font-family: var(--mono);
   font-size: 11px;
 }
-
-.lin-table caption {
+.ls-table caption {
   padding: 5px 8px;
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--mute);
+  font-size: 10px;
   text-align: left;
 }
-
-.lin-table th,
-.lin-table td {
+.ls-table th,
+.ls-table td {
   padding: 4px 8px;
-  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   text-align: left;
-  font-family: "Cambria Math", Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
   white-space: nowrap;
 }
-
-.lin-table thead th {
-  color: var(--muted);
-  font-family: "Open Sans", sans-serif;
-  font-size: 10px;
+.ls-table thead th {
+  color: var(--mute);
+  font-size: 9px;
+  font-weight: 500;
+}
+.ls-table tbody th {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ls-table tbody tr:last-child th,
+.ls-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ls-table tr.is-best {
+  background: #fefce8;
+}
+.ls-table tr.is-best td:last-child {
+  color: #854d0e;
+  font-weight: 600;
 }
 
-.lin-table tr.is-best th,
-.lin-table tr.is-best td {
-  background: #fff6d6;
-  color: #6b4e00;
-}
-
-.lin-guide {
-  border: 1px solid var(--line);
-  background: #fff;
-  font-size: 11px;
-}
-
-.lin-guide summary {
-  padding: 7px 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lin-guide ul {
-  display: grid;
+.ls-reset {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
   gap: 6px;
-  margin: 0;
-  padding: 0 10px 10px 26px;
-  color: var(--muted);
-  line-height: 1.45;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.ls-reset:hover {
+  border-color: var(--ink);
 }
 
-.lin-results {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
+/* ───────── Ponsel lanskap sangat pendek ───────── */
 
-/* Ponsel lanskap sangat pendek */
 @media (orientation: landscape) and (max-height: 360px) {
-  .linear-simulation.is-tabbed {
+  .ls {
     gap: 4px;
     padding: 4px;
   }
-
-  .linear-simulation.is-tabbed .lin-main {
+  .ls-layout {
     gap: 4px;
   }
-
-  .linear-simulation.is-tabbed .lin-side,
-  .linear-simulation.is-tabbed .lin-results {
-    padding: 6px;
+  .ls-panel {
+    gap: 6px;
+    padding: 6px 8px;
   }
-
-  .lin-modes button {
+  .ls-pane {
+    gap: 6px;
+  }
+  .ls-range {
     height: 24px;
   }
-
-  .lin-range {
-    height: 24px;
+  .ls-readouts > div {
+    padding: 2px 7px;
   }
 }
 
-/* ───────── Potret (cadangan): grafik atas, panel bertab di bawah ───────── */
+/* ───────── Desktop & tablet lanskap ─────────
+   Tanpa tab: semua bagian pengatur tampil bertumpuk. */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .ls {
+    --btn: 38px;
+    --step: 28px;
+    --track: 4px;
+    --thumb: 17px;
+    --field: 32px;
+    --inset-t: 12px;
+    --inset-r: 12px;
+    --inset-b: 12px;
+    --inset-l: 12px;
+    grid-template-rows: auto;
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+    font-size: 14px;
+  }
+  .ls-layout {
+    gap: 12px;
+    height: clamp(480px, 72vh, 720px);
+  }
+  .ls-eq {
+    padding: 4px 14px;
+    font-size: clamp(13px, 1.2vw, 16px);
+  }
+  .ls-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .ls-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+  .ls:not(.is-fs) .ls-tabs {
+    display: none;
+  }
+  .ls:not(.is-fs) .ls-pane {
+    display: flex;
+    gap: 10px;
+  }
+  .ls-label {
+    font-size: 10px;
+  }
+  .ls-modes button,
+  .ls-tabs button,
+  .ls-seg button {
+    height: 32px;
+    font-size: 13px;
+  }
+  .ls-modes button {
+    font-size: 12px;
+  }
+  .ls-sym {
+    font-size: 17px;
+  }
+  .ls-num {
+    width: 48px;
+    font-size: 13px;
+  }
+  .ls-op {
+    width: 52px;
+    font-size: 13px;
+  }
+  .ls-slider {
+    grid-template-columns: 18px var(--step) minmax(0, 1fr) var(--step) 54px;
+  }
+  .ls-slider label {
+    font-size: 20px;
+  }
+  .ls-range {
+    height: 32px;
+  }
+  .ls-chip {
+    height: 30px;
+    font-size: 13px;
+  }
+  .ls-note {
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+  .ls-muted {
+    font-size: 12px;
+  }
+  .ls-readouts > div {
+    padding: 8px 12px;
+  }
+  .ls-readouts dt {
+    font-size: 11px;
+  }
+  .ls-readouts dd {
+    font-size: 14px;
+  }
+  .ls-checks {
+    font-size: 12px;
+  }
+  .ls-table {
+    font-size: 13px;
+  }
+  .ls-table caption {
+    font-size: 11px;
+  }
+  .ls-reset {
+    height: 34px;
+    font-size: 13px;
+  }
+}
+
+/* ───────── Potret (cadangan): grafik atas, pengatur bawah ───────── */
 
 @media (orientation: portrait) and (max-width: 899px) {
-  .linear-simulation.is-tabbed:not(.is-fullscreen) {
-    grid-template-rows: none;
+  .ls {
+    grid-template-rows: auto auto;
     height: auto;
     padding: 8px;
   }
-
-  .linear-simulation.is-tabbed:not(.is-fullscreen) .lin-orientation-hint {
+  .ls-hint {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin: 0;
-    padding: 6px 9px;
-    border-left: 3px solid var(--lin-accent);
-    background: #e8f3f1;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
     font-size: 11px;
     line-height: 1.4;
   }
-
-  .lin-orientation-hint svg {
+  .ls-hint svg {
     flex: 0 0 auto;
-    color: var(--lin-accent);
+    color: var(--mute);
   }
-
-  .linear-simulation.is-tabbed:not(.is-fullscreen) .lin-main {
+  .ls-layout {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
-
-  .linear-simulation.is-tabbed:not(.is-fullscreen) .lin-board-panel {
-    height: clamp(250px, 46dvh, 420px);
+  .ls-graph {
+    height: clamp(260px, 52dvh, 420px);
   }
-
-  .linear-simulation.is-tabbed:not(.is-fullscreen) .lin-side,
-  .linear-simulation.is-tabbed:not(.is-fullscreen) .lin-results {
+  .ls-panel {
     overflow: visible;
   }
 }
 
-/* ───────── Desktop & tablet lanskap (tanpa .is-tabbed) ───────── */
+/* ───────── Layar penuh ─────────
+   Grafik memenuhi 100% layar. Toolbar, hasil singkat, legenda, dan panel
+   pengatur mengambang di atasnya. Diletakkan paling akhir agar menimpa
+   aturan potret dan desktop. */
 
-.linear-simulation:not(.is-tabbed) {
-  --track: 3px;
-  --thumb: 14px;
-  --step: 28px;
-  gap: 12px;
-  padding: 14px;
-  font-size: 13px;
-}
+.ls.is-fs {
+  --inset-t: max(8px, env(safe-area-inset-top, 0px));
+  --inset-r: max(8px, env(safe-area-inset-right, 0px));
+  --inset-b: max(8px, env(safe-area-inset-bottom, 0px));
+  --inset-l: max(8px, env(safe-area-inset-left, 0px));
 
-.linear-simulation:not(.is-tabbed) .lin-modes button {
-  height: 38px;
-  font-size: 13px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-main {
-  grid-template-rows: clamp(460px, 72vh, 700px) auto;
-  gap: 12px;
-  height: auto;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-column {
-  display: contents;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-tabs {
-  display: none;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-board-panel {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-side {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-results {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  gap: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-panel {
-  padding: 14px;
-  border: 1px solid var(--line);
-  background: #fff;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-caption {
-  top: 10px;
-  left: 10px;
-  padding: 4px 12px;
-  border-left-width: 4px;
-  font-size: clamp(14px, 1.4vw, 18px);
-}
-
-.linear-simulation:not(.is-tabbed) .lin-view-tools {
-  top: 10px;
-  right: 10px;
-  gap: 4px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-view-tools button {
-  width: 34px;
-  height: 34px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-legend {
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 7px 10px;
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-num {
-  width: 50px;
-  height: 32px;
-  font-size: 15px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-op {
-  height: 32px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-sym,
-.linear-simulation:not(.is-tabbed) .lin-op-static {
-  font-size: 16px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-level {
-  grid-template-columns: 18px var(--step) minmax(0, 1fr) var(--step) 56px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-level .lin-num {
-  height: 30px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-range {
-  height: 30px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-btn {
-  height: 34px;
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-check {
-  min-height: 32px;
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-segmented button {
-  min-height: 36px;
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-reset-button {
-  height: 34px;
-  padding: 0 14px;
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-cards {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 10px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-card {
-  gap: 6px;
-  padding: 10px 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-card p {
-  font-size: 14px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-table {
-  font-size: 12px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-table th,
-.linear-simulation:not(.is-tabbed) .lin-table td {
-  padding: 7px 13px;
-  font-size: 14px;
-}
-
-.linear-simulation:not(.is-tabbed) .lin-guide {
-  font-size: 12px;
-}
-
-/* ───────── Layar penuh (selalu bertab, tanpa gulir halaman) ───────── */
-
-.linear-simulation.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: block;
   width: 100vw;
   height: 100dvh;
-  padding: max(6px, env(safe-area-inset-top, 0px))
-    max(8px, env(safe-area-inset-right, 0px))
-    max(6px, env(safe-area-inset-bottom, 0px))
-    max(8px, env(safe-area-inset-left, 0px));
+  padding: 0;
   overflow: hidden;
+  background: #fff;
 }
 
-.linear-simulation.is-fullscreen .lin-orientation-hint {
+.ls.is-fs .ls-hint {
   display: none;
 }
 
-/* Layar penuh di monitor besar: ukuran sedikit lebih lega */
-@media (min-width: 900px) and (min-height: 541px) {
-  .linear-simulation.is-fullscreen {
-    --track: 3px;
-    --thumb: 14px;
-    --step: 26px;
-    font-size: 13px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-caption {
-    font-size: 16px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-modes button {
-    height: 32px;
-    font-size: 12px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-tabs button {
-    height: 34px;
-    font-size: 12px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-range {
-    height: 32px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-num {
-    height: 30px;
-  }
-
-  .linear-simulation.is-fullscreen .lin-card p {
-    font-size: 13.5px;
-  }
-}
-
-/* Layar penuh + potret: tetap 2 : 1, grafik atas, input bawah */
-@media (orientation: portrait) and (max-width: 899px) {
-  .linear-simulation.is-fullscreen .lin-main {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .linear-simulation.is-fullscreen .lin-board-panel {
-    height: auto;
-  }
-}
-
-/* Layar penuh: grafik 100%, bilah mode dan panel input tersembunyi lalu
-   muncul mengambang di atas grafik lewat tombol toolbar di bawah tombol
-   pusatkan tampilan. Ditaruh setelah aturan potret agar menimpanya. */
-.linear-simulation.is-fullscreen {
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.linear-simulation.is-fullscreen .lin-main {
-  position: relative;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.linear-simulation.is-fullscreen .lin-board-panel {
+.ls.is-fs .ls-layout {
+  display: block;
   height: 100%;
 }
 
-.linear-simulation.is-fullscreen .lin-column.is-floating {
+.ls.is-fs .ls-graph {
+  display: block;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.ls.is-fs .ls-stage {
+  height: 100%;
+}
+
+/* legenda: chip kecil di kiri bawah */
+.ls.is-fs .ls-legend {
   position: absolute;
-  top: 6px;
-  right: 42px;
-  bottom: 6px;
+  bottom: var(--inset-b);
+  left: var(--inset-l);
+  z-index: 2;
+  max-width: calc(100% - var(--inset-l) - var(--inset-r) - var(--btn) - 16px);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* panel pengatur: tersembunyi, muncul mengambang di kiri toolbar */
+.ls.is-fs .ls-panel.is-floating {
+  position: absolute;
+  top: var(--inset-t);
+  right: calc(var(--inset-r) + var(--btn) + 8px);
   z-index: 3;
   display: none;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  width: min(360px, calc(100% - 52px));
-  padding: 6px;
-  border: 1px solid #aebdc2;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 20px rgba(24, 49, 61, 0.22);
+  width: min(340px, 58vw);
+  height: auto;
+  max-height: calc(100% - var(--inset-t) - var(--inset-b));
+  overflow-y: auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
 }
-
-.linear-simulation.is-fullscreen .lin-column.is-floating.is-open {
-  display: grid;
-}
-
-.lin-view-tools .lin-toolbar-toggle[aria-pressed="true"] {
-  border-color: var(--lin-accent);
-  background: #d6ebe8;
-  color: var(--lin-accent);
+.ls.is-fs .ls-panel.is-floating.is-open {
+  display: flex;
 }
 
 @media (min-width: 900px) and (min-height: 541px) {
-  .linear-simulation.is-fullscreen .lin-column.is-floating {
-    top: 10px;
-    right: 54px;
-    bottom: 10px;
-    width: min(400px, calc(100% - 70px));
+  .ls.is-fs .ls-panel.is-floating {
+    width: min(400px, 40vw);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .linear-simulation * {
+  .ls * {
     transition: none !important;
+    animation: none !important;
   }
 }

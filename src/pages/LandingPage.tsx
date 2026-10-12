@@ -510,7 +510,7 @@ export default function Landing() {
           <a href="mailto:pesan.math1729@gmail.com">pesan.math1729@gmail.com</a>
           <a href="https://kelas1729.vercel.app/">Website lama</a>
           <Link to={HREF.latihan}>Latihan soal</Link>
-          <Link to="/toko">Shop</Link>
+          {/* <Link to="/toko">Shop</Link> */}
         </div>
       </footer>
     </div>

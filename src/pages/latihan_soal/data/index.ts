@@ -21,7 +21,7 @@ import bilanganKompleks from "./bilangan_kompleks";
 import barisanDeret from "./barisan_deret";
 import analisisDataPeluang from "./analisis_data_peluang";
 import eksponenLogaritma from "./eksponen_logaritma";
-import prediksiTka2027 from "./prediksiTKA2027SMA";
+// import prediksiTka2027 from "./prediksiTKA2027SMA";
 
 
 export const MATERIALS: Material[] = [
@@ -46,8 +46,7 @@ export const MATERIALS: Material[] = [
   analisisDataPeluang,
   limit,
   turunan,
-  integral,
-  prediksiTka2027
+  integral
 ];
 
 export const getMaterial = (slug: string | undefined) => MATERIALS.find((m) => m.slug === slug);

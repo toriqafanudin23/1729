@@ -566,6 +566,9 @@ export default function Landing() {
                 <Link to={HREF.start} className="lp-btn lp-btn--solid">
                   Mulai menjelajah <span aria-hidden>→</span>
                 </Link>
+                <a href="#footer" className="lp-btn lp-btn--ghost">
+                  Lihat produk lain
+                </a>
               </div>
             </div>
 

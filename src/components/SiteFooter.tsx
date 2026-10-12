@@ -10,7 +10,7 @@ const navigation = [
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer id="footer" className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__identity">
           <Link className="site-footer__brand" to="/" aria-label="1729 beranda">
@@ -25,6 +25,7 @@ export function SiteFooter() {
               {label}
             </NavLink>
           ))}
+          <a href="https://kelas1729.vercel.app/">Website lama</a>
         </nav>
 
         <a className="site-footer__contact" href="mailto:pesan.math1729@gmail.com">

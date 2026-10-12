@@ -3,6 +3,7 @@ import JXG from "jsxgraph";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { useSeo } from "../useSeo";
 import { SimMath } from "../simulation/common/components/SimMath";
 import "../styles/jsxgraph.css";
 import "./LandingPage.css";
@@ -540,6 +541,12 @@ const TOPICS: { name: string; sym: string; href: string }[] = [
  *  Halaman
  * ------------------------------------------------------------------ */
 export default function Landing() {
+  useSeo({
+    title: "1729 | Simulasi Matematika Interaktif dan Latihan Soal",
+    description: "Belajar matematika lewat simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan latihan soal berjenjang sampai HOTS.",
+    path: "/",
+  });
+
   return (
     <div className="lp">
       <SiteHeader />

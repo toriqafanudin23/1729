@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { useSeo } from "../../useSeo";
 import "katex/dist/katex.min.css";
 import "./styles/LatihanPage.css";
 import { SectionBlock } from "./components/SectionBlock";
@@ -15,6 +16,12 @@ import type { Material } from "./types";
  *  Halaman latihan untuk satu materi. Semua isi datang dari `material`.
  * ------------------------------------------------------------------ */
 export default function LatihanPage({ material }: { material: Material }) {
+  useSeo({
+    title: material.title,
+    description: material.description,
+    path: `/latihan/${material.slug}`,
+  });
+
   const stats = useMemo(() => {
     let questions = 0;
     let maxPoints = 0;
@@ -85,19 +92,31 @@ export default function LatihanPage({ material }: { material: Material }) {
   );
 }
 
+function MissingMaterialPage({ path }: { path: string }) {
+  useSeo({
+    title: "Materi latihan tidak ditemukan",
+    description: "Materi latihan yang kamu cari tidak tersedia. Jelajahi paket latihan matematika berjenjang di 1729.",
+    path,
+    noindex: true,
+  });
+
+  return (
+    <div className="lt">
+      <SiteHeader />
+      <main className="lt-wrap lt-hero">
+        <h1>Materi tidak ditemukan</h1>
+        <p className="lt-lead">Periksa kembali alamat latihan yang kamu buka.</p>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
 /** Pembungkus untuk route `/latihan/:slug`. */
 export function LatihanRoute() {
   const { slug } = useParams();
+  const { pathname } = useLocation();
   const material = getMaterial(slug);
-  if (!material)
-    return (
-      <div className="lt">
-        <div className="lt-wrap lt-hero">
-          <h1>Materi tidak ditemukan</h1>
-          <p className="lt-lead">Periksa kembali alamat latihan yang kamu buka.</p>
-        </div>
-        <SiteFooter />
-      </div>
-    );
+  if (!material) return <MissingMaterialPage path={pathname} />;
   return <LatihanPage key={material.slug} material={material} />;
 }

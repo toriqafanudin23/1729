@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { useSeo } from "../../useSeo";
 import "katex/dist/katex.min.css";
 import "./styles/LatihanPage.css"; // gaya renderer LaTeX untuk simbol materi
 import "./styles/LatihanLanding.css";
@@ -313,6 +314,12 @@ function PackCard({ material, no }: { material: Material; no: number }) {
  *  Halaman
  * ------------------------------------------------------------------ */
 export default function LatihanLanding() {
+  useSeo({
+    title: "Latihan Soal Matematika",
+    description: "Paket latihan soal matematika berjenjang dari mudah sampai HOTS, dengan umpan balik seketika dan pembahasan langkah demi langkah.",
+    path: "/latihan",
+  });
+
   const [cat, setCat] = useState("Semua");
 
   const packs = useMemo(() => MATERIALS.map((m) => ({ m, s: summarize(m) })), []);

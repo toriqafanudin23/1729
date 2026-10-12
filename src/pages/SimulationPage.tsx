@@ -1,9 +1,10 @@
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
 import NotFoundPage from "./NotFoundPage";
+import { fitSeoDescription, useSeo, breadcrumb } from "../useSeo";
 import "./pages.css";
 
 /**
@@ -15,10 +16,46 @@ import "./pages.css";
  */
 export default function SimulationPage({ slug }: { slug?: string }) {
   const sim = findSimulation(slug);
+  const description = fitSeoDescription(
+    sim?.summary ?? "Simulasi yang kamu cari tidak ada. Jelajahi daftar simulasi matematika interaktif di 1729.",
+  );
 
-  useEffect(() => {
-    if (sim) document.title = `${sim.title} · 1729`;
-  }, [sim]);
+  // Hook harus dipanggil sebelum return awal. Slug tak dikenal => noindex.
+  useSeo(
+    sim
+      ? {
+          title: `${sim.title}: Simulasi Interaktif`,
+          description,
+          path: simulationPath(sim.slug),
+          jsonLd: [
+            {
+              "@context": "https://schema.org",
+              "@type": "LearningResource",
+              name: `${sim.title}: Simulasi Interaktif`,
+              description,
+              url: `https://1729.blog${simulationPath(sim.slug)}`,
+              inLanguage: "id-ID",
+              learningResourceType: "Simulasi interaktif",
+              interactivityType: "active",
+              isAccessibleForFree: true,
+              teaches: sim.concepts,
+              about: sim.category,
+              isPartOf: { "@id": "https://1729.blog/#website" },
+            },
+            breadcrumb([
+              { name: "Beranda", path: "/" },
+              { name: "Simulasi", path: CATALOG_PATH },
+              { name: sim.title, path: simulationPath(sim.slug) },
+            ]),
+          ],
+        }
+      : {
+          title: "Simulasi tidak ditemukan",
+          description,
+          path: `${CATALOG_PATH}/${slug ?? ""}`,
+          noindex: true,
+        },
+  );
 
   if (!sim) {
     return <NotFoundPage />;

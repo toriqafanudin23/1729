@@ -1,13 +1,16 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { useSeo } from "../useSeo";
 import "./pages.css";
 
 export default function NotFoundPage() {
-  useEffect(() => {
-    document.title = "404 · 1729";
-  }, []);
+  useSeo({
+    title: "Halaman tidak ditemukan",
+    description: "Halaman yang kamu cari tidak ada. Jelajahi simulasi matematika interaktif dan latihan soal di 1729.",
+    path: window.location.pathname,
+    noindex: true,
+  });
 
   return (
     <div className="sp">

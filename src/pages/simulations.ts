@@ -32,7 +32,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Fungsi Kuadrat",
     category: "Aljabar",
     summary:
-      "Ubah parameter parabola dan lihat pergeseran puncak, lebar kurva, serta titik potong dengan sumbu koordinat.",
+      "Atur koefisien parabola dan amati perubahan titik puncak, sumbu simetri, akar, serta titik potongnya dengan sumbu koordinat secara langsung.",
     concepts: ["Parabola", "Diskriminan", "Puncak", "Persamaan kuadrat"],
     glyph: "ax²",
     component: lazy(() =>
@@ -44,7 +44,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Transformasi Geometri",
     category: "Geometri",
     summary:
-      "Lihat bagamana translasi, rotasi, refleksi, dan dilatasi mengubah bentuk tanpa menghilangkan struktur geometri.",
+      "Lihat bagaimana translasi, rotasi, refleksi, dan dilatasi mengubah posisi serta ukuran bangun pada bidang koordinat tanpa mengubah bentuk dasarnya.",
     concepts: ["Translasi", "Rotasi", "Refleksi", "Dilatasi"],
     glyph: "T",
     component: lazy(() =>
@@ -56,7 +56,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Trigonometri",
     category: "Trigonometri",
     summary:
-      "Ikuti putaran titik pada lingkaran satuan dan lihat bagaimana sinus, kosinus, dan tangen terbentuk dari sudut.",
+      "Putar titik pada lingkaran satuan untuk mengamati bagaimana nilai sinus, kosinus, dan tangen berubah mengikuti sudut dalam satu putaran penuh.",
     concepts: ["Sudut", "Sinus", "Kosinus", "Lingkaran satuan"],
     glyph: "sin",
     component: lazy(() =>
@@ -78,7 +78,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Sistem Linear",
     category: "Aljabar",
     summary:
-      "Selesaikan persamaan linear dengan melihat garis-garis yang berpotongan dan titik solusi yang berubah di waktu nyata.",
+      "Ubah koefisien persamaan dan amati garis-garis bergerak hingga berpotongan; titik potong menunjukkan solusi sistem langsung pada bidang koordinat.",
     concepts: ["Persamaan linear", "Interseksi", "Sistem", "Solusi"],
     glyph: "y=mx+c",
     component: lazy(() =>
@@ -90,7 +90,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Irisan Kerucut",
     category: "Geometri",
     summary:
-      "Jelajahi elips, parabola, dan hiperbola melalui fokus, sumbu, serta jumlah atau selisih jarak yang tetap.",
+      "Jelajahi elips, parabola, dan hiperbola dengan mengubah fokus serta parameter, kemudian amati hubungan jarak dan bentuk kurva yang terbentuk.",
     concepts: ["Elips", "Parabola", "Hiperbola", "Fokus"],
     glyph: "e",
     component: lazy(() =>
@@ -102,7 +102,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Sektor Lingkaran",
     category: "Geometri",
     summary:
-      "Jelajahi hubungan antara sudut pusat, panjang busur, dan luas juring pada lingkaran yang berubah ukuran.",
+      "Ubah jari-jari dan sudut pusat lingkaran untuk melihat kaitannya dengan panjang busur, luas juring, dan perubahan bentuk sektor secara langsung.",
     concepts: ["Juring", "Busur", "Sudut pusat", "Lingkaran"],
     glyph: "◔",
     component: lazy(() =>
@@ -114,7 +114,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Titik Istimewa Segitiga",
     category: "Geometri",
     summary:
-      "Jelajahi titik berat, titik bagi, titik sumbu, dan titik tinggi beserta garis Euler dengan mengubah bentuk segitiga.",
+      "Ubah bentuk segitiga dan amati posisi titik berat, titik bagi, titik sumbu, serta titik tinggi; lihat pula hubungan pusat-pusat itu dengan garis Euler.",
     concepts: ["Titik berat", "Titik bagi", "Titik sumbu", "Titik tinggi", "Garis Euler"],
     glyph: "G · I · O · H",
     component: lazy(() =>
@@ -150,7 +150,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Transformasi Fungsi",
     category: "Aljabar",
     summary:
-      "Geser, regangkan, dan refleksikan grafik fungsi untuk memahami asal-usul bentuk kurva setelah transformasi.",
+      "Geser, regangkan, atau refleksikan grafik fungsi untuk memahami perubahan posisi, arah, dan bentuk kurva pada bidang koordinat secara langsung.",
     concepts: ["Translasi", "Peregangan", "Refleksi", "Grafik fungsi"],
     glyph: "y = f(x)",
     component: lazy(() =>
@@ -162,7 +162,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Plotter Grafik",
     category: "Fungsi",
     summary:
-      "Masukkan ekspresi fungsi dan amati bagaimana bentuk grafik berubah saat parameter maupun ekspresi dimodifikasi.",
+      "Masukkan suatu fungsi dan amati grafiknya; ubah parameter untuk membandingkan bentuk kurva, titik potong, serta perilaku fungsi di bidang koordinat.",
     concepts: ["Grafik fungsi", "Ekspresi", "Plot", "Analisis visual"],
     glyph: "f(x)",
     component: lazy(() =>
@@ -184,7 +184,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     title: "Integral",
     category: "Kalkulus",
     summary:
-      "Lihat bagaimana jumlah luas persegi panjang mendekati nilai integral ketika lebar partisinya makin kecil.",
+      "Amati jumlah luas persegi panjang ketika partisi diperhalus dan lihat bagaimana pendekatan tersebut semakin dekat dengan nilai integral di bawah kurva.",
     concepts: ["Integral", "Luas daerah", "Riemann", "Aproksimasi"],
     glyph: "∫",
     component: lazy(() => import("../simulation/simulations/IntegralSimulation").then((m) => ({ default: m.IntegralSimulation }))),

@@ -4,61 +4,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f172a" />
-    <meta name="robots" content="index, follow" />
-    <meta name="author" content="1729" />
+    <meta name="color-scheme" content="light" />
     <meta name="format-detection" content="telephone=no" />
+
+    <title>1729 | Simulasi Matematika Interaktif dan Latihan Soal</title>
     <meta
       name="description"
-      content="1729 adalah situs simulasi matematika interaktif untuk mempelajari fungsi, trigonometri, turunan, integral, vektor, dan konsep matematika lainnya dengan visual yang mudah dipahami."
+      content="Belajar matematika lewat simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan latihan soal berjenjang sampai HOTS."
     />
     <meta
-      name="keywords"
-      content="simulasi matematika, belajar matematika interaktif, fungsi kuadrat, trigonometri, turunan, integral, vektor, geometri, edukasi matematika"
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
+    <meta name="author" content="Toriq Afanudin" />
     <link rel="canonical" href="https://1729.blog/" />
+
+    <!-- Ikon -->
+    <link rel="icon" type="image/svg+xml" href="/1729.svg" />
+
+    <!-- Open Graph (WhatsApp, Facebook, LinkedIn, Telegram) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="1729" />
     <meta property="og:locale" content="id_ID" />
-    <meta property="og:title" content="1729 | Simulasi Matematika Interaktif" />
+    <meta property="og:url" content="https://1729.blog/" />
+    <meta property="og:title" content="1729 | Simulasi Matematika Interaktif dan Latihan Soal" />
     <meta
       property="og:description"
-      content="Belajar matematika melalui simulasi interaktif: fungsi, trigonometri, turunan, integral, vektor, dan banyak konsep lainnya."
+      content="Geser satu titik, lihat seluruh konsep bergerak. Simulasi interaktif fungsi, trigonometri, turunan, integral, vektor, dan latihan soal sampai HOTS."
     />
-    <meta property="og:image" content="https://1729.blog/1729.svg" />
-    <meta property="og:url" content="https://1729.blog/" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="1729 | Simulasi Matematika Interaktif" />
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="1729 | Simulasi Matematika Interaktif dan Latihan Soal" />
     <meta
       name="twitter:description"
-      content="Belajar matematika dengan simulasi visual yang mudah dipahami."
+      content="Belajar matematika melalui simulasi interaktif fungsi, trigonometri, turunan, integral, vektor, irisan kerucut, dan latihan soal berjenjang sampai HOTS."
     />
-    <meta name="twitter:image" content="https://1729.blog/favicon.svg" />
-    <link rel="icon" type="image/svg+xml" href="/1729.svg" />
-    <title>1729 | Simulasi Matematika Interaktif</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Data terstruktur -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "EducationalOrganization",
-        "name": "1729",
-        "description": "Platform simulasi matematika interaktif untuk mempelajari konsep dan visualisasi matematika.",
-        "url": "https://1729.blog/",
-        "sameAs": [],
-        "areaServed": "ID",
-        "keywords": [
-          "1729",
-          "latihan soal TKA",
-          "simulasi matematika",
-          "belajar matematika",
-          "latihan soal matematika",
-          "bahan ajar",
-          "makna angka 1729",
-          "Toriq Afanudin"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://1729.blog/#website",
+            "url": "https://1729.blog/",
+            "name": "1729",
+            "alternateName": "1729 Simulasi Matematika",
+            "description": "Simulasi matematika interaktif dan latihan soal untuk memahami konsep dengan visual.",
+            "inLanguage": "id-ID",
+            "publisher": { "@id": "https://1729.blog/#organization" }
+          },
+          {
+            "@type": "EducationalOrganization",
+            "@id": "https://1729.blog/#organization",
+            "name": "1729",
+            "url": "https://1729.blog/",
+            "logo": "https://1729.blog/1729.svg",
+            "areaServed": "ID",
+            "founder": { "@id": "https://1729.blog/#founder" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://1729.blog/#founder",
+            "name": "Toriq Afanudin",
+            "url": "https://1729.blog/"
+          }
         ]
       }
     </script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Konten cadangan untuk crawler/pratinjau yang tidak menjalankan JavaScript -->
+    <noscript>
+      <h1>1729: Simulasi Matematika Interaktif</h1>
+      <p>
+        Pahami matematika dengan melihatnya. Simulasi interaktif untuk fungsi kuadrat, trigonometri, turunan, integral,
+        vektor, irisan kerucut, transformasi geometri, dan topik lainnya. Aktifkan JavaScript untuk menjalankan simulasi.
+      </p>
+      <nav>
+        <a href="/simulasi">Semua simulasi</a>
+        <a href="/latihan">Latihan soal</a>
+        <a href="/simulasi/fungsi-kuadrat">Fungsi kuadrat</a>
+        <a href="/simulasi/trigonometri">Trigonometri</a>
+        <a href="/simulasi/turunan">Turunan</a>
+        <a href="/simulasi/integral">Integral</a>
+        <a href="/simulasi/vektor">Vektor</a>
+        <a href="/simulasi/irisan-kerucut">Irisan kerucut</a>
+      </nav>
+    </noscript>
+
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

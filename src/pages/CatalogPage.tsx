@@ -1,14 +1,16 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { useSeo } from "../useSeo";
 import { SIMULATIONS, simulationPath } from "./simulations";
 import "./pages.css";
 
 export default function CatalogPage() {
-  useEffect(() => {
-    document.title = "Simulasi · 1729";
-  }, []);
+  useSeo({
+    title: "Simulasi Matematika Interaktif",
+    description: `${SIMULATIONS.length} simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan lainnya.`,
+    path: "/simulasi",
+  });
 
   return (
     <div className="sp">

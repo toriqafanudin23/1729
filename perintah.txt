@@ -1,0 +1,81 @@
+
+-----------------------------------
+
+[ ] 4. Simpan generate-sitemap.mjs di scripts/generate-sitemap.mjs, lalu ubah
+       package.json:
+         "build": "node scripts/generate-sitemap.mjs && tsc -b && vite build"
+       Periksa path LATIHAN_DATA_DIR di skrip (itu tebakan). Setelah build,
+       cek log jumlah URL dan isi public/sitemap.xml.
+
+B. ASET YANG HARUS ANDA BUAT
+----------------------------
+[ kecuali] 5. public/og-image.png, ukuran 1200x630 (PNG/JPG, bukan SVG).
+       Tanpa ini pratinjau tautan di WhatsApp/Telegram/Facebook tidak bergambar.
+
+C. PASANG useSeo DI SETIAP HALAMAN
+----------------------------------
+[ ] 6. App.tsx: hapus logika canonical dan og:url dari ScrollToTop
+       (sekarang ditangani useSeo). Biarkan scrollTo saja.
+[ ] 7. CatalogPage.tsx: hapus useEffect document.title, ganti dengan
+         useSeo({
+           title: "Simulasi Matematika Interaktif",
+           description: `${SIMULATIONS.length} simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan lainnya.`,
+           path: "/simulasi",
+         });
+[ ] 8. LandingPage.tsx (beranda):
+         useSeo({
+           title: "1729 | Simulasi Matematika Interaktif dan Latihan Soal",
+           description: "Belajar matematika lewat simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan latihan soal berjenjang sampai HOTS.",
+           path: "/",
+         });
+       (path "/" tidak diberi akhiran " | 1729".)
+[ ] 9. LatihanLanding.tsx:
+         useSeo({
+           title: "Latihan Soal Matematika",
+           description: "Paket latihan soal matematika berjenjang dari mudah sampai HOTS, dengan umpan balik seketika dan pembahasan langkah demi langkah.",
+           path: "/latihan",
+         });
+[ ] 10. LatihanPage.tsx (komponen LatihanPage):
+         useSeo({
+           title: material.title,
+           description: material.description,
+           path: `/latihan/${material.slug}`,
+         });
+       Di LatihanRoute (materi tidak ditemukan), tampilkan halaman dengan
+       noindex: true. Karena hook tidak boleh dipanggil bersyarat, buat
+       komponen kecil khusus untuk tampilan "Materi tidak ditemukan"
+       yang memanggil useSeo({ ..., noindex: true }).
+[ ] 11. NotFoundPage.tsx:
+         useSeo({
+           title: "Halaman tidak ditemukan",
+           description: "Halaman yang kamu cari tidak ada. Jelajahi simulasi matematika interaktif dan latihan soal di 1729.",
+           path: window.location.pathname,
+           noindex: true,
+         });
+[ ] 12. ShopLanding.tsx: pasang useSeo dengan judul, deskripsi, dan
+       path "/toko" yang sesuai isi halaman.
+
+D. PERBAIKI KONTEN
+------------------
+[ ] 13. simulations.ts, simulasi "transformasi-geometri": typo "bagamana"
+        menjadi "bagaimana" (summary dipakai sebagai meta description).
+[ ] 14. Pastikan setiap halaman punya deskripsi unik, sekitar 120-160 karakter.
+
+E. PRERENDER (PERBAIKAN TERBESAR, BELUM DIKERJAKAN)
+---------------------------------------------------
+Masalah: situs adalah SPA murni. Crawler tanpa JavaScript (WhatsApp, Telegram,
+Facebook, dll.) hanya melihat meta dari index.html, sehingga tautan
+/simulasi/turunan tampil dengan judul dan deskripsi beranda.
+[ ] 15. Kirim ke saya: src/main.tsx dan vercel.json (jika ada). Dengan itu saya
+        pilihkan cara prerender yang aman. Catatan: LandingPage.tsx mengimpor
+        jsxgraph di level atas, yang bisa bermasalah di SSR.
+
+F. SETELAH DEPLOY
+-----------------
+[ ] 16. Daftarkan 1729.blog di Google Search Console, kirim
+        https://1729.blog/sitemap.xml, dan minta indeks untuk beranda.
+[ ] 17. Uji hasil dengan: Rich Results Test (JSON-LD), pratinjau tautan di
+        WhatsApp, dan "Inspeksi URL" di Search Console untuk satu halaman
+        simulasi.
+[ ] 18. Setiap menambah simulasi baru: tambahkan di simulations.ts, lalu
+        build ulang (sitemap otomatis ikut diperbarui).

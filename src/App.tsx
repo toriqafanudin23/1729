@@ -14,12 +14,6 @@ function ScrollToTop() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const canonicalUrl = new URL(pathname, "https://1729.blog").toString();
-    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    const openGraphUrl = document.querySelector<HTMLMetaElement>('meta[property="og:url"]');
-
-    if (canonical) canonical.href = canonicalUrl;
-    if (openGraphUrl) openGraphUrl.content = canonicalUrl;
   }, [pathname]);
 
   return null;

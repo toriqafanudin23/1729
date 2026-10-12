@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { useSeo } from "../../useSeo";
 import "./ShopLanding.css";
 
 /* ------------------------------------------------------------------ *
@@ -164,6 +165,12 @@ function ProductCard({ p, inCart, onToggle }: { p: Product; inCart: boolean; onT
  *  Halaman
  * ------------------------------------------------------------------ */
 export default function ShopLanding() {
+  useSeo({
+    title: "Toko Bahan Ajar Matematika",
+    description: "Pilih modul ajar, bank soal, slide, dan LKPD matematika untuk SMP atau SMA. Bahan ajar digital dapat diedit dan disesuaikan dengan kebutuhan kelas.",
+    path: "/toko",
+  });
+
   const [jenjang, setJenjang] = useState<"Semua" | Jenjang>("Semua");
   const [tipe, setTipe] = useState<"Semua" | Tipe>("Semua");
   const [query, setQuery] = useState("");

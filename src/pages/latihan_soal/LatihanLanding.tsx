@@ -6,7 +6,6 @@ import "./styles/LatihanLanding.css";
 import { LEVEL_LABEL } from "./components/SectionBlock";
 import { Rich } from "./components/Rich";
 import { MATERIALS } from "./data";
-import { UPCOMING } from "./data/upcoming";
 import { summarize } from "./lib/catalog";
 import type { Level, Material } from "./types";
 
@@ -308,23 +307,6 @@ function PackCard({ material, no }: { material: Material; no: number }) {
   );
 }
 
-function SoonCard({ topic, category, symbol }: { topic: string; category: string; symbol: string }) {
-  return (
-    <article className="lk-card lk-card--soon" aria-label={`${topic}, segera hadir`}>
-      <div className="lk-card__top">
-        <span className="lk-card__no">··</span>
-        <span className="lk-card__cat">{category}</span>
-        <span className="lk-card__sym" aria-hidden>
-          <Rich as="span" html={tex(symbol)} />
-        </span>
-      </div>
-      <h3>{topic}</h3>
-      <p className="lk-card__desc">Paket latihan sedang disiapkan.</p>
-      <span className="lk-soon">Segera hadir</span>
-    </article>
-  );
-}
-
 /* ------------------------------------------------------------------ *
  *  Halaman
  * ------------------------------------------------------------------ */
@@ -345,12 +327,10 @@ export default function LatihanLanding() {
   const categories = useMemo(() => {
     const set = new Set<string>();
     MATERIALS.forEach((m) => set.add(m.category ?? "Matematika"));
-    UPCOMING.forEach((u) => set.add(u.category));
     return ["Semua", ...Array.from(set)];
   }, []);
 
   const shown = MATERIALS.map((m, i) => ({ m, no: i + 1 })).filter(({ m }) => cat === "Semua" || (m.category ?? "Matematika") === cat);
-  const soon = UPCOMING.filter((u) => cat === "Semua" || u.category === cat);
 
   return (
     <div className="lk">
@@ -359,17 +339,6 @@ export default function LatihanLanding() {
           <Link to={HREF.home} className="lk-brand" aria-label="1729 beranda">
             1729
           </Link>
-          <nav className="lk-nav__links" aria-label="Utama">
-            <a href="#fitur" className="lk-hide-sm">
-              Fitur
-            </a>
-            <a href="#cara" className="lk-hide-sm">
-              Cara belajar
-            </a>
-            <a href="#katalog" className="lk-btn lk-btn--solid lk-btn--sm">
-              Pilih latihan
-            </a>
-          </nav>
         </div>
       </header>
 
@@ -462,9 +431,6 @@ export default function LatihanLanding() {
             <div className="lk-grid">
               {shown.map(({ m, no }) => (
                 <PackCard material={m} no={no} key={m.slug} />
-              ))}
-              {soon.map((u) => (
-                <SoonCard key={u.topic} {...u} />
               ))}
             </div>
           </div>

@@ -79,18 +79,12 @@ html {
 /* ---------------------------------------------------------------- Nav --- */
 
 .lk-nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(255, 255, 255, 0.82);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
-  backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 1;
 }
 .lk-nav__in {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: var(--nav-h);
 }
 .lk-brand {
@@ -100,17 +94,6 @@ html {
   letter-spacing: 0.03em;
   color: var(--ink);
 }
-.lk-nav__links {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  font-size: 14px;
-  color: var(--mute);
-}
-.lk-nav__links a:not(.lk-btn):hover {
-  color: var(--ink);
-}
-
 @media (max-width: 720px) {
   .lk-hide-sm {
     display: none;

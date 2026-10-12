@@ -283,7 +283,7 @@ html {
 
 .lt-score {
   position: sticky;
-  top: var(--nav-h);
+  top: 0;
   z-index: 15;
   background: rgba(255, 255, 255, 0.92);
   -webkit-backdrop-filter: saturate(1.4) blur(10px);
@@ -359,7 +359,7 @@ html {
   max-width: var(--read);
   margin: 0 auto;
   padding-top: clamp(40px, 6vw, 72px);
-  scroll-margin-top: calc(var(--nav-h) + var(--score-h));
+  scroll-margin-top: var(--score-h);
 }
 
 .lt-section__head {

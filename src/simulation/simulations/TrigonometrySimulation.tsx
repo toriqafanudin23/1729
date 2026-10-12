@@ -1,5 +1,5 @@
 import JXG from "jsxgraph";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AxisNumbersIcon,
   GridIcon,
@@ -734,7 +734,6 @@ export function TrigonometrySimulation() {
               name="sudut theta"
               label={<SimMath tex={String.raw`\theta=${angle}^{\circ}`} />}
               hint="derajat"
-              accent={colors.theta}
               value={angle}
               min={0}
               max={359}
@@ -749,7 +748,6 @@ export function TrigonometrySimulation() {
               <input
                 id="trigonometry-angle-input"
                 className="sim-input"
-                style={{ "--sim-accent": colors.theta } as CSSProperties}
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"

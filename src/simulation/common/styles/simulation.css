@@ -12,9 +12,9 @@
 }
 
 .sim {
-  --sim-primary: #6557d2;
-  --sim-primary-dark: #4b3fb5;
-  --sim-primary-soft: #ebe9fb;
+  --sim-primary: #232329;
+  --sim-primary-dark: #232329;
+  --sim-primary-soft: #ececf0;
   --sim-text: #232329;
   --sim-muted: #6c6c78;
   --sim-border: #d8d8de;
@@ -28,7 +28,7 @@
   --sim-track: 3px;
   --sim-thumb: 14px;
   --sim-step: 22px;
-  --sim-radius: 6px;
+  --sim-radius: 2px;
   --sim-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
 
   position: relative;
@@ -55,7 +55,7 @@
 
 .sim button:focus-visible,
 .sim input:focus-visible {
-  outline: 2px solid var(--sim-primary);
+  outline: 2px solid var(--sim-text);
   outline-offset: 2px;
 }
 
@@ -78,7 +78,7 @@
   gap: 2px;
   height: var(--sim-bar-h);
   padding: 0 4px;
-  overflow-x: auto;
+  overflow: hidden;
   border-bottom: 1px solid var(--sim-border);
   background: var(--sim-surface);
   scrollbar-width: none;
@@ -214,13 +214,9 @@
 .sim-row__body {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
-}
-
-.sim-row__body::-webkit-scrollbar {
-  display: none;
+  padding: 2px 0;
+  overflow: hidden;
+  white-space: normal;
 }
 
 /* Titik warna: terisi = tampil, kosong = disembunyikan */
@@ -241,7 +237,7 @@
   width: 14px;
   height: 14px;
   border: 2px solid var(--sim-accent);
-  border-radius: 50%;
+  border-radius: var(--sim-radius);
   background: var(--sim-accent);
 }
 
@@ -290,7 +286,7 @@
   height: var(--sim-step);
   padding: 0;
   border: 1px solid #b9b9c2;
-  border-radius: 50%;
+  border-radius: var(--sim-radius);
   background: #fff;
   cursor: pointer;
   user-select: none;
@@ -327,7 +323,7 @@
 
 .sim-range::-webkit-slider-runnable-track {
   height: var(--sim-track);
-  border-radius: 999px;
+  border-radius: var(--sim-radius);
   background: linear-gradient(
     to right,
     var(--sim-accent) 0,
@@ -344,20 +340,20 @@
   height: var(--sim-thumb);
   margin-top: calc((var(--sim-track) - var(--sim-thumb)) / 2);
   border: 2px solid #fff;
-  border-radius: 50%;
+  border-radius: var(--sim-radius);
   background: var(--sim-accent);
   box-shadow: 0 0 0 1px rgba(35, 35, 41, 0.3);
 }
 
 .sim-range::-moz-range-track {
   height: var(--sim-track);
-  border-radius: 999px;
+  border-radius: var(--sim-radius);
   background: #d3d3da;
 }
 
 .sim-range::-moz-range-progress {
   height: var(--sim-track);
-  border-radius: 999px;
+  border-radius: var(--sim-radius);
   background: var(--sim-accent);
 }
 
@@ -365,7 +361,7 @@
   width: var(--sim-thumb);
   height: var(--sim-thumb);
   border: 2px solid #fff;
-  border-radius: 50%;
+  border-radius: var(--sim-radius);
   background: var(--sim-accent);
   box-shadow: 0 0 0 1px rgba(35, 35, 41, 0.3);
 }
@@ -423,16 +419,16 @@
   max-width: calc(100% - 60px);
   margin: 0;
   padding: 3px 9px;
-  overflow-x: auto;
+  overflow: hidden;
   border-radius: var(--sim-radius);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--sim-shadow);
   font-size: 14px;
   pointer-events: none;
-  white-space: nowrap;
+  white-space: normal;
 }
 
-/* Tombol bulat melayang di pojok kanan bawah grafik */
+/* Tombol kotak melayang di pojok kanan bawah grafik */
 .sim-fabs {
   position: absolute;
   right: 8px;
@@ -450,7 +446,7 @@
   height: var(--sim-fab);
   padding: 0;
   border: 1px solid var(--sim-border);
-  border-radius: 50%;
+  border-radius: var(--sim-radius);
   background: #fff;
   box-shadow: var(--sim-shadow);
   cursor: pointer;
@@ -555,7 +551,6 @@
     --sim-thumb: 16px;
     --sim-step: 28px;
     height: auto;
-    border-radius: 8px;
     font-size: 13px;
   }
 
@@ -844,23 +839,25 @@
   flex: 1; min-width: 0; height: 28px; padding: 0 8px;
   font: 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color: inherit; background: #fff;
-  border: 1px solid rgba(0,0,0,.2); border-left: 4px solid var(--sim-accent, #183e54);
-  border-radius: 6px;
+  border: 1px solid var(--sim-border);
+  border-radius: var(--sim-radius);
 }
-.sim-input:focus { outline: 2px solid var(--sim-accent, #183e54); outline-offset: -1px; }
-.sim-input[aria-invalid="true"] { border-color: #b3261e; border-left-color: #b3261e; }
+.sim .sim-input:hover { border-color: #9a9aa5; }
+.sim .sim-input:focus,
+.sim .sim-input:focus-visible { outline: none; border-color: var(--sim-text); }
+.sim .sim-input[aria-invalid="true"] { border-color: #b3261e; }
 .sim-status { margin: 2px 0 4px; font-size: 11px; line-height: 1.35; color: #5b6770; white-space: normal; }
 .sim-status.is-error { color: #b3261e; }
 .sim-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .sim-chip {
   padding: 3px 8px; font-size: 11px; color: inherit; background: #fff;
-  border: 1px solid rgba(0,0,0,.2); border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(0,0,0,.2); border-radius: var(--sim-radius); cursor: pointer;
 }
-.sim-chip[aria-pressed="true"] { background: rgba(24,62,84,.12); border-color: var(--sim-accent, #183e54); }
+.sim-chip[aria-pressed="true"] { background: var(--sim-primary-soft); border-color: var(--sim-text); }
 .sim-icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; padding: 0; color: inherit; background: transparent;
-  border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--sim-radius); cursor: pointer;
 }
 .sim-icon-btn:hover { background: rgba(0,0,0,.06); }
 .sim-subhead { margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .02em; color: #5b6770; }
@@ -871,22 +868,22 @@
 .sim-result__head { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
 .sim-result__note { font-size: 11px; color: #5b6770; }
 .sim-points { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 12px; }
-.sim-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.sim-swatch { display: inline-block; width: 10px; height: 10px; border-radius: var(--sim-radius); flex: none; }
 .sim-empty {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; text-align: center; font-size: 13px; color: #5b6770; pointer-events: none;
 }
 .sim-trace {
   position: absolute; left: 8px; bottom: 8px; padding: 4px 8px; font-size: 11px;
-  background: rgba(255,255,255,.92); border: 1px solid rgba(0,0,0,.15); border-radius: 6px; pointer-events: none;
+  background: rgba(255,255,255,.92); border: 1px solid rgba(0,0,0,.15); border-radius: var(--sim-radius); pointer-events: none;
 }
 .sim-toast {
   position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
   padding: 6px 12px; font-size: 12px; color: #fff; background: rgba(20,28,34,.92);
-  border-radius: 999px; pointer-events: none; white-space: nowrap;
+  border-radius: var(--sim-radius); pointer-events: none; white-space: nowrap;
 }
 .sim-guide summary { cursor: pointer; font-size: 12px; font-weight: 600; }
-.sim-guide code { padding: 0 3px; font-size: 11px; background: rgba(0,0,0,.06); border-radius: 3px; }
+.sim-guide code { padding: 0 3px; font-size: 11px; background: rgba(0,0,0,.06); border-radius: var(--sim-radius); }
 .sim-table--left { text-align: left; }
 .sim-table--left th, .sim-table--left td { text-align: left; }
 .sim-text-btn--icon { display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -904,7 +901,7 @@
 .sim-overlay__sub { margin-left: 10px; color: var(--sim-muted); font-size: 0.6em; font-weight: 600; }
 .sim-callout {
   margin: 6px 0 0; padding: 6px 8px; font-size: 12px; line-height: 1.55; white-space: normal;
-  border-left: 3px solid var(--sim-accent); border-radius: 0 var(--sim-radius) var(--sim-radius) 0;
+  border: 1px solid var(--sim-border); border-radius: 0;
   background: var(--sim-surface-alt);
 }
 .sim-wrap { display: block; padding: 3px 0; white-space: normal; line-height: 1.4; }
@@ -955,4 +952,25 @@
     padding: 0 2px;
     font-size: 11px;
   }
+}
+
+/* Math inline: sembunyikan scrollbar/panah saja. JANGAN ubah overflow di dalam
+   .katex (MathML tersembunyi dan ekor akar bergantung pada overflow: hidden). */
+.sim-overlay,
+.sim-overlay *,
+.sim-row__body,
+.sim-row__body *,
+.sim-notes *,
+.sim-callout *,
+.sim-slider__label * {
+  scrollbar-width: none;
+}
+.sim-overlay::-webkit-scrollbar,
+.sim-overlay *::-webkit-scrollbar,
+.sim-row__body::-webkit-scrollbar,
+.sim-row__body *::-webkit-scrollbar,
+.sim-notes *::-webkit-scrollbar,
+.sim-callout *::-webkit-scrollbar,
+.sim-slider__label *::-webkit-scrollbar {
+  display: none;
 }

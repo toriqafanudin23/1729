@@ -238,42 +238,28 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
-/* contoh soal */
+/* animasi deret Fourier di hero */
 .lk-hero__demo {
   width: 100%;
   max-width: 480px;
   justify-self: end;
+  margin: 0;
 }
-.lk-demo__cap {
-  margin-bottom: 10px;
+.lk-wave {
+  position: relative;
+  aspect-ratio: 1.3;
+  min-height: 260px;
+  max-height: 380px;
+  /* tepi memudar ke latar, tanpa kotak atau garis pinggir */
+  -webkit-mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 55%, transparent 100%);
 }
-/* `.lt` dirancang sebagai akar halaman penuh; di sini hanya pembungkus kartu */
-.lk .lk-demo.lt {
-  min-height: 0;
-  background: transparent;
-}
-.lk-demo .lt-q {
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 24px 48px -28px rgba(15, 23, 42, 0.28);
-}
-.lk-demo__again {
+.lk-wave__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
-  margin: 12px 0 0 auto;
-  padding: 0 0 2px;
-  border: 0;
-  border-bottom: 1px solid var(--line-strong);
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-  cursor: pointer;
-}
-.lk-demo__again:hover:not(:disabled) {
-  border-color: var(--ink);
-}
-.lk-demo__again:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 @media (max-width: 900px) {

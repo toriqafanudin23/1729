@@ -84,41 +84,6 @@ const dot = (board: JXG.Board, x: number | (() => number), y: number | (() => nu
   });
 
 /* ------------------------------------------------------------------ *
- *  Papan 1 — Turunan: garis singgung y = x² yang berjalan sendiri
- * ------------------------------------------------------------------ */
-const BBOX_TANGENT: BBox = [-4, 9, 4, -1.5];
-
-const setupTangent: Setup = (board, out) => {
-  let a = 0;
-  const f = (x: number) => x * x;
-  const dx = 0.5; // lebar segitiga kemiringan
-
-  backdrop(board);
-  mk(board, "functiongraph", [f, -4, 4], { ...still, strokeColor: C.ink, strokeWidth: 2.75 });
-
-  // garis singgung di x = a, gradien 2a
-  mk(board, "line", [[() => a, () => f(a)], [() => a + 1, () => f(a) + 2 * a]], {
-    ...still,
-    strokeColor: C.mid,
-    strokeWidth: 1.75,
-    straightFirst: true,
-    straightLast: true,
-  });
-
-  // segitiga kemiringan: Δx = 0.5, Δy = a  (karena gradien = 2a)
-  const dashed = { ...still, strokeColor: C.soft, strokeWidth: 1.5, dash: 2 };
-  mk(board, "segment", [[() => a, () => f(a)], [() => a + dx, () => f(a)]], dashed);
-  mk(board, "segment", [[() => a + dx, () => f(a)], [() => a + dx, () => f(a) + a]], dashed);
-
-  dot(board, () => a, () => f(a));
-
-  return (s) => {
-    a = 2.3 * Math.sin(s * 0.5);
-    out(`a = ${pad(num(a), 5)}    f′(a) = 2a = ${pad(num(2 * a), 5)}`);
-  };
-};
-
-/* ------------------------------------------------------------------ *
  *  Papan 2 — Integral Riemann: persegi panjang makin banyak
  * ------------------------------------------------------------------ */
 const BBOX_RIEMANN: BBox = [-1.5, 5.2, 7.5, -0.8];
@@ -255,20 +220,18 @@ const setupConic: Setup = (board, out) => {
 };
 
 /* ------------------------------------------------------------------ *
- *  Komponen Board: satu papan JSXGraph + bilah keterangan.
+ *  Komponen Board: satu papan JSXGraph tanpa teks pendamping.
  *  Animasi hanya berjalan saat papan terlihat di layar, dan berhenti
  *  bila pengguna memilih "kurangi gerakan" di sistemnya.
  * ------------------------------------------------------------------ */
 interface BoardProps {
-  title: string;
   setup: Setup;
   bbox: BBox;
   className?: string;
 }
 
-function Board({ title, setup, bbox, className = "" }: BoardProps) {
+function Board({ setup, bbox, className = "" }: BoardProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
   const domId = `jxg-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const ratio = (bbox[2] - bbox[0]) / (bbox[1] - bbox[3]);
 
@@ -290,9 +253,7 @@ function Board({ title, setup, bbox, className = "" }: BoardProps) {
       resize: { enabled: true, throttle: 60 },
     } as never);
 
-    const out: Out = (text) => {
-      if (readoutRef.current) readoutRef.current.textContent = text;
-    };
+    const out: Out = () => {}; // keterangan angka sengaja tidak ditampilkan
     const frame = setup(board, out);
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -339,11 +300,189 @@ function Board({ title, setup, bbox, className = "" }: BoardProps) {
   return (
     <figure className={`lp-board ${className}`}>
       <div id={domId} ref={canvasRef} className="lp-board__canvas" style={{ aspectRatio: String(ratio) }} />
-      <figcaption className="lp-board__bar">
-        <span className="lp-board__title"><SimMath tex={title} /></span>
-        <span className="lp-board__readout" ref={readoutRef} />
-      </figcaption>
     </figure>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ *  Animasi hero: permukaan gelombang 3D z = f(x, y, t) berupa kawat
+ *  jaring yang berputar pelan. Puncak gelombang berwarna teal, lembah
+ *  berwarna slate. Canvas 2D, tanpa teks, tepinya memudar ke latar.
+ * ------------------------------------------------------------------ */
+const RGB = {
+  soft: "148, 163, 184",
+  mid: "100, 116, 139",
+  ink: "15, 23, 42",
+  teal: "15, 118, 110",
+};
+const BUCKETS = [
+  { color: `rgba(${RGB.soft}, 0.38)`, width: 1 },
+  { color: `rgba(${RGB.mid}, 0.55)`, width: 1 },
+  { color: `rgba(${RGB.ink}, 0.8)`, width: 1.15 },
+  { color: `rgba(${RGB.teal}, 0.95)`, width: 1.5 },
+];
+const GN = 26; // simpul jaring per sisi (26 × 26 = 676 titik)
+const EXTENT = 1.25;
+
+// Koordinat simpul dan peluruhan radialnya tidak berubah antarbingkai,
+// jadi dihitung sekali saja.
+const GX = new Float32Array(GN * GN);
+const GY = new Float32Array(GN * GN);
+const GR = new Float32Array(GN * GN);
+const GD = new Float32Array(GN * GN);
+for (let i = 0; i < GN; i++) {
+  for (let j = 0; j < GN; j++) {
+    const k = i * GN + j;
+    GX[k] = -EXTENT + (2 * EXTENT * i) / (GN - 1);
+    GY[k] = -EXTENT + (2 * EXTENT * j) / (GN - 1);
+    GR[k] = Math.hypot(GX[k], GY[k]);
+    GD[k] = Math.exp(-1.7 * GR[k]);
+  }
+}
+const PX = new Float32Array(GN * GN);
+const PY = new Float32Array(GN * GN);
+const PZ = new Float32Array(GN * GN);
+
+function HeroSurface() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!wrap || !canvas || !ctx) return;
+
+    let w = 0;
+    let h = 0;
+    let fade: CanvasGradient | null = null;
+
+    const resize = () => {
+      const r = wrap.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      w = r.width;
+      h = r.height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // tepi memudar digambar di canvas (lebih ringan daripada CSS mask pada elemen yang bergerak)
+      const m = Math.max(w, h);
+      fade = ctx.createRadialGradient(w / 2, h / 2, m * 0.2, w / 2, h / 2, m * 0.5);
+      fade.addColorStop(0, "rgba(0,0,0,0)");
+      fade.addColorStop(1, "rgba(0,0,0,1)");
+    };
+
+    const draw = (t: number) => {
+      if (!w) return;
+      ctx.clearRect(0, 0, w, h);
+
+      const phi = 0.35 + t * 0.12;
+      const alpha = 1.0 + 0.06 * Math.sin(t * 0.2);
+      const cp = Math.cos(phi);
+      const sp = Math.sin(phi);
+      const ca = Math.cos(alpha);
+      const sa = Math.sin(alpha);
+      const scale = Math.min(w * 0.27, h * 0.245);
+      const cx = w * 0.5;
+      const cy = h * 0.52;
+
+      // satu kali hitung per simpul
+      for (let k = 0; k < GN * GN; k++) {
+        const x = GX[k];
+        const y = GY[k];
+        const z = 0.95 * Math.sin(6.5 * GR[k] - 1.9 * t) * GD[k] + 0.1 * Math.sin(2.6 * x + 0.7 * t) * Math.cos(2.6 * y - 0.5 * t);
+        const rx = x * cp - y * sp;
+        const ry = x * sp + y * cp;
+        const f = 1 / (1 - (ry * ca + z * sa) * 0.22); // perspektif tipis
+        PX[k] = cx + scale * rx * f;
+        PY[k] = cy + scale * (ry * sa - z * ca) * f;
+        PZ[k] = z;
+      }
+
+      const paths = BUCKETS.map(() => new Path2D());
+      const seg = (a: number, b: number) => {
+        const norm = ((PZ[a] + PZ[b]) / 2 + 0.7) / 1.4;
+        const bi = Math.max(0, Math.min(BUCKETS.length - 1, Math.floor(norm * BUCKETS.length)));
+        paths[bi].moveTo(PX[a], PY[a]);
+        paths[bi].lineTo(PX[b], PY[b]);
+      };
+      for (let i = 0; i < GN; i++) {
+        for (let j = 0; j < GN; j++) {
+          const k = i * GN + j;
+          if (j < GN - 1) seg(k, k + 1);
+          if (i < GN - 1) seg(k, k + GN);
+        }
+      }
+
+      ctx.lineCap = "round";
+      paths.forEach((p, i) => {
+        ctx.strokeStyle = BUCKETS[i].color;
+        ctx.lineWidth = BUCKETS[i].width;
+        ctx.stroke(p);
+      });
+
+      if (fade) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = fade;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = "source-over";
+      }
+    };
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0;
+    let last = 0;
+    let time = 3;
+
+    resize();
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (reduceMotion) draw(time);
+    });
+    ro.observe(wrap);
+
+    let io: IntersectionObserver | undefined;
+    if (reduceMotion) {
+      draw(time);
+    } else {
+      const tick = (now: number) => {
+        if (last) time += Math.min((now - last) / 1000, 0.05);
+        last = now;
+        draw(time);
+        frame = requestAnimationFrame(tick);
+      };
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            if (!frame) frame = requestAnimationFrame(tick);
+          } else {
+            cancelAnimationFrame(frame);
+            frame = 0;
+            last = 0;
+          }
+        },
+        { threshold: 0.1 },
+      );
+      io.observe(wrap);
+    }
+
+    return () => {
+      io?.disconnect();
+      ro.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="lp-hero__art">
+      <canvas
+        ref={canvasRef}
+        className="lp-hero__canvas"
+        role="img"
+        aria-label="Permukaan gelombang tiga dimensi berbentuk jaring yang berputar pelan"
+      />
+    </div>
   );
 }
 
@@ -357,7 +496,6 @@ const FEATURES = [
     title: "Integral Riemann",
     body: "Luas di bawah kurva bukan lagi misteri. Tambah banyak persegi panjang, dan jumlahnya merapat ke nilai integral.",
     href: HREF.integral,
-    boardTitle: String.raw`f(x)=-\displaystyle\frac{1}{4}(x-3)^2+4`,
     setup: setupRiemann,
     bbox: BBOX_RIEMANN,
   },
@@ -367,7 +505,6 @@ const FEATURES = [
     title: "Lingkaran satuan",
     body: "Sinus bukan sekadar tombol di kalkulator. Ia adalah tinggi sebuah titik yang berputar pada lingkaran. Ikuti perjalanannya, dan gelombang pun lahir.",
     href: HREF.trigonometri,
-    boardTitle: String.raw`y=\sin\theta`,
     setup: setupTrig,
     bbox: BBOX_TRIG,
   },
@@ -377,7 +514,6 @@ const FEATURES = [
     title: "Irisan kerucut",
     body: "Elips adalah semua titik yang jumlah jaraknya ke dua fokus selalu sama. Lihat sendiri bahwa jumlah itu tak pernah bergeser.",
     href: HREF.conic,
-    boardTitle: String.raw`\displaystyle\frac{x^2}{25}+\displaystyle\frac{y^2}{9}=1`,
     setup: setupConic,
     bbox: BBOX_CONIC,
   },
@@ -430,7 +566,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <Board className="lp-hero__board" title="f(x)=x^2" setup={setupTangent} bbox={BBOX_TANGENT} />
+            <HeroSurface />
           </div>
         </section>
 
@@ -463,7 +599,7 @@ export default function Landing() {
                       Buka simulasi <span aria-hidden>→</span>
                     </Link>
                   </div>
-                  <Board title={f.boardTitle} setup={f.setup} bbox={f.bbox} />
+                  <Board setup={f.setup} bbox={f.bbox} />
                 </article>
               ))}
             </div>

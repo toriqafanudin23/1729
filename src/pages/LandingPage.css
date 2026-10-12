@@ -219,19 +219,29 @@ html {
   justify-content: center;
 }
 
-.lp-hero__board {
+/* animasi hero menyatu dengan latar: tanpa kotak; tepi memudar digambar di canvas */
+.lp-hero__art {
+  position: relative;
   width: 100%;
-  max-width: 440px;
+  max-width: 540px;
+  aspect-ratio: 1.15;
   justify-self: end;
+}
+.lp-hero__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 @media (max-width: 860px) {
   .lp-hero__grid {
     grid-template-columns: 1fr;
   }
-  .lp-hero__board {
+  .lp-hero__art {
     justify-self: center;
-    max-width: 400px;
+    max-width: 420px;
   }
 }
 
@@ -259,20 +269,25 @@ html {
   .lp-hero__copy > *:nth-child(4) {
     animation-delay: 0.24s;
   }
-  .lp-hero__board {
+  .lp-hero__art {
     animation: lp-rise 0.9s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 }
 
 /* -------------------------------------------------------------- Board --- */
 
+/* Papan simulasi: tanpa kotak, garis, atau teks pendamping. Tepinya memudar ke latar. */
 .lp-board {
+  position: relative;
   margin: 0;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 24px 48px -28px rgba(15, 23, 42, 0.28);
+}
+/* pemudaran tepi lewat lapisan gradien (lebih ringan daripada mask pada papan yang bergerak) */
+.lp-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 74% 74% at 50% 50%, rgba(255, 255, 255, 0) 58%, var(--paper) 100%);
+  pointer-events: none;
 }
 
 /* Papan bersifat dekoratif. Hapus dua baris ini jika ingin papan bisa disentuh. */
@@ -291,32 +306,6 @@ html {
 .lp-board .JXGtext,
 .lp-board text {
   font-family: var(--mono) !important;
-}
-
-.lp-board__bar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 16px;
-  padding: 11px 16px;
-  border-top: 1px solid var(--line);
-  background: var(--wash);
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--mute);
-}
-
-.lp-board__title {
-  color: var(--ink);
-}
-.lp-board__title .katex {
-  font-size: 1.08em;
-}
-
-.lp-board__readout {
-  white-space: pre;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ------------------------------------------------------------ Sections --- */

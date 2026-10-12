@@ -1,16 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "katex/dist/katex.min.css";
-import "./styles/LatihanPage.css"; // gaya komponen soal untuk contoh di hero
+import "./styles/LatihanPage.css"; // gaya renderer LaTeX untuk simbol materi
 import "./styles/LatihanLanding.css";
 import { LEVEL_LABEL } from "./components/SectionBlock";
-import { Question } from "./components/Question";
 import { Rich } from "./components/Rich";
 import { MATERIALS } from "./data";
 import { UPCOMING } from "./data/upcoming";
 import { summarize } from "./lib/catalog";
-import { QuizProvider, useQuiz } from "./state/QuizContext";
-import type { ChoiceQuestion, Level, Material } from "./types";
+import type { Level, Material } from "./types";
 
 /* ------------------------------------------------------------------ *
  *  Tautan: sesuaikan dengan route di aplikasi 1729.
@@ -57,48 +55,204 @@ const STEPS = [
 ];
 
 /* ------------------------------------------------------------------ *
- *  Contoh soal di hero: soal sungguhan dari paket pertama.
+ *  Animasi hero: deret Fourier. Lingkaran-lingkaran yang berputar
+ *  dijumlahkan, ujungnya menggambar gelombang persegi yang mengalir
+ *  ke kanan. Jumlah suku bertambah dan berkurang secara halus.
+ *  Canvas 2D, tanpa dependensi, berhenti saat tidak terlihat.
  * ------------------------------------------------------------------ */
-function pickDemo(materials: Material[]) {
-  for (const m of materials)
-    for (const s of m.sections)
-      for (const g of s.groups)
-        for (const q of g.questions) {
-          if (q.type !== "pg" || q.figure || q.promptAfter || g.level !== "mudah") continue;
-          return { material: m, q: q as ChoiceQuestion, points: s.pointsEach };
-        }
-  return null;
-}
+const INK = "15, 23, 42"; // #0f172a
+const SLATE = "100, 116, 139"; // #64748b
+const SOFT = "148, 163, 184"; // #94a3b8
+const TEAL = "15, 118, 110"; // #0f766e (sama dengan titik "aktif")
 
-function DemoBody({ q, points }: { q: ChoiceQuestion; points: number }) {
-  const { round, reset, state } = useQuiz();
-  return (
-    <>
-      <Question key={`${q.id}-${round}`} q={q} points={points} />
-      <button type="button" className="lk-demo__again" onClick={reset} disabled={!state[q.id]}>
-        Coba lagi
-      </button>
-    </>
-  );
-}
+const MAX_TERMS = 5;
+const OMEGA = 1.8; // rad/detik untuk suku pertama
+const FLOW = 52; // px/detik, kecepatan gelombang mengalir
 
-function Demo() {
-  const demo = useMemo(() => pickDemo(MATERIALS), []);
-  if (!demo) return null;
-  const { material, q, points } = demo;
-  // paket mini berisi satu soal, agar QuizProvider tetap dipakai apa adanya
-  const mini: Material = {
-    ...material,
-    sections: [{ id: "demo", letter: "A", title: "Contoh", pointsEach: points, groups: [{ level: q.level, questions: [q] }] }],
-  };
+const ease = (x: number) => x * x * (3 - 2 * x);
+
+function FourierAnimation() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!wrap || !canvas || !ctx) return;
+
+    let w = 0;
+    let h = 0;
+    let dpr = 1;
+    const trail: { t: number; y: number }[] = [];
+
+    const resize = () => {
+      const r = wrap.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = r.width;
+      h = r.height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const draw = (t: number) => {
+      if (!w) return;
+      ctx.clearRect(0, 0, w, h);
+
+      // jumlah suku berubah halus 1 → MAX_TERMS → 1
+      const wave = 0.5 - 0.5 * Math.cos(t * 0.28);
+      const nf = 1 + (MAX_TERMS - 1) * ease(wave);
+      const full = Math.floor(nf);
+      const frac = nf - full;
+      const count = Math.min(MAX_TERMS, Math.ceil(nf));
+
+      const cx = w * 0.26;
+      const cy = h * 0.5;
+      const unit = h * 0.27;
+      const waveX = w * 0.54;
+      const waveW = w - waveX - w * 0.04;
+
+      // sumbu gelombang
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(${SOFT}, 0.45)`;
+      ctx.setLineDash([2, 5]);
+      ctx.beginPath();
+      ctx.moveTo(waveX, cy);
+      ctx.lineTo(waveX + waveW, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // rantai lingkaran
+      let x = cx;
+      let y = cy;
+      for (let i = 0; i < count; i++) {
+        const k = 2 * i + 1;
+        const amp = i < full ? 1 : frac;
+        const r = ((4 / (Math.PI * k)) * unit) * amp;
+        const ang = k * OMEGA * t;
+        const nx = x + r * Math.cos(ang);
+        const ny = y - r * Math.sin(ang);
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(${SLATE}, ${0.1 + 0.3 * amp})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = `rgba(${INK}, ${0.35 + 0.5 * amp})`;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(nx, ny);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(${INK}, ${0.5 * amp + 0.1})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        x = nx;
+        y = ny;
+      }
+
+      // jejak gelombang
+      trail.push({ t, y });
+      const span = waveW / FLOW;
+      while (trail.length && t - trail[0].t > span) trail.shift();
+
+      const grad = ctx.createLinearGradient(waveX, 0, waveX + waveW, 0);
+      grad.addColorStop(0, `rgba(${INK}, 0.95)`);
+      grad.addColorStop(1, `rgba(${INK}, 0)`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      trail.forEach((p, i) => {
+        const px = waveX + (t - p.t) * FLOW;
+        if (i === 0) ctx.moveTo(px, p.y);
+        else ctx.lineTo(px, p.y);
+      });
+      ctx.stroke();
+
+      // penghubung ujung → gelombang
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = `rgba(${TEAL}, 0.55)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(waveX, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // ujung dengan halo
+      ctx.fillStyle = `rgba(${TEAL}, 0.14)`;
+      ctx.beginPath();
+      ctx.arc(x, y, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgb(${TEAL})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 3.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    resize();
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (reduceMotion) draw(4.2);
+    });
+    ro.observe(wrap);
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0;
+    let last = 0;
+    let time = 4.2;
+    let io: IntersectionObserver | undefined;
+
+    if (reduceMotion) {
+      draw(time);
+    } else {
+      const tick = (now: number) => {
+        if (last) time += Math.min((now - last) / 1000, 0.05);
+        last = now;
+        draw(time);
+        frame = requestAnimationFrame(tick);
+      };
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            if (!frame) frame = requestAnimationFrame(tick);
+          } else {
+            cancelAnimationFrame(frame);
+            frame = 0;
+            last = 0;
+          }
+        },
+        { threshold: 0.1 },
+      );
+      io.observe(wrap);
+    }
+
+    return () => {
+      io?.disconnect();
+      ro.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
-    <div className="lk-hero__demo">
-      <p className="lk-eyebrow lk-demo__cap">Contoh soal · coba jawab</p>
-      <QuizProvider material={mini}>
-        <div className="lt lk-demo">
-          <DemoBody q={q} points={points} />
-        </div>
-      </QuizProvider>
+    <div className="lk-hero__demo lk-wave" ref={wrapRef}>
+      <canvas
+        ref={canvasRef}
+        className="lk-wave__canvas"
+        role="img"
+        aria-label="Lingkaran-lingkaran yang berputar dijumlahkan hingga membentuk gelombang persegi"
+      />
     </div>
   );
 }
@@ -255,7 +409,7 @@ export default function LatihanLanding() {
               </dl>
             </div>
 
-            <Demo />
+            <FourierAnimation />
           </div>
         </section>
 

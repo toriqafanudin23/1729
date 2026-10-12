@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { BrowserRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CatalogPage from "./pages/CatalogPage";
@@ -107,6 +108,7 @@ function App() {
         <Route path="/toko" element={<ShopLanding />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }

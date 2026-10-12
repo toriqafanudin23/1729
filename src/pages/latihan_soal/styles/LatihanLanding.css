@@ -1,0 +1,684 @@
+/* ==========================================================================
+   1729 — landing & katalog latihan soal
+   Hitam-putih, slate, tipografi tenang. Token sama dengan landing simulasi.
+   Semua kelas berawalan `lk-`. Contoh soal di hero memakai gaya `lt-` dari
+   LatihanPage.css (impor LatihanPage.css lebih dulu, lalu berkas ini).
+   ========================================================================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+.lk {
+  --ink: #0f172a;
+  --text: #334155;
+  --mute: #64748b;
+  --soft: #94a3b8;
+  --line-strong: #cbd5e1;
+  --line: #e2e8f0;
+  --wash: #f8fafc;
+  --paper: #ffffff;
+
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --max: 1120px;
+  --pad: clamp(20px, 5vw, 40px);
+  --nav-h: 60px;
+
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.lk *,
+.lk *::before,
+.lk *::after {
+  box-sizing: border-box;
+}
+.lk a {
+  color: inherit;
+  text-decoration: none;
+}
+.lk h1,
+.lk h2,
+.lk h3,
+.lk p,
+.lk dl,
+.lk dd,
+.lk ul,
+.lk ol {
+  margin: 0;
+}
+.lk ul,
+.lk ol {
+  padding: 0;
+  list-style: none;
+}
+
+.lk-wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+.lk-eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ---------------------------------------------------------------- Nav --- */
+
+.lk-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.lk-nav__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-h);
+}
+.lk-brand {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+.lk-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  color: var(--mute);
+}
+.lk-nav__links a:not(.lk-btn):hover {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .lk-hide-sm {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------ Buttons --- */
+
+.lk .lk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 10px;
+  border: 1px solid var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.lk .lk-btn--solid {
+  background: var(--ink);
+  color: #fff;
+}
+.lk .lk-btn--solid:hover {
+  background: #1e293b;
+}
+.lk .lk-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.lk .lk-btn--ghost:hover {
+  border-color: var(--ink);
+}
+.lk .lk-btn--sm {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.lk-btn:focus-visible,
+.lk-chip:focus-visible,
+.lk-card__go:focus-visible,
+.lk-demo__again:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- Hero --- */
+
+.lk-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(40px, 8vw, 104px) 0 clamp(48px, 7vw, 96px);
+}
+/* kertas grafik yang memudar */
+.lk-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.6;
+  -webkit-mask-image: radial-gradient(ellipse 70% 75% at 72% 40%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 75% at 72% 40%, #000 0%, transparent 78%);
+  pointer-events: none;
+}
+.lk-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 6vw, 72px);
+  align-items: center;
+}
+.lk-hero h1 {
+  margin: 18px 0 22px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 5.4vw, 66px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.lk-lead {
+  max-width: 34em;
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.6;
+  color: var(--text);
+}
+.lk-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+.lk-cta--center {
+  justify-content: center;
+}
+
+.lk-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 40px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.lk-stats dt {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.lk-stats dd {
+  font-family: var(--serif);
+  font-size: 32px;
+  line-height: 1.2;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* contoh soal */
+.lk-hero__demo {
+  width: 100%;
+  max-width: 480px;
+  justify-self: end;
+}
+.lk-demo__cap {
+  margin-bottom: 10px;
+}
+/* `.lt` dirancang sebagai akar halaman penuh; di sini hanya pembungkus kartu */
+.lk .lk-demo.lt {
+  min-height: 0;
+  background: transparent;
+}
+.lk-demo .lt-q {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 24px 48px -28px rgba(15, 23, 42, 0.28);
+}
+.lk-demo__again {
+  display: block;
+  margin: 12px 0 0 auto;
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+.lk-demo__again:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.lk-demo__again:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .lk-hero__grid {
+    grid-template-columns: 1fr;
+  }
+  .lk-hero__demo {
+    justify-self: stretch;
+    max-width: none;
+  }
+}
+
+@keyframes lk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lk-hero__copy > * {
+    animation: lk-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .lk-hero__copy > *:nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  .lk-hero__copy > *:nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  .lk-hero__copy > *:nth-child(4) {
+    animation-delay: 0.24s;
+  }
+  .lk-hero__copy > *:nth-child(5) {
+    animation-delay: 0.32s;
+  }
+  .lk-hero__demo {
+    animation: lk-rise 0.9s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ------------------------------------------------------------ Sections --- */
+
+.lk-section {
+  padding: clamp(56px, 8vw, 112px) 0;
+  scroll-margin-top: var(--nav-h);
+}
+.lk-section--wash {
+  background: var(--wash);
+  border-block: 1px solid var(--line);
+}
+.lk-h2 {
+  margin-top: 14px;
+  max-width: 20em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.lk-statement {
+  max-width: 18em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(30px, 5vw, 60px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.lk-statement span {
+  color: var(--soft);
+}
+
+/* ------------------------------------------------------------ Features --- */
+
+.lk-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(24px, 4vw, 48px);
+  margin-top: clamp(32px, 5vw, 56px);
+}
+.lk-feature {
+  padding-top: 20px;
+  border-top: 1px solid var(--ink);
+}
+.lk-feature__no {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--soft);
+}
+.lk-feature h3 {
+  margin: 10px 0 8px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------- Catalog --- */
+
+.lk-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+}
+.lk-chip {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.lk-chip:hover {
+  border-color: var(--ink);
+}
+.lk-chip[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.lk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.lk-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: #fff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.lk-card:not(.lk-card--soon):hover,
+.lk-card:not(.lk-card--soon):focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.35);
+}
+
+.lk-card__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lk-card__no {
+  color: var(--soft);
+}
+.lk-card__cat {
+  color: var(--mute);
+}
+.lk-card__sym {
+  margin-left: auto;
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--soft);
+  transition: color 0.18s ease;
+}
+.lk-card:hover .lk-card__sym {
+  color: var(--ink);
+}
+.lk-card__sym .katex {
+  font-size: 1em;
+}
+
+.lk-card h3 {
+  margin: 12px 0 8px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.lk-card__desc {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.lk-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 18px;
+}
+.lk-facts li {
+  padding: 2px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* komposisi tingkat kesulitan: makin pekat makin sulit */
+.lk-mix {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  margin-top: 20px;
+}
+.lk-mix__seg {
+  flex-basis: 0;
+  min-width: 6px;
+  border-radius: 2px;
+}
+.lk-mix__seg--mudah,
+.lk-dot--mudah {
+  background: #e2e8f0;
+}
+.lk-mix__seg--sedang,
+.lk-dot--sedang {
+  background: #94a3b8;
+}
+.lk-mix__seg--sulit,
+.lk-dot--sulit {
+  background: #475569;
+}
+.lk-mix__seg--hots,
+.lk-dot--hots {
+  background: #0f172a;
+}
+.lk-mix__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--mute);
+}
+.lk-mix__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lk-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.lk-card__types {
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--mute);
+  white-space: pre-wrap;
+}
+
+.lk-card__go {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 8px;
+  margin-top: auto;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line-strong);
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color 0.18s ease, gap 0.18s ease;
+}
+.lk-card__types + .lk-card__go {
+  margin-top: 22px;
+}
+/* seluruh kartu bisa diklik */
+.lk-card__go::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+}
+.lk-card:hover .lk-card__go {
+  border-color: var(--ink);
+  gap: 12px;
+}
+
+.lk-card--soon {
+  border-style: dashed;
+  background: transparent;
+}
+.lk-card--soon h3 {
+  color: var(--mute);
+}
+.lk-card--soon .lk-card__desc {
+  color: var(--mute);
+}
+.lk-soon {
+  align-self: flex-start;
+  margin-top: 20px;
+  padding: 2px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* --------------------------------------------------------- Cara belajar --- */
+
+.lk-section--ink {
+  background: var(--ink);
+  color: #cbd5e1;
+}
+.lk-section--ink .lk-eyebrow {
+  color: var(--soft);
+}
+.lk-section--ink .lk-h2 {
+  color: #fff;
+}
+.lk-why {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: clamp(32px, 7vw, 96px);
+  align-items: start;
+}
+.lk-steps li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+  padding: 22px 0;
+  border-top: 1px solid #334155;
+}
+.lk-steps li:last-child {
+  border-bottom: 1px solid #334155;
+}
+.lk-steps__no {
+  padding-top: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--soft);
+}
+.lk-steps h3 {
+  margin-bottom: 6px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: #fff;
+}
+.lk-steps p {
+  max-width: 30em;
+}
+@media (max-width: 860px) {
+  .lk-why {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------- Final --- */
+
+.lk-final {
+  text-align: center;
+}
+.lk-final .lk-h2,
+.lk-final .lk-lead {
+  margin-inline: auto;
+}
+.lk-final .lk-lead {
+  margin-top: 16px;
+}
+
+/* -------------------------------------------------------------- Footer --- */
+
+.lk-footer {
+  padding: 28px 0 40px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--mute);
+}
+.lk-footer__in {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+}
+.lk-footer a:hover {
+  color: var(--ink);
+}

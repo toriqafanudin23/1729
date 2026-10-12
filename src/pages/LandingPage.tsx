@@ -17,6 +17,7 @@ const HREF = {
   derivative: "/simulasi/turunan",
   vector: "/simulasi/vektor",
   tangent: "/simulasi/garis-singgung-dua-lingkaran",
+  latihan: "/latihan",
 };
 
 /* ------------------------------------------------------------------ *
@@ -508,6 +509,7 @@ export default function Landing() {
           <span>Memahami matematika secara visual.</span>
           <a href="mailto:pesan.math1729@gmail.com">pesan.math1729@gmail.com</a>
           <a href="https://kelas1729.vercel.app/">Website lama</a>
+          <Link to={HREF.latihan}>Latihan soal</Link>
         </div>
       </footer>
     </div>

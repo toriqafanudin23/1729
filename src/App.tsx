@@ -4,6 +4,8 @@ import LandingPage from "./pages/LandingPage";
 import CatalogPage from "./pages/CatalogPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SimulationPage from "./pages/SimulationPage";
+import LatihanLanding from "./pages/latihan_soal/LatihanLanding";
+import { LatihanRoute } from "./pages/latihan_soal/LatihanPage";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -28,6 +30,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/simulasi" element={<CatalogPage />} />
         <Route path="/simulasi/:slug" element={<SimulationRoute />} />
+        <Route path="/latihan" element={<LatihanLanding />} />
+        <Route path="/latihan/:slug" element={<LatihanRoute />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

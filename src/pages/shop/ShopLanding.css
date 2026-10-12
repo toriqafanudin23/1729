@@ -77,46 +77,6 @@ html {
   color: var(--mute);
 }
 
-/* ---------------------------------------------------------------- Nav --- */
-
-.sp-nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(255, 255, 255, 0.82);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
-  backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid var(--line);
-}
-.sp-nav__in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-}
-.sp-brand {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-}
-.sp-nav__links {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  font-size: 14px;
-  color: var(--mute);
-}
-.sp-nav__links a:hover {
-  color: var(--ink);
-}
-@media (max-width: 720px) {
-  .sp-hide-sm {
-    display: none;
-  }
-}
-
 /* ------------------------------------------------------------ Buttons --- */
 
 .sp .sp-btn {
@@ -427,6 +387,10 @@ html {
 
 /* ------------------------------------------------------------ Katalog --- */
 
+.sp-cart-trigger {
+  margin-top: 18px;
+}
+
 .sp-filters {
   display: flex;
   flex-wrap: wrap;
@@ -694,21 +658,6 @@ html {
 }
 .sp-final .sp-lead {
   margin-top: 16px;
-}
-
-/* ------------------------------------------------------------- Footer --- */
-
-.sp-footer {
-  padding: 28px 0 40px;
-  font-size: 14px;
-  color: var(--mute);
-}
-.sp-footer__in {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
 }
 
 /* ------------------------------------------------------ Bilah keranjang --- */

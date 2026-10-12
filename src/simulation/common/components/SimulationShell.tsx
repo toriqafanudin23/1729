@@ -9,7 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import "./simulation.css";
+import "../styles/simulation.css";
 
 /* Kerangka umum semua simulasi (gaya GeoGebra).
    - Bilah atas : tombol panel, toggle tampilan, atur ulang, pengaturan.

@@ -7,13 +7,13 @@ import {
   SimSection,
   SimSlider,
   SimToggle,
-} from "./SimControls";
-import { SimMath } from "./SimMath";
-import { SimulationShell } from "./SimulationShell";
-import { clamp } from "./simUtils";
-import { useJsxBoard, type BoundingBox, type SimBoard } from "./useJsxBoard";
-import { useStoredSimulationState } from "./useStoredSimulationState";
-import { FN_KEYS, FUNCS, calcColors, type FnKey } from "./calculusFunctions";
+} from "../common/components/SimControls";
+import { SimMath } from "../common/components/SimMath";
+import { SimulationShell } from "../common/components/SimulationShell";
+import { clamp } from "../common/utils/simUtils";
+import { useJsxBoard, type BoundingBox, type SimBoard } from "../common/hooks/useJsxBoard";
+import { useStoredSimulationState } from "../common/hooks/useStoredSimulationState";
+import { FN_KEYS, FUNCS, calcColors, type FnKey } from "../math/calculusFunctions";
 
 /* Simulasi integral: jumlah Riemann → integral tentu.
    Kerangka, slider, dan CSS memakai kit umum (prefix sim-), sama seperti

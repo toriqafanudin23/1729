@@ -14,12 +14,12 @@ import {
   SimSection,
   SimSlider,
   SimToggle,
-} from "./SimControls";
-import { SimMath } from "./SimMath";
-import { SimulationShell } from "./SimulationShell";
-import { clamp } from "./simUtils";
-import { useJsxBoard, type BoundingBox, type SimBoard } from "./useJsxBoard";
-import { useStoredSimulationState } from "./useStoredSimulationState";
+} from "../common/components/SimControls";
+import { SimMath } from "../common/components/SimMath";
+import { SimulationShell } from "../common/components/SimulationShell";
+import { clamp } from "../common/utils/simUtils";
+import { useJsxBoard, type BoundingBox, type SimBoard } from "../common/hooks/useJsxBoard";
+import { useStoredSimulationState } from "../common/hooks/useStoredSimulationState";
 import {
   OP_SYMBOL,
   boxPoly,
@@ -43,7 +43,7 @@ import {
   type Opt,
   type Pt,
   type Sol,
-} from "./linearMath";
+} from "../math/linearMath";
 
 /* Simulasi sistem linear: SPLDV, pertidaksamaan linear, dan program linear.
    Kerangka, slider, dan CSS memakai kit umum (prefix sim-), sama seperti

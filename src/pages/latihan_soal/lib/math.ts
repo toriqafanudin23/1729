@@ -10,6 +10,7 @@ import katex from "katex";
  * ------------------------------------------------------------------ */
 
 const MATH = /\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)/g;
+const INLINE_SCROLL_THRESHOLD = 36;
 const cache = new Map<string, string>();
 
 // Isi HTML sudah di-escape (&lt; &gt; &amp;), KaTeX butuh karakter aslinya.
@@ -30,7 +31,13 @@ function tex(src: string, display: boolean): string {
 }
 
 export function renderMath(html: string): string {
-  return html.replace(MATH, (_m, display?: string, inline?: string) =>
-    display !== undefined ? tex(display, true) : tex(inline as string, false),
-  );
+  return html.replace(MATH, (_m, display?: string, inline?: string) => {
+    if (display !== undefined) return tex(display, true);
+
+    const source = inline as string;
+    const rendered = tex(source, false);
+    return source.trim().length > INLINE_SCROLL_THRESHOLD
+      ? `<span class="lt-math-inline-scroll">${rendered}</span>`
+      : rendered;
+  });
 }

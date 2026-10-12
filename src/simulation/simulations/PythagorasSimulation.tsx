@@ -15,12 +15,12 @@ import {
   SimSection,
   SimSlider,
   SimToggle,
-} from "./SimControls";
-import { SimMath } from "./SimMath";
-import { SimulationShell } from "./SimulationShell";
-import { clamp, formatText, texNumber } from "./simUtils";
-import { useJsxBoard, type BoundingBox, type SimBoard } from "./useJsxBoard";
-import { useStoredSimulationState } from "./useStoredSimulationState";
+} from "../common/components/SimControls";
+import { SimMath } from "../common/components/SimMath";
+import { SimulationShell } from "../common/components/SimulationShell";
+import { clamp, formatText, texNumber } from "../common/utils/simUtils";
+import { useJsxBoard, type BoundingBox, type SimBoard } from "../common/hooks/useJsxBoard";
+import { useStoredSimulationState } from "../common/hooks/useStoredSimulationState";
 import {
   RIGHT,
   bounds,
@@ -36,7 +36,7 @@ import {
   type Params,
   type Pt,
   type Square,
-} from "./pythagorasMath";
+} from "../math/pythagorasMath";
 
 /* Simulasi Teorema Pythagoras.
    Mode 1 "Tiga persegi": seret titik A dan B, luas persegi pada tiap sisi

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
 import "./ShopLanding.css";
 
 /* ------------------------------------------------------------------ *
  *  Pengaturan: sesuaikan dengan aplikasi 1729.
  *  <Route path="/toko" element={<ShopLanding />} />
  * ------------------------------------------------------------------ */
-const HREF = { home: "/" };
-const WA_NUMBER = "6281234567890"; // ganti dengan nomor WhatsApp admin (format 62...)
+const WA_NUMBER = "6288226179468";
 const EMAIL = "pesan.math1729@gmail.com";
 
 type Jenjang = "SMP" | "SMA";
@@ -211,23 +211,7 @@ export default function ShopLanding() {
 
   return (
     <div className="sp">
-      <header className="sp-nav">
-        <div className="sp-wrap sp-nav__in">
-          <Link to={HREF.home} className="sp-brand" aria-label="1729 beranda">
-            1729
-          </Link>
-          <nav className="sp-nav__links" aria-label="Utama">
-            <a href="#produk" className="sp-hide-sm">Produk</a>
-            <a href="#katalog" className="sp-hide-sm">Katalog</a>
-            <a href="#cara" className="sp-hide-sm">Cara pesan</a>
-            <a href="#faq" className="sp-hide-sm">FAQ</a>
-            <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" onClick={() => setOpen(true)}>
-              Keranjang
-              <span className="sp-count" aria-label={`${cart.length} item`}>{cart.length}</span>
-            </button>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         {/* ------------------------------ Hero ------------------------------ */}
@@ -298,6 +282,10 @@ export default function ShopLanding() {
           <div className="sp-wrap">
             <p className="sp-eyebrow">Katalog</p>
             <h2 className="sp-h2">Pilih bahan ajar untuk jenjang dan kebutuhanmu.</h2>
+
+            <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm sp-cart-trigger" onClick={() => setOpen(true)}>
+              Keranjang <span className="sp-count" aria-label={`${cart.length} item`}>{cart.length}</span>
+            </button>
 
             <div className="sp-filters">
               <div className="sp-filter" role="group" aria-label="Filter jenjang">
@@ -395,13 +383,7 @@ export default function ShopLanding() {
         </section>
       </main>
 
-      <footer className="sp-footer">
-        <div className="sp-wrap sp-footer__in">
-          <span className="sp-brand">1729</span>
-          <span>Memahami matematika secara visual.</span>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-        </div>
-      </footer>
+      <SiteFooter />
 
       {/* Bilah keranjang untuk layar kecil */}
       {cart.length > 0 && !open && (

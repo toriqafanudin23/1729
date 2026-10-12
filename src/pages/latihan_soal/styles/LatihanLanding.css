@@ -76,30 +76,6 @@ html {
   color: var(--mute);
 }
 
-/* ---------------------------------------------------------------- Nav --- */
-
-.lk-nav {
-  position: relative;
-  z-index: 1;
-}
-.lk-nav__in {
-  display: flex;
-  align-items: center;
-  height: var(--nav-h);
-}
-.lk-brand {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-}
-@media (max-width: 720px) {
-  .lk-hide-sm {
-    display: none;
-  }
-}
-
 /* ------------------------------------------------------------ Buttons --- */
 
 .lk .lk-btn {
@@ -631,23 +607,4 @@ html {
 }
 .lk-final .lk-lead {
   margin-top: 16px;
-}
-
-/* -------------------------------------------------------------- Footer --- */
-
-.lk-footer {
-  padding: 28px 0 40px;
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-  color: var(--mute);
-}
-.lk-footer__in {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
-}
-.lk-footer a:hover {
-  color: var(--ink);
 }

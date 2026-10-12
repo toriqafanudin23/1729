@@ -1,5 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { SiteHeader } from "../components/SiteHeader";
+import { SiteFooter } from "../components/SiteFooter";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
 import NotFoundPage from "./NotFoundPage";
 import "./pages.css";
@@ -18,19 +20,6 @@ export default function SimulationPage({ slug }: { slug?: string }) {
     if (sim) document.title = `${sim.title} · 1729`;
   }, [sim]);
 
-  const header = (
-    <header className="sp-nav">
-      <div className="sp-wrap sp-wrap--wide sp-nav__in">
-        <Link to="/" className="sp-brand" aria-label="1729 beranda">
-          1729
-        </Link>
-        <nav className="sp-nav__links" aria-label="Navigasi utama">
-          <Link to={CATALOG_PATH}>Simulasi</Link>
-        </nav>
-      </div>
-    </header>
-  );
-
   if (!sim) {
     return <NotFoundPage />;
   }
@@ -40,7 +29,7 @@ export default function SimulationPage({ slug }: { slug?: string }) {
 
   return (
     <div className="sp">
-      {header}
+      <SiteHeader />
 
       <main className="sp-wrap sp-wrap--wide sp-sim">
         <nav className="sp-crumbs" aria-label="Jejak halaman">
@@ -87,6 +76,7 @@ export default function SimulationPage({ slug }: { slug?: string }) {
           )}
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

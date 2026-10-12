@@ -81,38 +81,6 @@ html {
   border-bottom: 1px solid var(--line);
 }
 
-.lp-nav__in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-}
-
-.lp-brand {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-}
-
-.lp-nav__links {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  font-size: 14px;
-  color: var(--mute);
-}
-
-.lp-nav__links a:not(.lp-btn):hover {
-  color: var(--ink);
-}
-
-@media (max-width: 720px) {
-  .lp-hide-sm {
-    display: none;
-  }
-}
 
 /* ------------------------------------------------------------ Buttons --- */
 
@@ -549,19 +517,4 @@ html {
 }
 .lp-final .lp-lead {
   margin-top: 16px;
-}
-
-/* -------------------------------------------------------------- Footer --- */
-
-.lp-footer {
-  padding: 28px 0 40px;
-  font-size: 14px;
-  color: var(--mute);
-}
-.lp-footer__in {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
 }

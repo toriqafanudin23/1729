@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
 import "katex/dist/katex.min.css";
 import "./styles/LatihanPage.css"; // gaya renderer LaTeX untuk simbol materi
 import "./styles/LatihanLanding.css";
@@ -334,13 +336,7 @@ export default function LatihanLanding() {
 
   return (
     <div className="lk">
-      <header className="lk-nav">
-        <div className="lk-wrap lk-nav__in">
-          <Link to={HREF.home} className="lk-brand" aria-label="1729 beranda">
-            1729
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         {/* ---------------------------- Hero ---------------------------- */}
@@ -471,14 +467,7 @@ export default function LatihanLanding() {
         </section>
       </main>
 
-      <footer className="lk-footer">
-        <div className="lk-wrap lk-footer__in">
-          <span className="lk-brand">1729</span>
-          <span>Memahami matematika secara visual.</span>
-          <a href="mailto:pesan.math1729@gmail.com">pesan.math1729@gmail.com</a>
-          <a href="https://kelas1729.vercel.app/">Website lama</a>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

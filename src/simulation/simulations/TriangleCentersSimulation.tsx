@@ -8,12 +8,12 @@ import {
   SimSection,
   SimSlider,
   SimToggle,
-} from "./SimControls";
-import { SimMath } from "./SimMath";
-import { SimulationShell } from "./SimulationShell";
-import { formatText, texNumber } from "./simUtils";
-import { useJsxBoard, type BoundingBox, type SimBoard } from "./useJsxBoard";
-import { useStoredSimulationState } from "./useStoredSimulationState";
+} from "../common/components/SimControls";
+import { SimMath } from "../common/components/SimMath";
+import { SimulationShell } from "../common/components/SimulationShell";
+import { formatText, texNumber } from "../common/utils/simUtils";
+import { useJsxBoard, type BoundingBox, type SimBoard } from "../common/hooks/useJsxBoard";
+import { useStoredSimulationState } from "../common/hooks/useStoredSimulationState";
 import {
   NAN_PT,
   analyze,
@@ -24,7 +24,7 @@ import {
   type Geometry,
   type Pt,
   type Tri,
-} from "./triangleMath";
+} from "../math/triangleMath";
 
 /* Simulasi titik istimewa segitiga: titik berat (G), titik bagi (I),
    titik sumbu (O), dan titik tinggi (H), beserta garis Euler.

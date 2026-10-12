@@ -7,12 +7,12 @@ import {
   SimSection,
   SimSlider,
   SimToggle,
-} from "./SimControls";
-import { SimMath } from "./SimMath";
-import { SimulationShell } from "./SimulationShell";
-import { clamp } from "./simUtils";
-import { useJsxBoard, type BoundingBox, type SimBoard } from "./useJsxBoard";
-import { useStoredSimulationState } from "./useStoredSimulationState";
+} from "../common/components/SimControls";
+import { SimMath } from "../common/components/SimMath";
+import { SimulationShell } from "../common/components/SimulationShell";
+import { clamp } from "../common/utils/simUtils";
+import { useJsxBoard, type BoundingBox, type SimBoard } from "../common/hooks/useJsxBoard";
+import { useStoredSimulationState } from "../common/hooks/useStoredSimulationState";
 
 /* Simulasi sektor lingkaran (juring).
    Kerangka, slider, dan CSS memakai kit umum (prefix sim-), sama seperti

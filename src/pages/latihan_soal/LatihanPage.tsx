@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
 import "katex/dist/katex.min.css";
 import "./styles/LatihanPage.css";
 import { SectionBlock } from "./components/SectionBlock";
@@ -27,18 +29,7 @@ export default function LatihanPage({ material }: { material: Material }) {
 
   return (
     <div className="lt">
-      <header className="lt-nav">
-        <div className="lt-wrap lt-nav__in">
-          <Link to="/" className="lt-brand" aria-label="1729 beranda">
-            1729
-          </Link>
-          <nav className="lt-nav__crumb" aria-label="Navigasi latihan">
-            <Link to="/latihan">Semua latihan</Link>
-            <span aria-hidden> / </span>
-            <span>{material.topic}</span>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <QuizProvider material={material}>
         <main>
@@ -89,12 +80,7 @@ export default function LatihanPage({ material }: { material: Material }) {
         </main>
       </QuizProvider>
 
-      <footer className="lt-footer">
-        <div className="lt-wrap lt-footer__in">
-          <span className="lt-brand">1729</span>
-          <span>Memahami matematika secara visual.</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
@@ -110,6 +96,7 @@ export function LatihanRoute() {
           <h1>Materi tidak ditemukan</h1>
           <p className="lt-lead">Periksa kembali alamat latihan yang kamu buka.</p>
         </div>
+        <SiteFooter />
       </div>
     );
   return <LatihanPage key={material.slug} material={material} />;

@@ -1,0 +1,122 @@
+.site-footer {
+  --footer-ink: #f8fafc;
+  --footer-muted: #cbd5e1;
+  --footer-line: rgba(226, 232, 240, 0.2);
+
+  background: #0f172a;
+  color: var(--footer-ink);
+}
+
+.site-footer,
+.site-footer * {
+  box-sizing: border-box;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-footer__inner {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto auto;
+  align-items: center;
+  gap: 24px 40px;
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  padding: 32px clamp(20px, 5vw, 48px);
+}
+
+.site-footer .site-footer__identity p {
+  margin: 6px 0 0;
+  color: var(--footer-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.site-footer__brand {
+  display: inline-block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+}
+
+.site-footer .site-footer__nav a,
+.site-footer .site-footer__contact {
+  color: var(--footer-muted);
+  font-size: 14px;
+  transition: color 160ms ease;
+}
+
+.site-footer .site-footer__nav a:hover,
+.site-footer .site-footer__nav a[aria-current="page"],
+.site-footer .site-footer__contact:hover {
+  color: #fff;
+}
+
+.site-footer__contact {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.site-footer__contact span {
+  margin-left: 4px;
+}
+
+.site-footer__legal {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--footer-line);
+  color: var(--footer-muted);
+  font-size: 12px;
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  .site-footer__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 22px 16px;
+    padding: 28px clamp(20px, 5vw, 32px) 20px;
+  }
+
+  .site-footer__identity {
+    grid-column: 1 / -1;
+  }
+
+  .site-footer__nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: start;
+    gap: 14px 20px;
+  }
+
+  .site-footer__contact {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .site-footer__legal {
+    padding-top: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer__nav a,
+  .site-footer__contact {
+    transition: none;
+  }
+}

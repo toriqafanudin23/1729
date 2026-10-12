@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { clamp, snap } from "./simUtils";
+import { clamp, snap } from "../utils/simUtils";
 
 /* Komponen kontrol umum. Semua gaya ada di simulation.css (prefix sim-). */
 

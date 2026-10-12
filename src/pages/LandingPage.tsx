@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef } from "react";
 import JXG from "jsxgraph";
 import { Link } from "react-router-dom";
-import { SimMath } from "../simulation/SimMath";
+import { SiteHeader } from "../components/SiteHeader";
+import { SiteFooter } from "../components/SiteFooter";
+import { SimMath } from "../simulation/common/components/SimMath";
 import "../styles/jsxgraph.css";
 import "./LandingPage.css";
 
@@ -540,13 +542,7 @@ const TOPICS: { name: string; sym: string; href: string }[] = [
 export default function Landing() {
   return (
     <div className="lp">
-      <header className="lp-top">
-        <div className="lp-wrap lp-top__in">
-          <Link to="/" className="lp-brand" aria-label="1729 beranda">
-            1729
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
         {/* ---------------------------- Hero ---------------------------- */}
@@ -639,16 +635,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="lp-footer">
-        <div className="lp-wrap lp-footer__in">
-          <span className="lp-brand">1729</span>
-          <span>Memahami matematika secara visual.</span>
-          <a href="mailto:pesan.math1729@gmail.com">pesan.math1729@gmail.com</a>
-          <a href="https://kelas1729.vercel.app/">Website lama</a>
-          <Link to={HREF.latihan}>Latihan soal</Link>
-          {/* <Link to="/toko">Shop</Link> */}
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

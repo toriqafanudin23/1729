@@ -36,7 +36,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Parabola", "Diskriminan", "Puncak", "Persamaan kuadrat"],
     glyph: "ax²",
     component: lazy(() =>
-      import("../simulation/QuadraticSimulation").then((m) => ({ default: m.QuadraticSimulation })),
+      import("../simulation/simulations/QuadraticSimulation").then((m) => ({ default: m.QuadraticSimulation })),
     ),
   },
   {
@@ -48,7 +48,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Translasi", "Rotasi", "Refleksi", "Dilatasi"],
     glyph: "T",
     component: lazy(() =>
-      import("../simulation/TransformationSimulation").then((m) => ({ default: m.TransformationSimulation })),
+      import("../simulation/simulations/TransformationSimulation").then((m) => ({ default: m.TransformationSimulation })),
     ),
   },
   {
@@ -60,7 +60,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Sudut", "Sinus", "Kosinus", "Lingkaran satuan"],
     glyph: "sin",
     component: lazy(() =>
-      import("../simulation/TrigonometrySimulation").then((m) => ({ default: m.TrigonometrySimulation })),
+      import("../simulation/simulations/TrigonometrySimulation").then((m) => ({ default: m.TrigonometrySimulation })),
     ),
   },
   {
@@ -71,7 +71,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Geser ujung dua vektor pada bidang koordinat dan amati penjumlahan, sudut, proyeksi, dan hasil kali titik berubah secara langsung.",
     concepts: ["Penjumlahan vektor", "Hasil kali titik", "Sudut antarvektor", "Proyeksi vektor"],
     glyph: "a·b",
-    component: lazy(() => import("../simulation/VectorSimulation").then((m) => ({ default: m.VectorSimulation }))),
+    component: lazy(() => import("../simulation/simulations/VectorSimulation").then((m) => ({ default: m.VectorSimulation }))),
   },
   {
     slug: "sistem-linear",
@@ -82,7 +82,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Persamaan linear", "Interseksi", "Sistem", "Solusi"],
     glyph: "y=mx+c",
     component: lazy(() =>
-      import("../simulation/LinearSystemSimulation").then((m) => ({ default: m.LinearSystemSimulation })),
+      import("../simulation/simulations/LinearSystemSimulation").then((m) => ({ default: m.LinearSystemSimulation })),
     ),
   },
   {
@@ -94,7 +94,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Elips", "Parabola", "Hiperbola", "Fokus"],
     glyph: "e",
     component: lazy(() =>
-      import("../simulation/ConicSectionsSimulation").then((m) => ({ default: m.ConicSectionsSimulation })),
+      import("../simulation/simulations/ConicSectionsSimulation").then((m) => ({ default: m.ConicSectionsSimulation })),
     ),
   },
   {
@@ -106,7 +106,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Juring", "Busur", "Sudut pusat", "Lingkaran"],
     glyph: "◔",
     component: lazy(() =>
-      import("../simulation/CircleSectorSimulation").then((m) => ({ default: m.CircleSectorSimulation })),
+      import("../simulation/simulations/CircleSectorSimulation").then((m) => ({ default: m.CircleSectorSimulation })),
     ),
   },
   {
@@ -118,7 +118,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Titik berat", "Titik bagi", "Titik sumbu", "Titik tinggi", "Garis Euler"],
     glyph: "G · I · O · H",
     component: lazy(() =>
-      import("../simulation/TriangleCentersSimulation").then((m) => ({ default: m.TriangleCentersSimulation })),
+      import("../simulation/simulations/TriangleCentersSimulation").then((m) => ({ default: m.TriangleCentersSimulation })),
     ),
   },
   {
@@ -130,7 +130,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Teorema Pythagoras", "Segitiga siku-siku", "Luas persegi", "Tripel Pythagoras"],
     glyph: "a² + b² = c²",
     component: lazy(() =>
-      import("../simulation/PythagorasSimulation").then((m) => ({ default: m.PythagorasSimulation })),
+      import("../simulation/simulations/PythagorasSimulation").then((m) => ({ default: m.PythagorasSimulation })),
     ),
   },
   {
@@ -142,7 +142,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Lingkaran", "Garis singgung persekutuan", "Konstruksi geometri"],
     glyph: "⊙⊙",
     component: lazy(() =>
-      import("../simulation/TwoCircleTangentSimulation").then((m) => ({ default: m.TwoCircleTangentSimulation })),
+      import("../simulation/simulations/TwoCircleTangentSimulation").then((m) => ({ default: m.TwoCircleTangentSimulation })),
     ),
   },
   {
@@ -154,7 +154,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Translasi", "Peregangan", "Refleksi", "Grafik fungsi"],
     glyph: "y = f(x)",
     component: lazy(() =>
-      import("../simulation/FunctionTransformationSimulation").then((m) => ({ default: m.FunctionTransformationSimulation })),
+      import("../simulation/simulations/FunctionTransformationSimulation").then((m) => ({ default: m.FunctionTransformationSimulation })),
     ),
   },
   {
@@ -166,7 +166,7 @@ export const SIMULATIONS: SimulationMeta[] = [
     concepts: ["Grafik fungsi", "Ekspresi", "Plot", "Analisis visual"],
     glyph: "f(x)",
     component: lazy(() =>
-      import("../simulation/GraphPlotterSimulation").then((m) => ({ default: m.GraphPlotterSimulation })),
+      import("../simulation/simulations/GraphPlotterSimulation").then((m) => ({ default: m.GraphPlotterSimulation })),
     ),
   },
   {
@@ -177,7 +177,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Saat titik Q mendekati P pada kurva, kemiringan tali busur PQ mendekati kemiringan garis singgung di P. Itulah nilai turunan.",
     concepts: ["Turunan", "Garis singgung", "Laju perubahan", "Kemonotonan"],
     glyph: "f′",
-    component: lazy(() => import("../simulation/DerivativeSimulation").then((m) => ({ default: m.DerivativeSimulation }))),
+    component: lazy(() => import("../simulation/simulations/DerivativeSimulation").then((m) => ({ default: m.DerivativeSimulation }))),
   },
   {
     slug: "integral",
@@ -187,7 +187,7 @@ export const SIMULATIONS: SimulationMeta[] = [
       "Lihat bagaimana jumlah luas persegi panjang mendekati nilai integral ketika lebar partisinya makin kecil.",
     concepts: ["Integral", "Luas daerah", "Riemann", "Aproksimasi"],
     glyph: "∫",
-    component: lazy(() => import("../simulation/IntegralSimulation").then((m) => ({ default: m.IntegralSimulation }))),
+    component: lazy(() => import("../simulation/simulations/IntegralSimulation").then((m) => ({ default: m.IntegralSimulation }))),
   },
 ];
 

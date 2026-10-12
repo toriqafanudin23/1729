@@ -97,43 +97,6 @@ html {
   color: var(--mute);
 }
 
-/* ---------------------------------------------------------------- Nav --- */
-
-.lt-nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(255, 255, 255, 0.86);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
-  backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid var(--line);
-}
-
-.lt-nav__in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--nav-h);
-}
-
-.lt-brand {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-}
-
-.lt-nav__crumb {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  color: var(--mute);
-}
-.lt-nav__crumb a:hover {
-  color: var(--ink);
-}
-
 /* ------------------------------------------------------------ Buttons --- */
 
 .lt .lt-btn {
@@ -384,9 +347,6 @@ html {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .lt-nav__crumb span {
-    display: none;
-  }
 }
 
 /* ------------------------------------------------------------ Sections --- */
@@ -559,8 +519,10 @@ html {
   margin-top: 0.45em;
 }
 .lt-rich .katex {
-  display: inline-block;
   font-size: 1.06em;
+}
+.lt-rich .lt-math-inline-scroll {
+  display: inline-block;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -575,6 +537,16 @@ html {
   overflow-x: auto;
   overflow-y: hidden;
   text-align: center;
+}
+.lt-rich .lt-math-inline-scroll,
+.lt-rich .katex-display,
+.lt-rich .math-display {
+  scrollbar-width: none;
+}
+.lt-rich .lt-math-inline-scroll::-webkit-scrollbar,
+.lt-rich .katex-display::-webkit-scrollbar,
+.lt-rich .math-display::-webkit-scrollbar {
+  display: none;
 }
 .lt-rich .math-display .katex-display {
   margin: 0;
@@ -745,8 +717,23 @@ html {
 }
 .lt-tf {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 15px;
+}
+.lt-tf th:first-child,
+.lt-tf td:first-child {
+  width: 2.75rem;
+}
+.lt-tf th:nth-child(3),
+.lt-tf th:nth-child(4),
+.lt-tf td:nth-child(3),
+.lt-tf td:nth-child(4) {
+  width: 3.5rem;
+}
+.lt-tf th:last-child,
+.lt-tf td:last-child {
+  width: 2.25rem;
 }
 .lt-tf th {
   padding: 10px 12px;
@@ -767,6 +754,9 @@ html {
   padding: 10px 12px;
   border-top: 1px solid var(--line);
   vertical-align: middle;
+}
+.lt-tf td:nth-child(2) {
+  overflow-wrap: anywhere;
 }
 .lt-tf tbody tr:first-child td {
   border-top: 0;
@@ -970,22 +960,6 @@ html {
   border-radius: 12px;
   background: var(--wash);
   font-size: 15.5px;
-}
-
-/* -------------------------------------------------------------- Footer --- */
-
-.lt-footer {
-  padding: 28px 0 40px;
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-  color: var(--mute);
-}
-.lt-footer__in {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
 }
 
 @media (prefers-reduced-motion: reduce) {

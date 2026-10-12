@@ -1,6 +1,6 @@
 import JXG from "jsxgraph";
 import { useCallback, useEffect, useId, useRef } from "react";
-import "../styles/jsxgraph.css";
+import "../../../styles/jsxgraph.css";
 
 export type SimBoard = ReturnType<typeof JXG.JSXGraph.initBoard>;
 export type BoundingBox = [number, number, number, number];

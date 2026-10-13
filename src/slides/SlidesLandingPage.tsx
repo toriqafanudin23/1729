@@ -291,6 +291,26 @@ function ThumbProgram() {
   );
 }
 
+function ThumbQuadratic() {
+  const pts = Array.from({ length: 41 }, (_, i) => {
+    const x = -2 + i * 0.1;
+    return `${i ? "L" : "M"}${(160 + x * 46).toFixed(1)} ${(40 + (x * x) * 22).toFixed(1)}`;
+  }).join(" ");
+  return (
+    <ThumbFrame label="Parabola dengan titik puncak, sumbu simetri, dan dua akar">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="60" x2="320" y2="60" />
+        <line x1="160" y1="0" x2="160" y2="180" />
+      </g>
+      <line x1="160" y1="10" x2="160" y2="170" stroke="#b3261e" strokeWidth="1.5" strokeDasharray="4 4" />
+      <path d={pts} fill="none" stroke="#0f172a" strokeWidth="2.75" strokeLinecap="round" />
+      <circle cx="160" cy="40" r="5.5" fill="#0f766e" stroke="#fff" strokeWidth="2" />
+      <circle cx="114" cy="60" r="4.5" fill="#e65100" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="206" cy="60" r="4.5" fill="#e65100" stroke="#fff" strokeWidth="1.5" />
+    </ThumbFrame>
+  );
+}
+
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
@@ -298,7 +318,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

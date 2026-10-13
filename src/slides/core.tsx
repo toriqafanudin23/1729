@@ -185,8 +185,10 @@ export const note = (b: B, pos: () => number[], text: () => string, color = C.mu
 /* ───────── SimBoard: papan yang hanya hidup saat slidenya tampil ───────── */
 export function SimBoard<P extends object>(props: {
   bbox: BBox; params: P; build: Build<P>; onChange?: (patch: Partial<P>) => void; loop?: boolean; maxH?: number;
+  /** Rasio lebar:tinggi papan. Bila diisi, sumbu x dan y boleh berbeda skala (keepAspectRatio mati). */
+  aspect?: number;
 }) {
-  const { bbox, params, build, loop = false, maxH = 500 } = props;
+  const { bbox, params, build, loop = false, maxH = 500, aspect } = props;
   const host = useRef<HTMLDivElement>(null);
   const deck = useDeck();
   const active = useActive(host);
@@ -200,7 +202,7 @@ export function SimBoard<P extends object>(props: {
     if (!active) return;
     const raf = requestAnimationFrame(() => {
       const b = JXG.JSXGraph.initBoard(id, {
-        boundingbox: bbox, keepAspectRatio: true, axis: false, grid: false, showCopyright: false,
+        boundingbox: bbox, keepAspectRatio: aspect === undefined, axis: false, grid: false, showCopyright: false,
         showNavigation: false, showInfobox: false, pan: { enabled: false }, zoom: { enabled: false },
         resize: { enabled: true, throttle: 60 },
       } as never) as B;
@@ -214,7 +216,7 @@ export function SimBoard<P extends object>(props: {
       cancelAnimationFrame(raf);
       if (board.current) { JXG.JSXGraph.freeBoard(board.current); board.current = null; }
     };
-  }, [active, id, bbox, build]);
+  }, [active, id, bbox, build, aspect]);
 
   useEffect(() => { board.current?.update(); }, [params]);
 
@@ -239,7 +241,7 @@ export function SimBoard<P extends object>(props: {
     return () => cancelAnimationFrame(raf);
   }, [active, loop]);
 
-  const ratio = (bbox[2] - bbox[0]) / (bbox[1] - bbox[3]);
+  const ratio = aspect ?? (bbox[2] - bbox[0]) / (bbox[1] - bbox[3]);
   return (
     <div className="ds-board" data-prevent-swipe style={{ maxWidth: ratio * maxH }}>
       <div id={id} ref={host} className="ds-board__canvas" style={{ aspectRatio: String(ratio) }} />

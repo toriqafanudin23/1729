@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -82,6 +82,19 @@ export const DECKS: DeckMeta[] = [
     level: "Kelas X",
     thumb: "program",
     Component: lazy(() => import("./ProgramLinearDeck")),
+  },
+  {
+    slug: "fungsi-kuadrat",
+    title: "Fungsi kuadrat",
+    category: "Aljabar",
+    summary:
+      "Dari bentuk umum sampai soal cerita: geser a, b, c dan lihat parabola berubah. Akar, diskriminan, titik puncak, menyusun fungsi, hingga garis dan parabola, lengkap dengan tantangan dan kuis berbasis simulasi.",
+    concepts: ["Parabola", "Akar", "Diskriminan", "Titik puncak", "Menyusun fungsi", "Garis dan parabola"],
+    slides: 39,
+    minutes: 55,
+    level: "Kelas X",
+    thumb: "quadratic",
+    Component: lazy(() => import("./FungsiKuadratDeck")),
   },
 ];
 

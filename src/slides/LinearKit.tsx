@@ -183,8 +183,12 @@ export function MethodSlide(p: {
 }
 
 /* ───────── Kuis pilihan ganda (dengan grafik pembahasan) ───────── */
-export type Viz = { bbox: BBox; lines?: Abc[]; cons?: Cons[]; pts?: Vec[]; mark?: Vec };
-export type QItem = { q: ReactNode; opts: string[]; ans: number; why: ReactNode; viz?: Viz };
+export type Viz = {
+  bbox: BBox; lines?: Abc[]; cons?: Cons[]; pts?: Vec[]; mark?: Vec;
+  fns?: ((x: number) => number)[]; // kurva y = f(x), mis. parabola
+  aspect?: number; // skala sumbu bebas (lihat SimBoard)
+};
+export type QItem = { q: ReactNode; opts: string[]; ans: number; why: ReactNode; viz?: Viz; vizFirst?: boolean };
 const LETTER = ["A", "B", "C", "D", "E"];
 const rich = (s: string) => (/[\\^_{}]/.test(s) ? tex(s) : s);
 const buildViz: Build<{ v: Viz }> = (b, g) => {
@@ -194,6 +198,7 @@ const buildViz: Build<{ v: Viz }> = (b, g) => {
     ln(b, () => g().v.lines?.[i] ?? null, c, 2.5);
     boundary(b, () => g().v.cons?.[i] ?? null, c, 2.25);
   });
+  [0, 1, 2].forEach((i) => mk(b, "functiongraph", [(x: number) => g().v.fns?.[i]?.(x) ?? NaN], { ...still, strokeColor: COL[i], strokeWidth: 2.75 }));
   [0, 1, 2, 3, 4, 5].forEach((i) => dot(b, () => g().v.pts?.[i] ?? OFF, C.violet, 5));
   dot(b, () => g().v.mark ?? OFF, C.green, 8);
 };
@@ -226,6 +231,7 @@ export function Quiz(p: { eyebrow: string; title: string; items: QItem[] }) {
       stage={done ? (
         <Btn onClick={() => { setI(0); setPick(null); setScore(0); }}>Ulangi kuis</Btn>
       ) : (<>
+        {it.vizFirst && it.viz && <SimBoard key={`f${i}`} bbox={it.viz.bbox} aspect={it.viz.aspect} params={{ v: it.viz }} build={buildViz} maxH={200} />}
         <div className="ds-opts">
           {it.opts.map((o, j) => (
             <button
@@ -237,7 +243,7 @@ export function Quiz(p: { eyebrow: string; title: string; items: QItem[] }) {
             </button>
           ))}
         </div>
-        {pick !== null && it.viz && <SimBoard key={i} bbox={it.viz.bbox} params={{ v: it.viz }} build={buildViz} maxH={230} />}
+        {pick !== null && !it.vizFirst && it.viz && <SimBoard key={i} bbox={it.viz.bbox} aspect={it.viz.aspect} params={{ v: it.viz }} build={buildViz} maxH={230} />}
         {pick !== null && <Btn onClick={() => { setPick(null); setI(i + 1); }}>{i + 1 < N ? "Soal berikutnya" : "Lihat skor"}</Btn>}
       </>)}
     />

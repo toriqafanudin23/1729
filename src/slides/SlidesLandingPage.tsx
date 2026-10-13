@@ -311,6 +311,25 @@ function ThumbQuadratic() {
   );
 }
 
+function ThumbCircle() {
+  return (
+    <ThumbFrame label="Lingkaran dengan juring, jari-jari, dan garis singgung">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="90" x2="320" y2="90" />
+        <line x1="160" y1="0" x2="160" y2="180" />
+      </g>
+      <path d="M160 90 L230 90 A70 70 0 0 0 209.5 40.5 Z" fill="rgba(101,87,210,.16)" />
+      <circle cx="160" cy="90" r="70" fill="none" stroke="#0f172a" strokeWidth="2.75" />
+      <line x1="160" y1="90" x2="209.5" y2="40.5" stroke="#1565c0" strokeWidth="2.25" />
+      <line x1="160" y1="90" x2="230" y2="90" stroke="#1565c0" strokeWidth="2.25" />
+      <path d="M230 90 A70 70 0 0 0 209.5 40.5" fill="none" stroke="#e65100" strokeWidth="4" strokeLinecap="round" />
+      <line x1="170" y1="20" x2="250" y2="62" stroke="#e65100" strokeWidth="2" strokeDasharray="5 4" />
+      <circle cx="160" cy="90" r="4.5" fill="#0f172a" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="209.5" cy="40.5" r="5" fill="#b3261e" stroke="#fff" strokeWidth="1.5" />
+    </ThumbFrame>
+  );
+}
+
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
@@ -318,7 +337,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -95,6 +95,19 @@ export const DECKS: DeckMeta[] = [
     level: "Kelas X",
     thumb: "quadratic",
     Component: lazy(() => import("./FungsiKuadratDeck")),
+  },
+  {
+    slug: "lingkaran",
+    title: "Lingkaran",
+    category: "Geometri",
+    summary:
+      "Dari unsur-unsur lingkaran, nilai π, keliling, dan luas, sampai sudut pusat dan sudut keliling, busur, juring, garis singgung persekutuan luar dan dalam, serta lingkaran luar dan dalam segitiga. Setiap rumus ditemukan lewat simulasi.",
+    concepts: ["Unsur", "π", "Keliling dan luas", "Sudut pusat dan keliling", "Busur dan juring", "Garis singgung", "Lingkaran luar dan dalam"],
+    slides: 25,
+    minutes: 60,
+    level: "Kelas VIII–IX",
+    thumb: "circle",
+    Component: lazy(() => import("./LingkaranDeck")),
   },
 ];
 

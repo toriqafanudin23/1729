@@ -556,7 +556,7 @@ export default function Landing() {
         <section className="lp-hero">
           <div className="lp-wrap lp-hero__grid">
             <div className="lp-hero__copy">
-              <p className="lp-eyebrow">Matematika, terlihat.</p>
+              <p className="lp-eyebrow">Math in Cartesian</p>
               <h1>Pahami matematika dengan melihatnya.</h1>
               <p className="lp-lead">
                 1729 adalah ruang simulasi interaktif. Geser satu titik, dan lihat seluruh konsep ikut bergerak, dari
@@ -564,11 +564,11 @@ export default function Landing() {
               </p>
               <div className="lp-cta">
                 <Link to={HREF.start} className="lp-btn lp-btn--solid">
-                  Mulai menjelajah <span aria-hidden>→</span>
+                  Pilih simulasi <span aria-hidden>→</span>
                 </Link>
-                <a href="#footer" className="lp-btn lp-btn--ghost">
-                  Lihat produk lain
-                </a>
+                <Link to="/slides" className="lp-btn lp-btn--ghost">
+                  Lakukan presentasi
+                </Link>
               </div>
             </div>
 

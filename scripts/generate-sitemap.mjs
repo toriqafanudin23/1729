@@ -6,9 +6,10 @@ import { join } from "node:path";
 
 const SITE = "https://1729.blog";
 const SIMULATIONS_FILE = "src/pages/simulations.ts";
+const SLIDES_FILE = "src/slides/slides.ts";
 const LATIHAN_DATA_DIR = "src/pages/latihan_soal/data"; // sesuaikan bila berbeda
 
-const STATIC_PATHS = ["/", "/simulasi", "/latihan", "/toko"];
+const STATIC_PATHS = ["/", "/simulasi", "/latihan", "/toko", "/slides"];
 
 const slugsIn = (file) =>
   [...readFileSync(file, "utf8").matchAll(/\bslug:\s*["']([a-z0-9-]+)["']/g)].map((m) => m[1]);
@@ -21,6 +22,7 @@ function walk(dir) {
 }
 
 const simulasi = [...new Set(slugsIn(SIMULATIONS_FILE))].map((s) => `/simulasi/${s}`);
+const slides = [...new Set(slugsIn(SLIDES_FILE))].map((s) => `/slides/${s}`);
 
 let latihan = [];
 try {
@@ -29,7 +31,7 @@ try {
   console.warn(`[sitemap] folder ${LATIHAN_DATA_DIR} tidak ditemukan; /latihan/<slug> dilewati.`);
 }
 
-const paths = [...STATIC_PATHS, ...simulasi, ...latihan];
+const paths = [...STATIC_PATHS, ...simulasi, ...latihan, ...slides];
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${paths.map((p) => `  <url><loc>${SITE}${p}</loc></url>`).join("\n")}
@@ -37,4 +39,4 @@ ${paths.map((p) => `  <url><loc>${SITE}${p}</loc></url>`).join("\n")}
 `;
 
 writeFileSync("public/sitemap.xml", xml);
-console.log(`[sitemap] ${paths.length} URL (${simulasi.length} simulasi, ${latihan.length} latihan)`);
+console.log(`[sitemap] ${paths.length} URL (${simulasi.length} simulasi, ${latihan.length} latihan, ${slides.length} slides)`);

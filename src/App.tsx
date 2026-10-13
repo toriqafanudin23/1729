@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { BrowserRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CatalogPage from "./pages/CatalogPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -8,7 +8,8 @@ import SimulationPage from "./pages/SimulationPage";
 import ShopLanding from "./pages/shop/ShopLanding";
 import LatihanLanding from "./pages/latihan_soal/LatihanLanding";
 import { LatihanRoute } from "./pages/latihan_soal/LatihanPage";
-import SlidesPage from "./slides/SlidesPage";
+import SlidesLandingPage from "./slides/SlidesLandingPage";
+import SlidePresentPage from "./slides/SlidePresentPage";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -101,7 +102,9 @@ function App() {
         <Route path="/latihan" element={<LatihanLanding />} />
         <Route path="/latihan/:slug" element={<LatihanRoute />} />
         <Route path="/toko" element={<ShopLanding />} />
-        <Route path="/slide" element={<SlidesPage />} />
+        <Route path="/slides" element={<SlidesLandingPage />} />
+        <Route path="/slides/:slug" element={<SlidePresentPage />} />
+        <Route path="/slide" element={<Navigate to="/slides" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Analytics />

@@ -5,7 +5,7 @@ const navigation = [
   { label: "Beranda", to: "/", end: true },
   { label: "Simulasi", to: "/simulasi" },
   { label: "Latihan soal", to: "/latihan" },
-  { label: "Slide", to: "/slide" },
+  { label: "Slide", to: "/slides" },
 //   { label: "Toko", to: "/toko" },
 ];
 

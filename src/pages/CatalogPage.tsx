@@ -3,45 +3,8 @@ import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { useSeo } from "../useSeo";
 import { SIMULATIONS, simulationPath } from "./simulations";
+import { SimThumb } from "./SimThumbs";
 import "./pages.css";
-
-/* Gambar kecil kartu: kisi dan sumbu seperti di katalog Slides,
-   dengan simbol topik (glyph) di tengah. SVG statis, ringan. */
-const GRID_X = [40, 80, 120, 160, 200, 240, 280];
-const GRID_Y = [20, 60, 100, 140];
-
-function Thumb({ glyph, label }: { glyph: string; label: string }) {
-  const size = glyph.length > 8 ? 30 : glyph.length > 4 ? 44 : 72;
-  return (
-    <svg viewBox="0 0 320 180" className="sp-thumb" role="img" aria-label={label}>
-      <g stroke="#e2e8f0" strokeWidth="1">
-        {GRID_X.map((x) => (
-          <line key={`x${x}`} x1={x} y1="0" x2={x} y2="180" />
-        ))}
-        {GRID_Y.map((y) => (
-          <line key={`y${y}`} x1="0" y1={y} x2="320" y2={y} />
-        ))}
-      </g>
-      <g stroke="#94a3b8" strokeWidth="1.25">
-        <line x1="0" y1="90" x2="320" y2="90" />
-        <line x1="160" y1="0" x2="160" y2="180" />
-      </g>
-      <text
-        x="160"
-        y="90"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={size}
-        className="sp-thumb__glyph"
-        stroke="#f8fafc"
-        strokeWidth="8"
-        paintOrder="stroke"
-      >
-        {glyph}
-      </text>
-    </svg>
-  );
-}
 
 export default function CatalogPage() {
   useSeo({
@@ -72,7 +35,7 @@ export default function CatalogPage() {
                   aria-describedby={`sim-${s.slug}-ringkasan`}
                 >
                   <div className="sp-card__thumb" aria-hidden>
-                    <Thumb glyph={s.glyph} label={s.title} />
+                    <SimThumb slug={s.slug} title={s.title} glyph={s.glyph} />
                   </div>
                   <div className="sp-card__body">
                     <p className="sp-card__meta">

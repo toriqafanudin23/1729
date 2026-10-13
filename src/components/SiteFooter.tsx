@@ -3,6 +3,7 @@ import "./SiteFooter.css";
 
 const navigation = [
   { label: "Beranda", to: "/", end: true },
+  { label: "Tentang", to: "/about" },
   { label: "Simulasi", to: "/simulasi" },
   { label: "Latihan soal", to: "/latihan" },
   { label: "Slides", to: "/slides" },

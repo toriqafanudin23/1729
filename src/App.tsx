@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
+import AboutPage from "./pages/AboutPage";
 import CatalogPage from "./pages/CatalogPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import SimulationPage from "./pages/SimulationPage";
@@ -97,6 +98,7 @@ function App() {
       <PageLoading />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/simulasi" element={<CatalogPage />} />
         <Route path="/simulasi/:slug" element={<SimulationRoute />} />
         <Route path="/latihan" element={<LatihanLanding />} />

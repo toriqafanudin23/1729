@@ -170,6 +170,21 @@ html {
   text-wrap: balance;
 }
 
+/* Tagline besar: dua baris, kata kedua lebih redup (senada .lp-statement span) */
+.lp-hero h1.lp-hero__tagline {
+  margin: 18px 0 24px;
+  font-size: clamp(52px, 9vw, 112px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+.lp-hero__tagline span {
+  display: block;
+}
+.lp-hero__accent {
+  font-style: italic;
+  color: var(--soft);
+}
+
 .lp-lead {
   max-width: 34em;
   font-size: clamp(17px, 1.6vw, 20px);

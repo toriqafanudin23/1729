@@ -1,0 +1,87 @@
+/* Halaman Tentang. Bergantung pada LandingPage.css (.lp, .lp-*). */
+
+.ab-hero {
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+.ab-hero::before {
+  /* kertas grafik memudar, digeser ke kanan seperti di hero landing */
+  -webkit-mask-image: radial-gradient(ellipse 70% 90% at 78% 40%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 90% at 78% 40%, #000 0%, transparent 78%);
+}
+.ab-title {
+  position: relative;
+  margin: 18px 0 0;
+  max-width: 12em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(48px, 8.5vw, 104px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.ab-title span {
+  display: block;
+}
+
+.ab-grid {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: clamp(24px, 6vw, 80px);
+  align-items: start;
+}
+.ab-grid__label {
+  padding-top: 8px;
+}
+
+.ab-prose {
+  display: grid;
+  gap: 20px;
+  max-width: 36em;
+  font-size: clamp(17px, 1.5vw, 19px);
+  line-height: 1.75;
+}
+.ab-prose .ab-lead {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.ab-prose .lp-cta {
+  margin-top: 12px;
+}
+
+.ab-sign {
+  display: grid;
+  gap: 4px;
+}
+.ab-sign__hi {
+  font-size: 17px;
+}
+.ab-sign__name {
+  margin-top: 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.ab-sign__role {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+@media (max-width: 860px) {
+  .ab-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .ab-grid__label {
+    padding-top: 0;
+  }
+}

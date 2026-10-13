@@ -556,10 +556,12 @@ export default function Landing() {
         <section className="lp-hero">
           <div className="lp-wrap lp-hero__grid">
             <div className="lp-hero__copy">
-              <p className="lp-eyebrow">Math in Cartesian</p>
-              <h1>Pahami matematika dengan melihatnya.</h1>
+              <p className="lp-eyebrow">1729</p>
+              <h1 className="lp-hero__tagline">
+                <span>Math in</span> <span className="lp-hero__accent">Cartesian.</span>
+              </h1>
               <p className="lp-lead">
-                1729 adalah ruang simulasi interaktif. Geser satu titik, dan lihat seluruh konsep ikut bergerak, dari
+                Pahami matematika dengan melihatnya. 1729 adalah ruang simulasi interaktif. Geser satu titik, dan lihat seluruh konsep ikut bergerak, dari
                 fungsi kuadrat sampai integral Riemann.
               </p>
               <div className="lp-cta">

@@ -1,0 +1,22 @@
+/* Tambahan gaya untuk deck SPL, SPtL, dan Program linear (melengkapi slides.css) */
+.ds-deck .ds-ok { color: #15803d; }
+.ds-deck .ds-bad { color: #b3261e; }
+.ds-steps { display: grid; gap: 2px; font-size: 20px; font-family: var(--sans); font-weight: 400; }
+.ds-steps > div { padding: 2px 10px; border-left: 3px solid transparent; opacity: 0.55; }
+.ds-steps > div:first-child { opacity: 1; }
+.ds-steps > div.is-now { opacity: 1; border-left-color: var(--ink); }
+.ds-opts { display: grid; gap: 8px; width: 100%; max-width: 640px; }
+.ds-opt {
+  display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 6px 14px; text-align: left;
+  font: 500 18px var(--sans); color: var(--ink); background: #fff; border: 1px solid var(--line2);
+  border-radius: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.ds-opt b { font: 600 14px var(--mono); color: var(--mute); }
+.ds-opt:hover:not(:disabled) { border-color: var(--ink); }
+.ds-opt:disabled { cursor: default; opacity: 0.85; }
+.ds-opt.is-ok { border-color: #15803d; background: #f0fdf4; }
+.ds-opt.is-bad { border-color: #b3261e; background: #fef2f2; }
+.ds-opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.ds-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; }
+.ds-copy .ds-table { font-size: 17px; }
+.ds-copy .ds-table th, .ds-copy .ds-table td { padding: 6px 8px; }

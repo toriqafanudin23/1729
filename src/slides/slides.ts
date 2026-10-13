@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -43,6 +43,45 @@ export const DECKS: DeckMeta[] = [
     level: "Kelas XI–XII",
     thumb: "calculus",
     Component: lazy(() => import("./CalculusDeck")),
+  },
+  {
+    slug: "sistem-persamaan-linear",
+    title: "Sistem persamaan linear",
+    category: "Aljabar",
+    summary:
+      "Pahami sistem persamaan sebagai garis-garis yang bertemu, lalu temukan penyelesaiannya lewat grafik, substitusi, dan eliminasi.",
+    concepts: ["SPLDV", "SPLTV", "Grafik", "Substitusi", "Eliminasi"],
+    slides: 21,
+    minutes: 35,
+    level: "Kelas X",
+    thumb: "linear",
+    Component: lazy(() => import("./SistemPersamaanDeck")),
+  },
+  {
+    slug: "pertidaksamaan-linear",
+    title: "Pertidaksamaan linear",
+    category: "Aljabar",
+    summary:
+      "Jelajahi himpunan solusi pertidaksamaan pada garis bilangan dan bidang, dari nilai mutlak hingga irisan daerah.",
+    concepts: ["PtLSV", "Nilai mutlak", "Pecahan", "Daerah solusi", "Sistem"],
+    slides: 12,
+    minutes: 25,
+    level: "Kelas X",
+    thumb: "inequality",
+    Component: lazy(() => import("./PertidaksamaanDeck")),
+  },
+  {
+    slug: "program-linear",
+    title: "Program linear",
+    category: "Aljabar",
+    summary:
+      "Bagaimana mencari untung terbesar atau biaya terkecil bila bahan terbatas? Susun model, gambar daerah layak, lalu uji titik pojok sampai nilai optimum ditemukan.",
+    concepts: ["Model matematika", "Daerah layak", "Titik pojok", "Fungsi tujuan", "Garis selidik"],
+    slides: 10,
+    minutes: 25,
+    level: "Kelas X",
+    thumb: "program",
+    Component: lazy(() => import("./ProgramLinearDeck")),
   },
 ];
 

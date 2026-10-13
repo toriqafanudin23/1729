@@ -246,13 +246,60 @@ function ThumbCalculus() {
   );
 }
 
+function ThumbLinear() {
+  return (
+    <ThumbFrame label="Dua garis berpotongan pada satu titik penyelesaian">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="140" x2="320" y2="140" />
+        <line x1="160" y1="0" x2="160" y2="180" />
+      </g>
+      <line x1="35" y1="35" x2="285" y2="155" stroke="#1565c0" strokeWidth="2.75" />
+      <line x1="40" y1="165" x2="280" y2="25" stroke="#e65100" strokeWidth="2.75" />
+      <circle cx="160" cy="95" r="6" fill="#0f172a" stroke="#fff" strokeWidth="2" />
+    </ThumbFrame>
+  );
+}
+
+function ThumbInequality() {
+  return (
+    <ThumbFrame label="Daerah solusi pada satu sisi garis batas">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="140" x2="320" y2="140" />
+        <line x1="160" y1="0" x2="160" y2="180" />
+      </g>
+      <path d="M25 155 L80 35 L285 35 L285 155 Z" fill="rgba(11,132,198,.16)" />
+      <line x1="80" y1="35" x2="285" y2="155" stroke="#e65100" strokeWidth="2.75" />
+      <circle cx="175" cy="115" r="5" fill="#2e7d32" stroke="#fff" strokeWidth="2" />
+    </ThumbFrame>
+  );
+}
+
+function ThumbProgram() {
+  return (
+    <ThumbFrame label="Garis selidik menyapu daerah layak sampai menyentuh titik pojok">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="150" x2="320" y2="150" />
+        <line x1="50" y1="0" x2="50" y2="180" />
+      </g>
+      <path d="M50 150 L170 150 L230 90 L50 40 Z" fill="rgba(15,118,110,.16)" />
+      <line x1="50" y1="150" x2="170" y2="150" stroke="#1565c0" strokeWidth="2.75" />
+      <line x1="50" y1="40" x2="230" y2="90" stroke="#e65100" strokeWidth="2.75" />
+      <line x1="170" y1="150" x2="230" y2="90" stroke="#0f766e" strokeWidth="2.75" />
+      <line x1="120" y1="10" x2="300" y2="140" stroke="#6557d2" strokeWidth="2.5" strokeDasharray="5 5" />
+      <circle cx="230" cy="90" r="6.5" fill="#b3261e" stroke="#fff" strokeWidth="2" />
+    </ThumbFrame>
+  );
+}
+
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
 function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
-      <div className="sl-card__thumb">{deck.thumb === "transform" ? <ThumbTransform /> : <ThumbCalculus />}</div>
+      <div className="sl-card__thumb">
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : <ThumbCalculus />}
+      </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">
           <span>{String(index + 1).padStart(2, "0")}</span>

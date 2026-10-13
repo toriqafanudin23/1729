@@ -1,0 +1,77 @@
+/* SimSlides — tema slate yang senada dengan landing page 1729 */
+.ds-deck {
+  --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ink: #0f172a; --text: #334155; --mute: #64748b; --soft: #94a3b8;
+  --line: #e2e8f0; --line2: #cbd5e1; --wash: #f8fafc;
+
+  /* variabel Reveal (tanpa memuat tema bawaan) */
+  --r-main-font: var(--sans); --r-main-font-size: 25px; --r-main-color: var(--text);
+  --r-heading-font: var(--serif); --r-heading-color: var(--ink); --r-heading-text-transform: none;
+  --r-heading-font-weight: 500; --r-heading-letter-spacing: -0.02em; --r-heading-line-height: 1.08;
+  --r-heading-margin: 0 0 0.45em 0; --r-link-color: var(--ink);
+
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  max-width: calc((100dvh - 24px) * 16 / 9); margin: 0 auto;
+  overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff;
+}
+.ds-deck:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.ds-deck .slides > section { height: 100%; padding: 0 !important; text-align: left; }
+.ds-deck .reveal .progress, .ds-deck .progress { color: var(--ink); height: 4px; }
+.ds-deck .controls { color: var(--ink); }
+.ds-deck .slide-number { font-family: var(--mono); font-size: 13px; background: none; color: var(--mute); }
+
+.ds-slide {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 44px;
+  align-items: center; height: 100%; padding: 34px 56px 46px;
+}
+.ds-copy h2 { font-size: 54px; }
+.ds-copy p, .ds-copy li { margin: 0 0 0.65em; font-size: 24px; line-height: 1.5; }
+.ds-eyebrow { font-family: var(--mono); font-size: 14px !important; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); }
+.ds-copy .fragment { padding-left: 14px; border-left: 3px solid var(--line2); font-size: 22px; }
+.ds-math { font-size: 28px; }
+.ds-copy b { color: var(--ink); font-weight: 600; }
+.ds-muted { color: var(--mute); font-size: 18px !important; }
+
+.ds-stage { display: grid; justify-items: center; gap: 12px; min-width: 0; }
+.ds-board { width: 100%; }
+.ds-board__canvas { width: 100%; touch-action: none; }
+.ds-board .jxgbox { border: 0 !important; border-radius: 0 !important; background: transparent !important; }
+.ds-board text, .ds-board .JXGtext { font-family: var(--mono) !important; }
+
+.ds-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; width: 100%; max-width: 640px; }
+.ds-controls--one { grid-template-columns: 1fr; }
+.ds-read {
+  width: 100%; max-width: 640px; padding: 9px 14px; font: 500 16px/1.5 var(--mono);
+  color: var(--ink); background: var(--wash); border: 1px solid var(--line); border-radius: 10px;
+}
+.ds-ok { color: var(--green); } .ds-bad { color: var(--red); }
+
+.ds-range { display: grid; gap: 2px; font-size: 17px; }
+.ds-range__top { display: flex; justify-content: space-between; gap: 8px; }
+.ds-range__top b { font: 600 16px var(--mono); }
+.ds-range input { -webkit-appearance: none; appearance: none; height: 26px; margin: 0; background: transparent; cursor: pointer; }
+.ds-range input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--c) var(--fill), #d7dee8 var(--fill)); }
+.ds-range input::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -7px; border-radius: 50%; background: var(--c); border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35); }
+.ds-range input::-moz-range-track { height: 4px; border-radius: 2px; background: #d7dee8; }
+.ds-range input::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--c); }
+.ds-range input::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--c); border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35); }
+
+.ds-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ds-chip, .ds-btn {
+  height: 36px; padding: 0 16px; font: 500 16px var(--sans); color: var(--ink);
+  background: #fff; border: 1px solid var(--line2); border-radius: 9px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ds-chip:hover, .ds-btn:hover { border-color: var(--ink); }
+.ds-chip[aria-pressed="true"] { color: #fff; background: var(--ink); border-color: var(--ink); }
+.ds-btn { background: var(--ink); color: #fff; }
+.ds-chip:focus-visible, .ds-btn:focus-visible, .ds-range input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.ds-table { border-collapse: collapse; width: 100%; font-size: 20px; }
+.ds-table th, .ds-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.ds-table thead th { font: 500 13px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.ds-table tbody th { color: var(--ink); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) { .ds-deck * { transition: none !important; animation: none !important; } }

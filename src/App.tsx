@@ -8,6 +8,7 @@ import SimulationPage from "./pages/SimulationPage";
 import ShopLanding from "./pages/shop/ShopLanding";
 import LatihanLanding from "./pages/latihan_soal/LatihanLanding";
 import { LatihanRoute } from "./pages/latihan_soal/LatihanPage";
+import SlidesPage from "./slides/SlidesPage";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -100,6 +101,7 @@ function App() {
         <Route path="/latihan" element={<LatihanLanding />} />
         <Route path="/latihan/:slug" element={<LatihanRoute />} />
         <Route path="/toko" element={<ShopLanding />} />
+        <Route path="/slide" element={<SlidesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Analytics />

@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: "Latihan", to: "/latihan" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ variant = "default" }: { variant?: "default" | "hero" }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function SiteHeader() {
   }, [menuOpen]);
 
   return (
-    <header className="site-header">
+    <header className={`site-header${variant === "hero" ? " site-header--hero" : ""}`}>
       <div className="site-header__inner">
         <Link className="site-header__brand" to="/" aria-label="1729 beranda">
           1729

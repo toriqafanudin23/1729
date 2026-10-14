@@ -137,6 +137,10 @@ html {
   padding: clamp(48px, 9vw, 112px) 0 clamp(56px, 8vw, 104px);
 }
 
+.site-header--hero + main .lp-hero {
+  padding-top: clamp(112px, 14vw, 184px);
+}
+
 /* kertas grafik yang memudar */
 .lp-hero::before {
   content: "";

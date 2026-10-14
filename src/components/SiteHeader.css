@@ -8,6 +8,14 @@
   backdrop-filter: blur(14px);
 }
 
+.site-header--hero {
+  margin-bottom: -64px;
+  background: rgba(255, 255, 255, 0.76);
+  border-bottom-color: transparent;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 .site-header,
 .site-header * {
   box-sizing: border-box;
@@ -88,6 +96,7 @@
 }
 
 .site-header__login {
+  display: none;
   width: 100%;
   min-height: 46px;
   margin-top: 10px;
@@ -115,6 +124,15 @@
   .site-header__inner {
     height: 72px;
     padding-inline: clamp(24px, 5vw, 48px);
+  }
+
+  .site-header--hero {
+    margin-bottom: -72px;
+  }
+
+  .site-header--hero .site-header__inner {
+    width: min(100%, 1120px);
+    padding-inline: clamp(20px, 5vw, 40px);
   }
 
   .site-header__menu-toggle {

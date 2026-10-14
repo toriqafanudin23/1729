@@ -566,7 +566,7 @@ export default function Landing() {
 
   return (
     <div className="lp">
-      <SiteHeader />
+      <SiteHeader variant="hero" />
 
       <main>
         {/* ---------------------------- Hero ---------------------------- */}

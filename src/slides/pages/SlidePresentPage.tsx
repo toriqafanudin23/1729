@@ -1,12 +1,12 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { SiteHeader } from "../components/SiteHeader";
-import { SiteFooter } from "../components/SiteFooter";
-import { useSeo } from "../useSeo";
-import { DECKS, findDeck } from "../slides/slides";
-import { useFullscreen } from "../slides/useFullscreen";
-import "../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
-import "./SlidesPages.css";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
+import { useSeo } from "../../useSeo";
+import { DECKS, findDeck } from "../slides";
+import { useFullscreen } from "../common/useFullscreen";
+import "../../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
+import "../styles/SlidesPages.css";
 
 const IconEnter = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

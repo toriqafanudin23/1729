@@ -1,11 +1,11 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { SiteHeader } from "../components/SiteHeader";
-import { SiteFooter } from "../components/SiteFooter";
-import { useSeo } from "../useSeo";
-import { DECKS, type DeckMeta } from "../slides/slides";
-import "../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
-import "./SlidesPages.css";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
+import { useSeo } from "../../useSeo";
+import { DECKS, type DeckMeta } from "../slides";
+import "../../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
+import "../styles/SlidesPages.css";
 
 /* ------------------------------------------------------------------ *
  *  Hero: satu kurva, satu titik. Garis potong (oranye) merapat menjadi

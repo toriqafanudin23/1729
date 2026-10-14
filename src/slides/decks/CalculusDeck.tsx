@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import { SimMath } from "../simulation/common/components/SimMath";
+import { SimMath } from "../../simulation/common/components/SimMath";
 import {
   Btn, C, Chips, dot, fmt, Frame, mk, note, OFF, Range, seg, shape,
   SimBoard, SlideDeck, still, useStep, useTween,
   type BBox, type Build, type Vec,
-} from "./core";
+} from "../common/core";
 
 /* Slide "Limit dan turunan": mendekati → ε–δ → garis potong → fungsi turunan. */
 

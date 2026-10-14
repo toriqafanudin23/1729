@@ -9,8 +9,8 @@ const SimulationPage = lazy(() => import("./pages/SimulationPage"));
 const ShopLanding = lazy(() => import("./pages/shop/ShopLanding"));
 const LatihanLanding = lazy(() => import("./pages/latihan_soal/LatihanLanding"));
 const LatihanRoute = lazy(() => import("./pages/latihan_soal/LatihanPage").then((m) => ({ default: m.LatihanRoute })));
-const SlidesLandingPage = lazy(() => import("./slides/SlidesLandingPage"));
-const SlidePresentPage = lazy(() => import("./slides/SlidePresentPage"));
+const SlidesLandingPage = lazy(() => import("./slides/pages/SlidesLandingPage"));
+const SlidePresentPage = lazy(() => import("./slides/pages/SlidePresentPage"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();

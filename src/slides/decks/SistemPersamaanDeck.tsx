@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   Btn, C, Chips, dot, fmt, Frame, mk, note, OFF, Range, seg, shape, SimBoard, SlideDeck, still, useStep,
   type BBox, type Build, type Vec,
-} from "./core";
+} from "../common/core";
 import {
   buildSys, cases, eq, KIND, lin, ln, MethodSlide, n, Quiz, solve, tex,
   type Abc, type MP, type QItem, type Sys,
-} from "./LinearKit";
+} from "../common/LinearKit";
 
 /* Deck "Sistem persamaan linear" (Kelas X): neraca → garis → titik potong → metode → soal cerita. */
 

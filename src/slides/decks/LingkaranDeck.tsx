@@ -3,8 +3,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Btn, C, Chips, dot, fmt, Frame, mk, note, OFF, Range, rad, seg, shape, SimBoard, SlideDeck, still, useStep, useTween,
   type B, type BBox, type Build, type Vec,
-} from "./core";
-import { fill, ln, n, Quiz, solve, tex } from "./LinearKit";
+} from "../common/core";
+import { fill, ln, n, Quiz, solve, tex } from "../common/LinearKit";
 import { QUIZ } from "./quizzes/LingkaranQuiz";
 
 /* Slide "Lingkaran" (SMP): unsur → π, keliling, luas → sudut pusat dan keliling → busur, juring, tembereng

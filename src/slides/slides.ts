@@ -29,7 +29,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 35,
     level: "SMP dan SMA",
     thumb: "linear",
-    Component: lazy(() => import("./SistemPersamaanDeck")),
+    Component: lazy(() => import("./decks/SistemPersamaanDeck")),
   },
   {
     slug: "pertidaksamaan-linear",
@@ -42,7 +42,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 25,
     level: "SMP dan SMA",
     thumb: "inequality",
-    Component: lazy(() => import("./PertidaksamaanDeck")),
+    Component: lazy(() => import("./decks/PertidaksamaanDeck")),
   },
   {
     slug: "program-linear",
@@ -55,7 +55,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 25,
     level: "SMP dan SMA",
     thumb: "program",
-    Component: lazy(() => import("./ProgramLinearDeck")),
+    Component: lazy(() => import("./decks/ProgramLinearDeck")),
   },
   {
     slug: "fungsi-kuadrat",
@@ -68,7 +68,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 55,
     level: "SMP dan SMA",
     thumb: "quadratic",
-    Component: lazy(() => import("./FungsiKuadratDeck")),
+    Component: lazy(() => import("./decks/FungsiKuadratDeck")),
   },
   {
     slug: "lingkaran",
@@ -81,7 +81,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 60,
     level: "SMP dan SMA",
     thumb: "circle",
-    Component: lazy(() => import("./LingkaranDeck")),
+    Component: lazy(() => import("./decks/LingkaranDeck")),
   },
   {
     slug: "bangun-ruang-sisi-datar",
@@ -94,7 +94,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 60,
     level: "SMP",
     thumb: "solid",
-    Component: lazy(() => import("./BangunRuangDeck")),
+    Component: lazy(() => import("./decks/BangunRuangDeck")),
   },
   {
     slug: "transformasi-geometri",
@@ -107,7 +107,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 20,
     level: "SMP dan SMA",
     thumb: "transform",
-    Component: lazy(() => import("./TransformationDeck")),
+    Component: lazy(() => import("./decks/TransformationDeck")),
   },
   {
     slug: "limit-turunan",
@@ -120,7 +120,7 @@ export const DECKS: DeckMeta[] = [
     minutes: 15,
     level: "SMA",
     thumb: "calculus",
-    Component: lazy(() => import("./CalculusDeck")),
+    Component: lazy(() => import("./decks/CalculusDeck")),
   }
 ];
 

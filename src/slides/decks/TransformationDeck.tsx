@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import JXG from "jsxgraph";
 import { useEffect, useRef, useState } from "react";
-import { SimMath } from "../simulation/common/components/SimMath";
-import { texNumber } from "../simulation/common/utils/simUtils";
+import { SimMath } from "../../simulation/common/components/SimMath";
+import { texNumber } from "../../simulation/common/utils/simUtils";
 import {
   add, arrow, Btn, C, Chips, dil, dot, fmt, Frame, mirror, mk, note, OFF, Range, rad, rot, seg, shape,
   SimBoard, SlideDeck, still, useStep, useTween,
   type B, type BBox, type Build, type Vec,
-} from "./core";
+} from "../common/core";
 
 /* Slide "Transformasi geometri": penjelasan (fragmen) menggerakkan simulasi. */
 

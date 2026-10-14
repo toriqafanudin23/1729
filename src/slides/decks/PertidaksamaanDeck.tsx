@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   Btn, C, Chips, dot, fmt, Frame, mk, note, OFF, Range, seg, SimBoard, SlideDeck, still, useStep,
   type BBox, type Build, type Vec,
-} from "./core";
+} from "../common/core";
 import {
   axisSolution, boundary, consTxt, fill, gcd, K, lin, ln, n, ok, Quiz, region, solution, tex,
   type Cons, type QItem, type Sol,
-} from "./LinearKit";
+} from "../common/LinearKit";
 
 /* Deck "Pertidaksamaan linear" (Kelas X): garis bilangan → nilai mutlak → pecahan → daerah → sistem. */
 

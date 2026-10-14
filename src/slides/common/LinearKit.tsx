@@ -3,12 +3,12 @@
    Isi: geometri garis ax+by=c, daerah pertidaksamaan, penyelesaian pada garis bilangan,
    slide "metode langkah demi langkah" (MethodSlide), dan kuis pilihan ganda (Quiz). */
 import { useRef, useState, type ReactNode } from "react";
-import { SimMath } from "../simulation/common/components/SimMath";
+import { SimMath } from "../../simulation/common/components/SimMath";
 import {
   Btn, C, dot, fmt, Frame, mk, note, OFF, seg, shape, SimBoard, still, useStep,
   type B, type BBox, type Build, type Vec,
 } from "./core";
-import "./sppl.css";
+import "../styles/sppl.css";
 
 /* ───────── Teks & angka ───────── */
 export const tex = (s: string) => <SimMath tex={s} />;

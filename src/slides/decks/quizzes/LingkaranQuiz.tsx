@@ -1,5 +1,5 @@
-import type { QItem } from "../LinearKit";
-import { tex } from "../LinearKit";
+import type { QItem } from "../../common/LinearKit";
+import { tex } from "../../common/LinearKit";
 
 const raw = String.raw;
 

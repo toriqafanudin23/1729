@@ -3,11 +3,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Btn, C, Chips, dot, fmt, Frame, note, OFF, Range, SimBoard, SlideDeck, useStep,
   type BBox, type Build, type Vec,
-} from "./core";
+} from "../common/core";
 import {
   boundary, fill, K, lin, ln, n, ok, Quiz, region, tex, consTxt,
   type Cons, type QItem,
-} from "./LinearKit";
+} from "../common/LinearKit";
 
 /* Deck "Program linear" (penerapan sistem pertidaksamaan): model → daerah feasible → titik pojok → Z optimum. */
 

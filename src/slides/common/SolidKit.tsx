@@ -6,7 +6,7 @@
    Isi: aritmetika vektor, bangun (kubus, balok, prisma, limas), mesin jaring-jaring (buka ⇄ lipat
    lewat engsel dan rotasi Rodrigues), pemeriksa jaring kubus, dan penggambar view3. */
 import { C, mk, OFF, still, type B, type Vec } from "./core";
-import "./solid.css";
+import "../styles/solid.css";
 
 export type V3 = [number, number, number];
 

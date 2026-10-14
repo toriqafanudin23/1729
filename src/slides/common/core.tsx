@@ -9,7 +9,7 @@ import {
   createContext, useContext, useEffect, useId, useRef, useState,
   type CSSProperties, type ReactNode, type RefObject,
 } from "react";
-import "./slides.css";
+import "../styles/slides.css";
 
 export type Vec = [number, number];
 export type BBox = [number, number, number, number];

@@ -3,14 +3,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Btn, C, Chips, fmt, Frame, Range, SimBoard, SlideDeck, useStep, useTween,
   type BBox, type Build,
-} from "./core";
-import { n, Quiz, tex } from "./LinearKit";
+} from "../common/core";
+import { n, Quiz, tex } from "../common/LinearKit";
 import { QUIZ } from "./quizzes/BangunRuangQuiz";
 import {
   boxCol, boxEdges, boxFaces, boxNetFromCells, boxSolid, CUBE_NETS, cellNet, cubeCol, edgesOf, netFromSolid, netIndex,
   netScene, orient, polyArea, polyPerim, prismSolid, pyramidSolid, regular, solidEdges, solidFaces, view3,
   type Cell, type E3, type F3, type L3, type NetFace, type Scene, type Solid, type V3,
-} from "./SolidKit";
+} from "../common/SolidKit";
 
 /* Slide "Bangun ruang sisi datar" (SMP kelas 8): unsur → kubus dan balok → jaring-jaring (contoh, 11 jaring kubus,
    uji dan rancang sendiri) → luas permukaan → volume (kubus satuan, susunan kubus) → prisma → limas → soal cerita.

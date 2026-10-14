@@ -3,8 +3,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Btn, C, Chips, dot, fmt, Frame, mk, note, OFF, Range, seg, SimBoard, SlideDeck, still, useStep,
   type BBox, type Build, type Vec,
-} from "./core";
-import { ln, n, Quiz, tex } from "./LinearKit";
+} from "../common/core";
+import { ln, n, Quiz, tex } from "../common/LinearKit";
 import { QUIZ } from "./quizzes/FungsiKuadratQuiz";
 
 /* Slide "Fungsi kuadrat": bentuk umum → grafik → akar → diskriminan → puncak → menyusun fungsi

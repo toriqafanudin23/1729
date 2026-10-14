@@ -24,11 +24,11 @@ import { useStoredSimulationState } from "../common/hooks/useStoredSimulationSta
 
 type Vec = [number, number];
 type Mat = number[][];
-type ReflectionAxis = "x" | "y" | "yx" | "ynx";
+type ReflectionAxis = "x" | "y" | "yx" | "ynx" | "horizontal" | "vertical";
 
 type Step =
   | { id: number; type: "translation"; tx: number; ty: number }
-  | { id: number; type: "reflection"; axis: ReflectionAxis }
+  | { id: number; type: "reflection"; axis: ReflectionAxis; value?: number }
   | { id: number; type: "rotation"; angle: number; cx: number; cy: number }
   | { id: number; type: "dilation"; k: number; cx: number; cy: number };
 
@@ -38,6 +38,7 @@ type Draft = {
   tx: number;
   ty: number;
   axis: ReflectionAxis;
+  mirrorValue: number;
   angle: number;
   rcx: number;
   rcy: number;
@@ -149,18 +150,29 @@ const axisLabels: Record<ReflectionAxis, string> = {
   y: "sumbu y",
   yx: "garis y = x",
   ynx: "garis y = −x",
+  horizontal: "garis horizontal",
+  vertical: "garis vertikal",
 };
 const axisShort: Record<ReflectionAxis, string> = {
   x: "sumbu x",
   y: "sumbu y",
   yx: "y = x",
   ynx: "y = −x",
+  horizontal: "y = k",
+  vertical: "x = k",
 };
-const axisKeys: ReflectionAxis[] = ["x", "y", "yx", "ynx"];
+const axisKeys: ReflectionAxis[] = ["x", "y", "yx", "ynx", "horizontal", "vertical"];
 
-const reflectionAngles: Record<ReflectionAxis, number> = { x: 0, y: 90, yx: 45, ynx: -45 };
+const reflectionAngles: Record<ReflectionAxis, number> = {
+  x: 0,
+  y: 90,
+  yx: 45,
+  ynx: -45,
+  horizontal: 0,
+  vertical: 90,
+};
 
-const exactReflections: Record<ReflectionAxis, Mat> = {
+const exactReflections: Record<Exclude<ReflectionAxis, "horizontal" | "vertical">, Mat> = {
   x: [
     [1, 0, 0],
     [0, -1, 0],
@@ -183,7 +195,7 @@ const exactReflections: Record<ReflectionAxis, Mat> = {
   ],
 };
 
-const mirrorEnds: Record<ReflectionAxis, [Vec, Vec]> = {
+const mirrorEnds: Record<Exclude<ReflectionAxis, "horizontal" | "vertical">, [Vec, Vec]> = {
   x: [
     [-30, 0],
     [30, 0],
@@ -211,6 +223,7 @@ const initialDraft: Draft = {
   tx: 3,
   ty: 1,
   axis: "y",
+  mirrorValue: 2,
   angle: 90,
   rcx: 0,
   rcy: 0,
@@ -291,6 +304,32 @@ function aboutCenter(m: Mat, cx: number, cy: number): Mat {
   return multiply(translationMatrix(cx, cy), multiply(m, translationMatrix(-cx, -cy)));
 }
 
+function exactReflection(step: Extract<Step, { type: "reflection" }>): Mat {
+  const value = step.value ?? 0;
+  if (step.axis === "horizontal") {
+    return [
+      [1, 0, 0],
+      [0, -1, 2 * value],
+      [0, 0, 1],
+    ];
+  }
+  if (step.axis === "vertical") {
+    return [
+      [-1, 0, 2 * value],
+      [0, 1, 0],
+      [0, 0, 1],
+    ];
+  }
+  return exactReflections[step.axis];
+}
+
+function reflectionLineEnds(step: Extract<Step, { type: "reflection" }>): [Vec, Vec] {
+  const value = step.value ?? 0;
+  if (step.axis === "horizontal") return [[-30, value], [30, value]];
+  if (step.axis === "vertical") return [[value, -30], [value, 30]];
+  return mirrorEnds[step.axis];
+}
+
 /**
  * Matriks satu langkah pada progres lokal t (0..1). Pada t = 1 hasilnya adalah
  * matriks transformasi sebenarnya. Refleksi dianimasikan dengan "membalik"
@@ -307,12 +346,16 @@ function stepMatrix(step: Step, t: number): Mat {
       return aboutCenter(scaleMatrix(s, s), step.cx, step.cy);
     }
     case "reflection": {
-      if (t >= 1) return exactReflections[step.axis];
+      if (t >= 1) return exactReflection(step);
       const phi = toRadians(reflectionAngles[step.axis]);
-      return multiply(
+      const flip = multiply(
         rotationMatrix(phi),
         multiply(scaleMatrix(1, Math.cos(Math.PI * t)), rotationMatrix(-phi)),
       );
+      if (step.axis !== "horizontal" && step.axis !== "vertical") return flip;
+      const shift = (1 - Math.cos(Math.PI * t)) * (step.value ?? 0);
+      const offset = step.axis === "horizontal" ? translationMatrix(0, shift) : translationMatrix(shift, 0);
+      return multiply(offset, flip);
     }
   }
 }
@@ -347,7 +390,15 @@ function describeStep(step: Step): { name: string; detail: string } {
     case "translation":
       return { name: "Translasi", detail: `T(${formatText(step.tx)}; ${formatText(step.ty)})` };
     case "reflection":
-      return { name: "Refleksi", detail: `terhadap ${axisLabels[step.axis]}` };
+      return {
+        name: "Refleksi",
+        detail:
+          step.axis === "horizontal"
+            ? `terhadap garis y = ${formatText(step.value ?? 0)}`
+            : step.axis === "vertical"
+              ? `terhadap garis x = ${formatText(step.value ?? 0)}`
+              : `terhadap ${axisLabels[step.axis]}`,
+      };
     case "rotation":
       return {
         name: "Rotasi",
@@ -474,10 +525,11 @@ export function TransformationSimulation() {
     "transformation.draft-type",
     "rotation",
   );
-  const [draft, setDraft] = useStoredSimulationState<Draft>(
+  const [storedDraft, setDraft] = useStoredSimulationState<Draft>(
     "transformation.draft.v2",
     initialDraft,
   );
+  const draft = useMemo<Draft>(() => ({ ...initialDraft, ...storedDraft }), [storedDraft]);
   const [sampleIndex, setSampleIndex] = useStoredSimulationState(
     "transformation.sample-index",
     0,
@@ -776,7 +828,7 @@ export function TransformationSimulation() {
     const mirrorCoord = (end: 0 | 1, coord: 0 | 1) => () => {
       const step = guideStep();
       return step && step.type === "reflection"
-        ? mirrorEnds[step.axis][end][coord]
+        ? reflectionLineEnds(step)[end][coord]
         : 1000 + end;
     };
     const mirror = board.create(
@@ -987,7 +1039,7 @@ export function TransformationSimulation() {
         step = { id, type: "translation", tx: draft.tx, ty: draft.ty };
         break;
       case "reflection":
-        step = { id, type: "reflection", axis: draft.axis };
+        step = { id, type: "reflection", axis: draft.axis, value: draft.mirrorValue };
         break;
       case "rotation":
         step = { id, type: "rotation", angle: draft.angle, cx: draft.rcx, cy: draft.rcy };
@@ -1482,25 +1534,45 @@ export function TransformationSimulation() {
                 </div>
 
                 {draftType === "reflection" ? (
-                  <div
-                    className="sim-seg"
-                    style={{ marginTop: 6 }}
-                    role="radiogroup"
-                    aria-label="Garis cermin"
-                  >
-                    {axisKeys.map((axis) => (
-                      <button
-                        key={axis}
-                        type="button"
-                        role="radio"
-                        className="sim-seg__btn"
-                        aria-checked={draft.axis === axis}
-                        onClick={() => setDraft((current) => ({ ...current, axis }))}
-                      >
-                        {axisShort[axis]}
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <div
+                      className="sim-seg"
+                      style={{ marginTop: 6 }}
+                      role="radiogroup"
+                      aria-label="Garis cermin"
+                    >
+                      {axisKeys.map((axis) => (
+                        <button
+                          key={axis}
+                          type="button"
+                          role="radio"
+                          className="sim-seg__btn"
+                          aria-checked={draft.axis === axis}
+                          onClick={() => setDraft((current) => ({ ...current, axis }))}
+                        >
+                          {axisShort[axis]}
+                        </button>
+                      ))}
+                    </div>
+                    {(draft.axis === "horizontal" || draft.axis === "vertical") && (
+                      <SimSlider
+                        id="transformation-draft-reflection-value"
+                        name={draft.axis === "horizontal" ? "nilai y garis cermin" : "nilai x garis cermin"}
+                        label={
+                          <SimMath
+                            tex={`${draft.axis === "horizontal" ? "y" : "x"}=${texNumber(draft.mirrorValue)}`}
+                          />
+                        }
+                        hint="posisi garis cermin"
+                        accent={colors.guide}
+                        value={draft.mirrorValue}
+                        min={-9}
+                        max={9}
+                        step={0.5}
+                        onChange={(value) => setDraftNum("mirrorValue", value)}
+                      />
+                    )}
+                  </>
                 ) : (
                   draftRows[draftType].map((row) => (
                     <SimSlider

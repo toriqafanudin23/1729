@@ -109,6 +109,10 @@ export function QuadraticSimulation() {
     "quadratic.view",
     initialView,
   );
+  const [parameterStep, setParameterStep] = useStoredSimulationState(
+    "quadratic.parameter-step",
+    1,
+  );
   const view = useMemo<ViewState>(
     () => ({
       ...initialView,
@@ -469,6 +473,21 @@ export function QuadraticSimulation() {
       panel={
         <>
           <SimSection title="Parameter" sticky>
+            <p className="sim-hint">Pilih langkah tombol tambah dan kurangi</p>
+            <div className="sim-seg" role="radiogroup" aria-label="Besar perubahan parameter">
+              {([0.2, 0.5, 1] as const).map((step) => (
+                <button
+                  key={step}
+                  type="button"
+                  role="radio"
+                  className="sim-seg__btn"
+                  aria-checked={parameterStep === step}
+                  onClick={() => setParameterStep(step)}
+                >
+                  ±{step.toLocaleString("id-ID")}
+                </button>
+              ))}
+            </div>
             {sliderConfig.map(({ key, min, max, hint }) => (
               <SimSlider
                 key={key}
@@ -480,6 +499,7 @@ export function QuadraticSimulation() {
                 value={params[key]}
                 min={min}
                 max={max}
+                step={parameterStep}
                 valueText={`${key} sama dengan ${params[key]}`}
                 onChange={(value) => updateParam(key, value)}
               />

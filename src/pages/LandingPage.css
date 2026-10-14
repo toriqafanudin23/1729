@@ -442,10 +442,6 @@ html {
   color: var(--soft);
   transition: color 0.18s ease;
 }
-.lp-topic__sym .katex {
-  font-size: 1em;
-}
-
 /* ----------------------------------------------------------------- Why --- */
 
 .lp-section--ink {

@@ -19,32 +19,6 @@ export interface DeckMeta {
 
 export const DECKS: DeckMeta[] = [
   {
-    slug: "transformasi-geometri",
-    title: "Transformasi geometri",
-    category: "Geometri",
-    summary:
-      "Apa yang berubah dan apa yang tetap saat bangun digeser, dicerminkan, diputar, dan diperbesar. Berakhir pada satu gagasan: matriks adalah ke mana î dan ĵ mendarat.",
-    concepts: ["Translasi", "Refleksi", "Rotasi", "Dilatasi", "Komposisi", "Matriks"],
-    slides: 9,
-    minutes: 20,
-    level: "SMP dan SMA",
-    thumb: "transform",
-    Component: lazy(() => import("./TransformationDeck")),
-  },
-  {
-    slug: "limit-turunan",
-    title: "Limit dan turunan",
-    category: "Kalkulus",
-    summary:
-      "Dua gagasan terbesar kalkulus sebenarnya satu pertanyaan: apa yang terjadi ketika sesuatu mendekati nol? Dari permainan ε–δ sampai garis potong yang menjadi garis singgung.",
-    concepts: ["Limit", "ε–δ", "Garis potong", "Fungsi turunan"],
-    slides: 6,
-    minutes: 15,
-    level: "SMA",
-    thumb: "calculus",
-    Component: lazy(() => import("./CalculusDeck")),
-  },
-  {
     slug: "sistem-persamaan-linear",
     title: "Sistem persamaan linear",
     category: "Aljabar",
@@ -122,6 +96,32 @@ export const DECKS: DeckMeta[] = [
     thumb: "solid",
     Component: lazy(() => import("./BangunRuangDeck")),
   },
+  {
+    slug: "transformasi-geometri",
+    title: "Transformasi geometri",
+    category: "Geometri",
+    summary:
+      "Apa yang berubah dan apa yang tetap saat bangun digeser, dicerminkan, diputar, dan diperbesar. Berakhir pada satu gagasan: matriks adalah ke mana î dan ĵ mendarat.",
+    concepts: ["Translasi", "Refleksi", "Rotasi", "Dilatasi", "Komposisi", "Matriks"],
+    slides: 9,
+    minutes: 20,
+    level: "SMP dan SMA",
+    thumb: "transform",
+    Component: lazy(() => import("./TransformationDeck")),
+  },
+  {
+    slug: "limit-turunan",
+    title: "Limit dan turunan",
+    category: "Kalkulus",
+    summary:
+      "Dua gagasan terbesar kalkulus sebenarnya satu pertanyaan: apa yang terjadi ketika sesuatu mendekati nol? Dari permainan ε–δ sampai garis potong yang menjadi garis singgung.",
+    concepts: ["Limit", "ε–δ", "Garis potong", "Fungsi turunan"],
+    slides: 6,
+    minutes: 15,
+    level: "SMA",
+    thumb: "calculus",
+    Component: lazy(() => import("./CalculusDeck")),
+  }
 ];
 
 export const findDeck = (slug?: string) => DECKS.find((d) => d.slug === slug);

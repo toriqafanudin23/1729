@@ -1,11 +1,9 @@
 import { useEffect, useId, useRef } from "react";
-import JXG from "jsxgraph";
+import type JXG from "jsxgraph";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { useSeo } from "../useSeo";
-import { SimMath } from "../simulation/common/components/SimMath";
-import "../styles/jsxgraph.css";
 import "./LandingPage.css";
 
 /* ------------------------------------------------------------------ *
@@ -241,39 +239,48 @@ function Board({ setup, bbox, className = "" }: BoardProps) {
   useEffect(() => {
     const host = canvasRef.current;
     if (!host) return;
-
-    const board = JXG.JSXGraph.initBoard(domId, {
-      boundingbox: bbox,
-      keepAspectRatio: true,
-      axis: false,
-      grid: false,
-      showCopyright: false,
-      showNavigation: false,
-      showInfobox: false,
-      pan: { enabled: false },
-      zoom: { enabled: false },
-      drag: { enabled: false },
-      resize: { enabled: true, throttle: 60 },
-    } as never);
-
-    const out: Out = () => {}; // keterangan angka sengaja tidak ditampilkan
-    const frame = setup(board, out);
-
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let clock = reduce ? STILL_TIME : 0;
-    frame(clock);
-    board.update();
-
+    let disposed = false;
+    let board: JXG.Board | undefined;
+    let freeBoard: ((board: JXG.Board) => void) | undefined;
     let raf = 0;
-    let last = 0;
-    let io: IntersectionObserver | undefined;
+    let loadObserver: IntersectionObserver | undefined;
+    let animationObserver: IntersectionObserver | undefined;
 
-    if (!reduce) {
+    const initialize = async () => {
+      const [{ default: JXG }] = await Promise.all([
+        import("jsxgraph"),
+        import("../styles/jsxgraph.css"),
+      ]);
+      if (disposed) return;
+      freeBoard = (activeBoard) => JXG.JSXGraph.freeBoard(activeBoard);
+      board = JXG.JSXGraph.initBoard(domId, {
+        boundingbox: bbox,
+        keepAspectRatio: true,
+        axis: false,
+        grid: false,
+        showCopyright: false,
+        showNavigation: false,
+        showInfobox: false,
+        pan: { enabled: false },
+        zoom: { enabled: false },
+        drag: { enabled: false },
+        resize: { enabled: true, throttle: 60 },
+      } as never);
+
+      const out: Out = () => {}; // keterangan angka sengaja tidak ditampilkan
+      const frame = setup(board, out);
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let clock = reduce ? STILL_TIME : 0;
+      frame(clock);
+      board.update();
+      if (reduce) return;
+
+      let last = 0;
       const tick = (now: number) => {
         if (last) clock += Math.min((now - last) / 1000, 0.1);
         last = now;
         frame(clock);
-        board.update();
+        board?.update();
         raf = requestAnimationFrame(tick);
       };
       const stop = () => {
@@ -281,7 +288,7 @@ function Board({ setup, bbox, className = "" }: BoardProps) {
         raf = 0;
         last = 0;
       };
-      io = new IntersectionObserver(
+      animationObserver = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
             if (!raf) raf = requestAnimationFrame(tick);
@@ -289,15 +296,25 @@ function Board({ setup, bbox, className = "" }: BoardProps) {
         },
         { threshold: 0.15 },
       );
-      io.observe(host);
-      return () => {
-        io?.disconnect();
-        stop();
-        JXG.JSXGraph.freeBoard(board);
-      };
-    }
+      animationObserver.observe(host);
+    };
 
-    return () => JXG.JSXGraph.freeBoard(board);
+    loadObserver = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      loadObserver?.disconnect();
+      void initialize().catch(() => {
+        if (!disposed) host.setAttribute("data-load-error", "true");
+      });
+    }, { rootMargin: "120px" });
+    loadObserver.observe(host);
+
+    return () => {
+      disposed = true;
+      loadObserver?.disconnect();
+      animationObserver?.disconnect();
+      cancelAnimationFrame(raf);
+      if (board) freeBoard?.(board);
+    };
   }, [domId, bbox, setup]);
 
   return (
@@ -523,18 +540,18 @@ const FEATURES = [
 ];
 
 const TOPICS: { name: string; sym: string; href: string }[] = [
-  { name: "Fungsi Kuadrat", sym: "ax^2", href: HREF.quadratic },
+  { name: "Fungsi Kuadrat", sym: "ax²", href: HREF.quadratic },
   { name: "Transformasi Geometri", sym: "T", href: "/simulasi/transformasi-geometri" },
-  { name: "Turunan", sym: "f'", href: HREF.derivative },
-  { name: "Integral Riemann", sym: String.raw`\int`, href: HREF.integral },
-  { name: "Vektor", sym: String.raw`\overrightarrow{a}`, href: HREF.vector },
+  { name: "Turunan", sym: "f′", href: HREF.derivative },
+  { name: "Integral Riemann", sym: "∫", href: HREF.integral },
+  { name: "Vektor", sym: "a⃗", href: HREF.vector },
   { name: "Irisan Kerucut", sym: "e", href: HREF.conic },
-  { name: "Trigonometri", sym: String.raw`\sin`, href: HREF.trigonometri },
-  { name: "Garis Singgung", sym: String.raw`\nearrow`, href: HREF.tangent },
+  { name: "Trigonometri", sym: "sin", href: HREF.trigonometri },
+  { name: "Garis Singgung", sym: "↗", href: HREF.tangent },
   { name: "Plotter Grafik", sym: "f(x)", href: "/simulasi/plotter-grafik" },
-  { name: "Sektor Lingkaran", sym: String.raw`\angle`, href: "/simulasi/sektor-lingkaran" },
+  { name: "Sektor Lingkaran", sym: "∠", href: "/simulasi/sektor-lingkaran" },
   { name: "Transformasi Fungsi", sym: "y=f(x)", href: "/simulasi/transformasi-fungsi" },
-  { name: "Dan terus bertambah", sym: String.raw`\ldots`, href: HREF.start },
+  { name: "Dan terus bertambah", sym: "…", href: HREF.start },
 ];
 
 /* ------------------------------------------------------------------ *
@@ -625,7 +642,7 @@ export default function Landing() {
                   <span className="lp-topic__no">{String(i + 1).padStart(2, "0")}</span>
                   <span className="lp-topic__name">{t.name}</span>
                   <span className="lp-topic__sym" aria-hidden>
-                    <SimMath tex={t.sym} />
+                    {t.sym}
                   </span>
                 </Link>
               ))}

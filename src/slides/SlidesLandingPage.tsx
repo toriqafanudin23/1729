@@ -408,17 +408,6 @@ const KEYS: { keys: string[]; label: string }[] = [
   { keys: ["Esc"], label: "Keluar dari layar penuh" },
 ];
 
-const CATALOG_ORDER = [
-  "sistem-persamaan-linear",
-  "pertidaksamaan-linear",
-  "program-linear",
-  "fungsi-kuadrat",
-  "lingkaran",
-  "bangun-ruang-sisi-datar",
-  "transformasi-geometri",
-  "limit-turunan",
-];
-
 export default function SlidesLandingPage() {
   useSeo({
     title: "1729 Slides | Another Level: Presentasi Matematika Interaktif",
@@ -427,10 +416,7 @@ export default function SlidesLandingPage() {
     path: "/slides",
   });
 
-  const catalogDecks = CATALOG_ORDER.flatMap((slug) => {
-    const deck = DECKS.find((item) => item.slug === slug);
-    return deck ? [deck] : [];
-  });
+  const catalogDecks = DECKS;
   const first = catalogDecks[0];
 
   return (

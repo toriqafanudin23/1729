@@ -1,16 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
 import { useSeo } from "../../useSeo";
-import "katex/dist/katex.min.css";
-import "./styles/LatihanPage.css"; // gaya renderer LaTeX untuk simbol materi
 import "./styles/LatihanLanding.css";
-import { LEVEL_LABEL } from "./components/SectionBlock";
-import { Rich } from "./components/Rich";
-import { MATERIALS } from "./data";
-import { summarize } from "./lib/catalog";
-import type { Level, Material } from "./types";
+import { PACK_CATALOG } from "./catalog";
+import type { Level } from "./types";
 
 /* ------------------------------------------------------------------ *
  *  Tautan: sesuaikan dengan route di aplikasi 1729.
@@ -23,6 +18,12 @@ const HREF = {
 };
 
 const LEVELS: Level[] = ["mudah", "sedang", "sulit", "hots"];
+const LEVEL_LABEL: Record<Level, string> = {
+  mudah: "Mudah",
+  sedang: "Sedang",
+  sulit: "Sulit",
+  hots: "HOTS",
+};
 const CATEGORIES = [
   "Semua",
   "Bilangan",
@@ -32,32 +33,6 @@ const CATEGORIES = [
   "Kombinatorika",
   "Kalkulus",
 ] as const;
-
-// Pengelompokan materi untuk filter katalog.
-const CATEGORY_BY_SLUG: Record<string, (typeof CATEGORIES)[number]> = {
-  "eksponen-logaritma": "Bilangan",
-  "barisan-deret": "Bilangan",
-  "bilangan-kompleks": "Bilangan",
-  sppl: "Aljabar",
-  "fungsi-kuadrat": "Aljabar",
-  "komposisi-fungsi-invers": "Aljabar",
-  matriks: "Aljabar",
-  "transformasi-fungsi": "Aljabar",
-  "fungsi-pemodelan": "Aljabar",
-  polinomial: "Aljabar",
-  "perbandingan-trigonometri": "Geometri",
-  vektor: "Geometri",
-  "transformasi-geometri": "Geometri",
-  lingkaran: "Geometri",
-  "irisan-kerucut": "Geometri",
-  statistika: "Statistika & Peluang",
-  peluang: "Statistika & Peluang",
-  "analisis-data-peluang": "Statistika & Peluang",
-  kombinatorika: "Kombinatorika",
-  limit: "Kalkulus",
-  turunan: "Kalkulus",
-  integral: "Kalkulus",
-};
 
 /* ------------------------------------------------------------------ *
  *  Konten
@@ -297,46 +272,38 @@ function FourierAnimation() {
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
-const tex = (s: string) => `\\(${s}\\)`;
-
-function PackCard({ material, no }: { material: Material; no: number }) {
-  const sum = useMemo(() => summarize(material), [material]);
-  const mixLabel = LEVELS.map((l) => `${LEVEL_LABEL[l]} ${sum.byLevel[l]}`).join(", ");
+function PackCard({ material, no }: { material: (typeof PACK_CATALOG)[number]; no: number }) {
+  const mixLabel = LEVELS.map((l) => `${LEVEL_LABEL[l]} ${material.byLevel[l]}`).join(", ");
   return (
     <article className="lk-card">
       <div className="lk-card__top">
         <span className="lk-card__no">{String(no).padStart(2, "0")}</span>
-        <span className="lk-card__cat">{CATEGORY_BY_SLUG[material.slug]}</span>
-        {material.symbol && (
-          <span className="lk-card__sym" aria-hidden>
-            <Rich as="span" html={tex(material.symbol)} />
-          </span>
-        )}
+        <span className="lk-card__cat">{material.category}</span>
       </div>
 
       <h3>{material.topic}</h3>
       <p className="lk-card__desc">{material.description}</p>
 
       <ul className="lk-facts">
-        <li>{sum.questions} soal</li>
+        <li>{material.questions} soal</li>
         {material.durationMinutes && <li>{material.durationMinutes} menit</li>}
-        <li>{sum.points} poin</li>
+        <li>{material.points} poin</li>
       </ul>
 
       <div className="lk-mix" role="img" aria-label={`Komposisi tingkat kesulitan: ${mixLabel}`}>
-        {LEVELS.filter((l) => sum.byLevel[l] > 0).map((l) => (
-          <span key={l} className={`lk-mix__seg lk-mix__seg--${l}`} style={{ flexGrow: sum.byLevel[l] }} />
+        {LEVELS.filter((l) => material.byLevel[l] > 0).map((l) => (
+          <span key={l} className={`lk-mix__seg lk-mix__seg--${l}`} style={{ flexGrow: material.byLevel[l] }} />
         ))}
       </div>
       <p className="lk-mix__legend">
-        {LEVELS.filter((l) => sum.byLevel[l] > 0).map((l) => (
+        {LEVELS.filter((l) => material.byLevel[l] > 0).map((l) => (
           <span key={l}>
             <i className={`lk-dot lk-dot--${l}`} aria-hidden />
-            {LEVEL_LABEL[l]} {sum.byLevel[l]}
+            {LEVEL_LABEL[l]} {material.byLevel[l]}
           </span>
         ))}
       </p>
-      <p className="lk-card__types">{sum.parts.join("  ·  ")}</p>
+      <p className="lk-card__types">{material.parts.join("  ·  ")}</p>
 
       <Link to={HREF.pack(material.slug)} className="lk-card__go">
         Mulai latihan <span aria-hidden>→</span>
@@ -357,19 +324,15 @@ export default function LatihanLanding() {
 
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");
 
-  const packs = useMemo(() => MATERIALS.map((m) => ({ m, s: summarize(m) })), []);
-  const totals = useMemo(() => {
-    const types = new Set<string>();
-    let questions = 0;
-    for (const { s } of packs) {
-      questions += s.questions;
-      s.types.forEach((t) => types.add(t));
-    }
-    return { packs: packs.length, questions, forms: types.size };
-  }, [packs]);
+  const types = new Set(PACK_CATALOG.flatMap((material) => material.types));
+  const totals = {
+    packs: PACK_CATALOG.length,
+    questions: PACK_CATALOG.reduce((count, material) => count + material.questions, 0),
+    forms: types.size,
+  };
 
-  const shown = MATERIALS.map((m, i) => ({ m, no: i + 1 })).filter(
-    ({ m }) => cat === "Semua" || CATEGORY_BY_SLUG[m.slug] === cat,
+  const shown = PACK_CATALOG.map((material, i) => ({ material, no: i + 1 })).filter(
+    ({ material }) => cat === "Semua" || material.category === cat,
   );
 
   return (
@@ -501,8 +464,8 @@ export default function LatihanLanding() {
             </div>
 
             <div className="lk-grid">
-              {shown.map(({ m, no }) => (
-                <PackCard material={m} no={no} key={m.slug} />
+              {shown.map(({ material, no }) => (
+                <PackCard material={material} no={no} key={material.slug} />
               ))}
             </div>
           </div>

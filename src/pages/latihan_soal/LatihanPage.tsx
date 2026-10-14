@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
@@ -116,7 +116,30 @@ function MissingMaterialPage({ path }: { path: string }) {
 export function LatihanRoute() {
   const { slug } = useParams();
   const { pathname } = useLocation();
-  const material = getMaterial(slug);
+  const [material, setMaterial] = useState<Material | null>();
+
+  useEffect(() => {
+    let active = true;
+    setMaterial(undefined);
+    getMaterial(slug)
+      .then((loaded) => {
+        if (active) setMaterial(loaded ?? null);
+      })
+      .catch(() => {
+        if (active) setMaterial(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (material === undefined) {
+    return (
+      <div className="lt lt-loading" role="status" aria-live="polite">
+        <p>Memuat paket latihan…</p>
+      </div>
+    );
+  }
   if (!material) return <MissingMaterialPage path={pathname} />;
   return <LatihanPage key={material.slug} material={material} />;
 }

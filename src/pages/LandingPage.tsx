@@ -559,8 +559,8 @@ const TOPICS: { name: string; sym: string; href: string }[] = [
  * ------------------------------------------------------------------ */
 export default function Landing() {
   useSeo({
-    title: "1729 | Simulasi Matematika Interaktif dan Latihan Soal",
-    description: "Belajar matematika lewat simulasi interaktif: fungsi kuadrat, trigonometri, turunan, integral, vektor, irisan kerucut, dan latihan soal berjenjang sampai HOTS.",
+    title: "1729 | Simulasi Matematika dan Latihan Soal SMP/SMA",
+    description: "Belajar matematika SMP dan SMA lewat simulasi interaktif, latihan soal berjenjang, pembahasan, dan slide aljabar, geometri, serta kalkulus.",
     path: "/",
   });
 

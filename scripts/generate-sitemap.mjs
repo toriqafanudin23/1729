@@ -9,7 +9,7 @@ const SIMULATIONS_FILE = "src/pages/simulations.ts";
 const SLIDES_FILE = "src/slides/slides.ts";
 const LATIHAN_DATA_DIR = "src/pages/latihan_soal/data"; // sesuaikan bila berbeda
 
-const STATIC_PATHS = ["/", "/simulasi", "/latihan", "/toko", "/slides"];
+const STATIC_PATHS = ["/", "/about", "/simulasi", "/latihan", "/toko", "/slides"];
 
 const slugsIn = (file) =>
   [...readFileSync(file, "utf8").matchAll(/\bslug:\s*["']([a-z0-9-]+)["']/g)].map((m) => m[1]);

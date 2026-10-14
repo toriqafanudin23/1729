@@ -55,7 +55,7 @@ export function useSeo({ title, description, path, image, noindex = false, jsonL
     const fullTitle = path === "/" ? title : `${title} | 1729`;
     const url = new URL(path, SITE).toString();
     const metaDescription = fitSeoDescription(description);
-    const imageUrl = image ? new URL(image, SITE).toString() : undefined;
+    const imageUrl = new URL(image ?? "/1729.png", SITE).toString();
 
     document.title = fullTitle;
     meta("name", "description", metaDescription);
@@ -80,13 +80,11 @@ export function useSeo({ title, description, path, image, noindex = false, jsonL
     meta("property", "og:title", fullTitle);
     meta("property", "og:description", metaDescription);
     meta("property", "og:url", url);
-    if (imageUrl) {
-      meta("property", "og:image", imageUrl);
-      meta("name", "twitter:image", imageUrl);
-    } else {
-      document.head.querySelector('meta[property="og:image"]')?.remove();
-      document.head.querySelector('meta[name="twitter:image"]')?.remove();
-    }
+    meta("property", "og:type", "website");
+    meta("property", "og:image", imageUrl);
+    meta("property", "og:image:alt", "Logo 1729 — simulasi matematika dan latihan soal");
+    meta("name", "twitter:card", "summary_large_image");
+    meta("name", "twitter:image", imageUrl);
     meta("name", "twitter:title", fullTitle);
     meta("name", "twitter:description", metaDescription);
 

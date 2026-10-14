@@ -401,6 +401,18 @@ function ThumbSolid() {
   );
 }
 
+function ThumbSimilar() {
+  return (
+    <ThumbFrame label="Dua segitiga sebangun: yang kecil dan yang besar dengan sudut sama">
+      <g stroke="#94a3b8" strokeWidth="1.25"><line x1="0" y1="150" x2="320" y2="150" /></g>
+      <path d="M30 150 L110 150 L30 96 Z" fill="rgba(15,23,42,.06)" stroke="#0f172a" strokeWidth="2.25" strokeLinejoin="round" />
+      <path d="M150 150 L290 150 L150 55.5 Z" fill="rgba(230,81,0,.1)" stroke="#e65100" strokeWidth="2.25" strokeLinejoin="round" />
+      <path d="M92 150 A18 18 0 0 0 99 136" fill="none" stroke="#0f766e" strokeWidth="2" />
+      <path d="M252 150 A32 32 0 0 0 266 126" fill="none" stroke="#0f766e" strokeWidth="2" />
+    </ThumbFrame>
+  );
+}
+
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
@@ -408,7 +420,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : deck.thumb === "similar" ? <ThumbSimilar /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

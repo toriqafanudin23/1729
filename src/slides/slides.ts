@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid" | "similar";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -97,19 +97,6 @@ export const DECKS: DeckMeta[] = [
     Component: lazy(() => import("./decks/LingkaranDeck")),
   },
   {
-    slug: "irisan-kerucut",
-    title: "Irisan kerucut",
-    category: "Geometri analitik",
-    summary:
-      "Kenali lingkaran, parabola, elips, dan hiperbola melalui persamaan, garis singgung, serta eksentrisitas.",
-    concepts: ["Lingkaran", "Parabola", "Elips", "Hiperbola", "Garis singgung", "Eksentrisitas"],
-    slides: 19,
-    minutes: 40,
-    level: "SMA",
-    thumb: "conic",
-    Component: lazy(() => import("./decks/IrisanKerucutDeck")),
-  },
-  {
     slug: "bangun-ruang-sisi-datar",
     title: "Bangun ruang sisi datar",
     category: "Geometri",
@@ -123,6 +110,19 @@ export const DECKS: DeckMeta[] = [
     Component: lazy(() => import("./decks/BangunRuangDeck")),
   },
   {
+    slug: "kesebangunan-kekongruenan",
+    title: "Kesebangunan dan kekongruenan",
+    category: "Geometri",
+    summary:
+      "Kapan dua bangun sama persis, dan kapan hanya sama bentuk? Dari sifat bangun datar, skala, dan Pythagoras sampai syarat SSS, SAS, ASA, kesebangunan segitiga, segitiga siku-siku, dan pengukuran tinggi pohon lewat bayangan. Setiap syarat dicoba lewat simulasi.",
+    concepts: ["Skala", "Kongruen", "SSS, SAS, ASA", "Sebangun", "Segitiga siku-siku", "Penerapan"],
+    slides: 38,
+    minutes: 65,
+    level: "SMP",
+    thumb: "similar",
+    Component: lazy(() => import("./decks/KesebangunanDeck")),
+  },
+  {
     slug: "transformasi-geometri",
     title: "Transformasi geometri",
     category: "Geometri",
@@ -134,6 +134,19 @@ export const DECKS: DeckMeta[] = [
     level: "SMP dan SMA",
     thumb: "transform",
     Component: lazy(() => import("./decks/TransformationDeck")),
+  },
+  {
+    slug: "irisan-kerucut",
+    title: "Irisan kerucut",
+    category: "Geometri analitik",
+    summary:
+      "Kenali lingkaran, parabola, elips, dan hiperbola melalui persamaan, garis singgung, serta eksentrisitas.",
+    concepts: ["Lingkaran", "Parabola", "Elips", "Hiperbola", "Garis singgung", "Eksentrisitas"],
+    slides: 19,
+    minutes: 40,
+    level: "SMA",
+    thumb: "conic",
+    Component: lazy(() => import("./decks/IrisanKerucutDeck")),
   },
   {
     slug: "limit-turunan",

@@ -609,7 +609,6 @@ export function CircleSectorSimulation() {
     const md = () => S.current.mode;
     const showIn = (...keys: PartKey[]) =>
       md() === "parts" && (S.current.focus === "all" || keys.includes(S.current.focus));
-    const isSector = () => md() === "parts" || md() === "area" || md() === "arc";
     const isInscribed = () => md() === "angle" || md() === "diameter";
     const piVal = () => PI_OPTIONS.find((o) => o.id === S.current.piMode)?.value ?? 3.14;
 

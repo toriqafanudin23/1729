@@ -1,0 +1,11 @@
+/* Gaya tambahan deck Bangun ruang sisi datar (melengkapi slides.css dan sppl.css) */
+.ds-grid { display: grid; gap: 4px; justify-content: center; }
+.ds-cell {
+  width: 34px; height: 34px; padding: 0; font: 600 15px var(--mono); color: #fff;
+  background: #fff; border: 1px solid var(--line2); border-radius: 6px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ds-cell:hover { border-color: var(--ink); }
+.ds-cell.is-on { background: #0f766e; border-color: #0f766e; }
+.ds-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.ds-board svg { touch-action: none; user-select: none; -webkit-user-select: none; }

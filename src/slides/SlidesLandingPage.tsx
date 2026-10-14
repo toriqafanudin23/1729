@@ -330,6 +330,26 @@ function ThumbCircle() {
   );
 }
 
+function ThumbSolid() {
+  return (
+    <ThumbFrame label="Kubus satuan tersusun dengan jaring-jaring kubus di sampingnya">
+      <polygon points="160,38 205,64 160,90 115,64" fill="#5fa8a2" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+      <polygon points="115,64 160,90 160,142 115,116" fill="#e9915a" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+      <polygon points="160,90 205,64 205,116 160,142" fill="#5f9bd6" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+      <g stroke="#0f172a" strokeWidth="1" opacity=".45">
+        <line x1="130" y1="46.7" x2="175" y2="72.7" /><line x1="145" y1="55.3" x2="190" y2="81.3" />
+        <line x1="145" y1="46.7" x2="100" y2="72.7" /><line x1="190" y1="46.7" x2="145" y2="72.7" />
+        <line x1="130" y1="72.7" x2="130" y2="124.7" /><line x1="145" y1="81.3" x2="145" y2="133.3" />
+        <line x1="175" y1="81.3" x2="175" y2="133.3" /><line x1="190" y1="72.7" x2="190" y2="124.7" />
+      </g>
+      <g fill="#cbd5e1" stroke="#0f172a" strokeWidth="1.5">
+        <rect x="250" y="40" width="16" height="16" /><rect x="234" y="56" width="16" height="16" /><rect x="250" y="56" width="16" height="16" />
+        <rect x="266" y="56" width="16" height="16" /><rect x="282" y="56" width="16" height="16" /><rect x="250" y="72" width="16" height="16" />
+      </g>
+    </ThumbFrame>
+  );
+}
+
 /* ------------------------------------------------------------------ *
  *  Kartu katalog
  * ------------------------------------------------------------------ */
@@ -337,7 +357,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">
@@ -388,6 +408,17 @@ const KEYS: { keys: string[]; label: string }[] = [
   { keys: ["Esc"], label: "Keluar dari layar penuh" },
 ];
 
+const CATALOG_ORDER = [
+  "sistem-persamaan-linear",
+  "pertidaksamaan-linear",
+  "program-linear",
+  "fungsi-kuadrat",
+  "lingkaran",
+  "bangun-ruang-sisi-datar",
+  "transformasi-geometri",
+  "limit-turunan",
+];
+
 export default function SlidesLandingPage() {
   useSeo({
     title: "1729 Slides | Another Level: Presentasi Matematika Interaktif",
@@ -396,7 +427,11 @@ export default function SlidesLandingPage() {
     path: "/slides",
   });
 
-  const first = DECKS[0];
+  const catalogDecks = CATALOG_ORDER.flatMap((slug) => {
+    const deck = DECKS.find((item) => item.slug === slug);
+    return deck ? [deck] : [];
+  });
+  const first = catalogDecks[0];
 
   return (
     <div className="lp sl">
@@ -445,7 +480,7 @@ export default function SlidesLandingPage() {
             <h2 className="lp-h2">Pilih materi, tekan mulai.</h2>
 
             <div className="sl-cards">
-              {DECKS.map((d, i) => (
+              {catalogDecks.map((d, i) => (
                 <DeckCard deck={d} index={i} key={d.slug} />
               ))}
               <div className="sl-card sl-card--soon">

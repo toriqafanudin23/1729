@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "solid";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -27,7 +27,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["Translasi", "Refleksi", "Rotasi", "Dilatasi", "Komposisi", "Matriks"],
     slides: 9,
     minutes: 20,
-    level: "Kelas XI",
+    level: "SMP dan SMA",
     thumb: "transform",
     Component: lazy(() => import("./TransformationDeck")),
   },
@@ -40,7 +40,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["Limit", "ε–δ", "Garis potong", "Fungsi turunan"],
     slides: 6,
     minutes: 15,
-    level: "Kelas XI–XII",
+    level: "SMA",
     thumb: "calculus",
     Component: lazy(() => import("./CalculusDeck")),
   },
@@ -53,7 +53,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["SPLDV", "SPLTV", "Grafik", "Substitusi", "Eliminasi"],
     slides: 21,
     minutes: 35,
-    level: "Kelas X",
+    level: "SMP dan SMA",
     thumb: "linear",
     Component: lazy(() => import("./SistemPersamaanDeck")),
   },
@@ -66,7 +66,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["PtLSV", "Nilai mutlak", "Pecahan", "Daerah solusi", "Sistem"],
     slides: 12,
     minutes: 25,
-    level: "Kelas X",
+    level: "SMP dan SMA",
     thumb: "inequality",
     Component: lazy(() => import("./PertidaksamaanDeck")),
   },
@@ -79,7 +79,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["Model matematika", "Daerah layak", "Titik pojok", "Fungsi tujuan", "Garis selidik"],
     slides: 10,
     minutes: 25,
-    level: "Kelas X",
+    level: "SMP dan SMA",
     thumb: "program",
     Component: lazy(() => import("./ProgramLinearDeck")),
   },
@@ -92,7 +92,7 @@ export const DECKS: DeckMeta[] = [
     concepts: ["Parabola", "Akar", "Diskriminan", "Titik puncak", "Menyusun fungsi", "Garis dan parabola"],
     slides: 39,
     minutes: 55,
-    level: "Kelas X",
+    level: "SMP dan SMA",
     thumb: "quadratic",
     Component: lazy(() => import("./FungsiKuadratDeck")),
   },
@@ -105,9 +105,22 @@ export const DECKS: DeckMeta[] = [
     concepts: ["Unsur", "π", "Keliling dan luas", "Sudut pusat dan keliling", "Busur dan juring", "Garis singgung", "Lingkaran luar dan dalam"],
     slides: 25,
     minutes: 60,
-    level: "Kelas VIII–IX",
+    level: "SMP dan SMA",
     thumb: "circle",
     Component: lazy(() => import("./LingkaranDeck")),
+  },
+  {
+    slug: "bangun-ruang-sisi-datar",
+    title: "Bangun ruang sisi datar",
+    category: "Geometri",
+    summary:
+      "Kubus, balok, prisma, dan limas: buka kulitnya menjadi jaring-jaring, lalu isi ruangnya dengan kubus satuan. Termasuk 11 jaring kubus, uji dan rancang jaring sendiri, serta rumus luas permukaan dan volume yang ditemukan lewat simulasi 3D.",
+    concepts: ["Unsur", "Jaring-jaring", "11 jaring kubus", "Luas permukaan", "Kubus satuan", "Volume", "Prisma", "Limas"],
+    slides: 28,
+    minutes: 60,
+    level: "SMP",
+    thumb: "solid",
+    Component: lazy(() => import("./BangunRuangDeck")),
   },
 ];
 

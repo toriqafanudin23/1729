@@ -391,8 +391,8 @@ export default function LatihanLanding() {
                 <a href="#katalog" className="lk-btn lk-btn--solid">
                   Pilih latihan <span aria-hidden>→</span>
                 </a>
-                <a href="#cara" className="lk-btn lk-btn--ghost">
-                  Lihat cara belajar
+                <a href="#unduhan" className="lk-btn lk-btn--ghost">
+                  Unduh
                 </a>
               </div>
 
@@ -413,6 +413,44 @@ export default function LatihanLanding() {
             </div>
 
             <FourierAnimation />
+          </div>
+        </section>
+
+        {/* -------------------------- Unduhan --------------------------- */}
+        <section className="lk-section lk-downloads" id="unduhan">
+          <div className="lk-wrap">
+            <p className="lk-eyebrow">Bahan belajar</p>
+            <h2 className="lk-h2">Unduh latihan soal.</h2>
+            <div className="lk-download-grid">
+              <article className="lk-download-card">
+                <div className="lk-download-card__copy">
+                  <span className="lk-download-card__meta">TKA · SMA · 2026</span>
+                  <h3>Latihan soal TKA SMA 2026</h3>
+                  <p>Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.</p>
+                </div>
+                <a
+                  className="lk-btn lk-btn--solid lk-download-card__button"
+                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMA_2026.zip"
+                  download
+                >
+                  Unduh berkas <span aria-hidden="true">↓</span>
+                </a>
+              </article>
+              <article className="lk-download-card">
+                <div className="lk-download-card__copy">
+                  <span className="lk-download-card__meta">TKA · SMP · 2026</span>
+                  <h3>Latihan soal TKA SMP 2026</h3>
+                  <p>Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.</p>
+                </div>
+                <a
+                  className="lk-btn lk-btn--solid lk-download-card__button"
+                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMP_2026.zip"
+                  download
+                >
+                  Unduh berkas <span aria-hidden="true">↓</span>
+                </a>
+              </article>
+            </div>
           </div>
         </section>
 

@@ -357,6 +357,53 @@ html {
   color: #fff;
 }
 
+.lk-downloads {
+  padding-top: 52px;
+}
+.lk-download-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 28px;
+}
+.lk-download-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: clamp(22px, 4vw, 36px);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  background: var(--paper);
+}
+.lk-download-card__meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--mute);
+}
+.lk-download-card h3 {
+  margin: 8px 0;
+  font-family: var(--serif);
+  font-size: clamp(23px, 3vw, 30px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.lk-download-card p {
+  color: var(--text);
+  font-size: 15px;
+}
+.lk-download-card__button {
+  flex: 0 0 auto;
+}
+@media (max-width: 640px) {
+  .lk-download-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .lk-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));

@@ -78,9 +78,16 @@ function PageLoading() {
   return (
     <div className="app-loading" role="status" aria-live="polite">
       <div className="app-loading__content">
-        <span className="app-loading__brand" aria-hidden="true">1729</span>
-        <span className="app-loading__spinner" aria-hidden="true" />
-        <span className="app-loading__label">Memuat halaman</span>
+        <div className="app-loading__chart" aria-hidden="true">
+          <span className="app-loading__brand">1729</span>
+          <span className="app-loading__chart-label">y = f(x)</span>
+          <svg viewBox="0 0 240 120" focusable="false">
+            <path className="app-loading__axis" d="M24 12v88h204M24 76h204M76 12v88M128 12v88M180 12v88" />
+            <path className="app-loading__curve" d="M26 86 C52 84 56 30 91 34 S130 96 157 69 187 22 226 26" />
+            <circle className="app-loading__point" cx="157" cy="69" r="4" />
+          </svg>
+        </div>
+        <span className="app-loading__label">Memuat halaman<span className="app-loading__dots" aria-hidden="true">…</span></span>
       </div>
     </div>
   );

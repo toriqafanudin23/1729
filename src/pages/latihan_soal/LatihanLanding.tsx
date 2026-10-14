@@ -23,6 +23,41 @@ const HREF = {
 };
 
 const LEVELS: Level[] = ["mudah", "sedang", "sulit", "hots"];
+const CATEGORIES = [
+  "Semua",
+  "Bilangan",
+  "Aljabar",
+  "Geometri",
+  "Statistika & Peluang",
+  "Kombinatorika",
+  "Kalkulus",
+] as const;
+
+// Pengelompokan materi untuk filter katalog.
+const CATEGORY_BY_SLUG: Record<string, (typeof CATEGORIES)[number]> = {
+  "eksponen-logaritma": "Bilangan",
+  "barisan-deret": "Bilangan",
+  "bilangan-kompleks": "Bilangan",
+  sppl: "Aljabar",
+  "fungsi-kuadrat": "Aljabar",
+  "komposisi-fungsi-invers": "Aljabar",
+  matriks: "Aljabar",
+  "transformasi-fungsi": "Aljabar",
+  "fungsi-pemodelan": "Aljabar",
+  polinomial: "Aljabar",
+  "perbandingan-trigonometri": "Geometri",
+  vektor: "Geometri",
+  "transformasi-geometri": "Geometri",
+  lingkaran: "Geometri",
+  "irisan-kerucut": "Geometri",
+  statistika: "Statistika & Peluang",
+  peluang: "Statistika & Peluang",
+  "analisis-data-peluang": "Statistika & Peluang",
+  kombinatorika: "Kombinatorika",
+  limit: "Kalkulus",
+  turunan: "Kalkulus",
+  integral: "Kalkulus",
+};
 
 /* ------------------------------------------------------------------ *
  *  Konten
@@ -271,7 +306,7 @@ function PackCard({ material, no }: { material: Material; no: number }) {
     <article className="lk-card">
       <div className="lk-card__top">
         <span className="lk-card__no">{String(no).padStart(2, "0")}</span>
-        <span className="lk-card__cat">{material.category ?? "Matematika"}</span>
+        <span className="lk-card__cat">{CATEGORY_BY_SLUG[material.slug]}</span>
         {material.symbol && (
           <span className="lk-card__sym" aria-hidden>
             <Rich as="span" html={tex(material.symbol)} />
@@ -320,7 +355,7 @@ export default function LatihanLanding() {
     path: "/latihan",
   });
 
-  const [cat, setCat] = useState("Semua");
+  const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");
 
   const packs = useMemo(() => MATERIALS.map((m) => ({ m, s: summarize(m) })), []);
   const totals = useMemo(() => {
@@ -333,13 +368,9 @@ export default function LatihanLanding() {
     return { packs: packs.length, questions, forms: types.size };
   }, [packs]);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    MATERIALS.forEach((m) => set.add(m.category ?? "Matematika"));
-    return ["Semua", ...Array.from(set)];
-  }, []);
-
-  const shown = MATERIALS.map((m, i) => ({ m, no: i + 1 })).filter(({ m }) => cat === "Semua" || (m.category ?? "Matematika") === cat);
+  const shown = MATERIALS.map((m, i) => ({ m, no: i + 1 })).filter(
+    ({ m }) => cat === "Semua" || CATEGORY_BY_SLUG[m.slug] === cat,
+  );
 
   return (
     <div className="lk">
@@ -418,7 +449,7 @@ export default function LatihanLanding() {
             <h2 className="lk-h2">Pilih paket latihan yang ingin kamu kerjakan.</h2>
 
             <div className="lk-filter" role="group" aria-label="Filter kategori">
-              {categories.map((c) => (
+              {CATEGORIES.map((c) => (
                 <button
                   type="button"
                   key={c}

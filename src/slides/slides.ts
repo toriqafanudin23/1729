@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "solid";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "solid";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -82,6 +82,19 @@ export const DECKS: DeckMeta[] = [
     level: "SMP dan SMA",
     thumb: "circle",
     Component: lazy(() => import("./decks/LingkaranDeck")),
+  },
+  {
+    slug: "irisan-kerucut",
+    title: "Irisan kerucut",
+    category: "Geometri analitik",
+    summary:
+      "Kenali lingkaran, parabola, elips, dan hiperbola melalui persamaan, garis singgung, serta eksentrisitas.",
+    concepts: ["Lingkaran", "Parabola", "Elips", "Hiperbola", "Garis singgung", "Eksentrisitas"],
+    slides: 19,
+    minutes: 40,
+    level: "SMA",
+    thumb: "conic",
+    Component: lazy(() => import("./decks/IrisanKerucutDeck")),
   },
   {
     slug: "bangun-ruang-sisi-datar",

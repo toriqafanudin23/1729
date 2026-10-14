@@ -330,6 +330,27 @@ function ThumbCircle() {
   );
 }
 
+function ThumbConic() {
+  return (
+    <ThumbFrame label="Empat irisan kerucut: lingkaran, parabola, elips, dan hiperbola">
+      <g stroke="#94a3b8" strokeWidth="1.1" opacity=".8">
+        <line x1="160" y1="12" x2="160" y2="168" />
+        <line x1="20" y1="90" x2="300" y2="90" />
+      </g>
+      <circle cx="82" cy="49" r="23" fill="rgba(21,101,192,.08)" stroke="#1565c0" strokeWidth="3" />
+      <path d="M211 69 Q236 30 261 69" fill="none" stroke="#0f766e" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="82" cy="131" rx="31" ry="19" fill="rgba(101,87,210,.08)" stroke="#6557d2" strokeWidth="3" />
+      <path d="M207 111 C220 113 230 122 238 131 C230 140 220 149 207 151 M273 111 C260 113 250 122 242 131 C250 140 260 149 273 151" fill="none" stroke="#e65100" strokeWidth="3" strokeLinecap="round" />
+      <g fill="#475569" fontSize="10" fontFamily="system-ui, sans-serif" textAnchor="middle">
+        <text x="82" y="83">lingkaran</text>
+        <text x="237" y="83">parabola</text>
+        <text x="82" y="166">elips</text>
+        <text x="240" y="166">hiperbola</text>
+      </g>
+    </ThumbFrame>
+  );
+}
+
 function ThumbSolid() {
   return (
     <ThumbFrame label="Kubus satuan tersusun dengan jaring-jaring kubus di sampingnya">
@@ -357,7 +378,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

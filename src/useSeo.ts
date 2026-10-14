@@ -55,7 +55,7 @@ export function useSeo({ title, description, path, image, noindex = false, jsonL
     const fullTitle = path === "/" ? title : `${title} | 1729`;
     const url = new URL(path, SITE).toString();
     const metaDescription = fitSeoDescription(description);
-    const imageUrl = new URL(image ?? "/1729.png", SITE).toString();
+    const imageUrl = new URL(image ?? "/favicon.png", SITE).toString();
 
     document.title = fullTitle;
     meta("name", "description", metaDescription);

@@ -351,6 +351,36 @@ function ThumbConic() {
   );
 }
 
+function ThumbSets() {
+  return (
+    <ThumbFrame label="Diagram himpunan dan pemetaan relasi dengan panah">
+      <circle cx="66" cy="87" r="35" fill="rgba(21,101,192,.13)" stroke="#1565c0" strokeWidth="2.5" />
+      <circle cx="105" cy="87" r="35" fill="rgba(230,81,0,.12)" stroke="#e65100" strokeWidth="2.5" />
+      <text x="50" y="49" fill="#1565c0" fontSize="12" fontWeight="700" fontFamily="system-ui, sans-serif">A</text>
+      <text x="116" y="49" fill="#e65100" fontSize="12" fontWeight="700" fontFamily="system-ui, sans-serif">B</text>
+      <text x="58" y="83" fill="#0f172a" fontSize="11" fontFamily="system-ui, sans-serif">1</text>
+      <text x="82" y="83" fill="#0f172a" fontSize="11" fontFamily="system-ui, sans-serif">2</text>
+      <text x="105" y="99" fill="#0f172a" fontSize="11" fontFamily="system-ui, sans-serif">3</text>
+      <line x1="168" y1="30" x2="168" y2="150" stroke="#cbd5e1" strokeWidth="1.5" />
+      <g fill="none" stroke="#64748b" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M210 56 C226 56 235 48 252 48" />
+        <path d="M210 88 C228 88 235 112 252 112" />
+        <path d="M210 120 C229 120 233 48 252 48" />
+      </g>
+      <g fill="#eaf2fb" stroke="#1565c0" strokeWidth="2">
+        <circle cx="198" cy="56" r="12" /><circle cx="198" cy="88" r="12" /><circle cx="198" cy="120" r="12" />
+      </g>
+      <g fill="#fdeee5" stroke="#e65100" strokeWidth="2">
+        <circle cx="264" cy="48" r="12" /><circle cx="264" cy="112" r="12" />
+      </g>
+      <g fill="#0f172a" fontSize="10" fontWeight="600" fontFamily="system-ui, sans-serif" textAnchor="middle" dominantBaseline="central">
+        <text x="198" y="56">a</text><text x="198" y="88">b</text><text x="198" y="120">c</text>
+        <text x="264" y="48">1</text><text x="264" y="112">2</text>
+      </g>
+    </ThumbFrame>
+  );
+}
+
 function ThumbSolid() {
   return (
     <ThumbFrame label="Kubus satuan tersusun dengan jaring-jaring kubus di sampingnya">
@@ -378,7 +408,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

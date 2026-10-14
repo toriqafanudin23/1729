@@ -13,11 +13,24 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "solid";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid";
   Component: LazyExoticComponent<ComponentType>;
 }
 
 export const DECKS: DeckMeta[] = [
+  {
+    slug: "himpunan-relasi-fungsi",
+    title: "Himpunan, Relasi, dan Fungsi",
+    category: "Aljabar",
+    summary:
+      "Pelajari cara menyajikan dan mengoperasikan himpunan, memahami relasi, lalu mengenali fungsi melalui diagram, tabel, aturan, dan contoh sehari-hari.",
+    concepts: ["Himpunan", "Operasi himpunan", "Relasi", "Domain dan range", "Fungsi", "Injektif dan surjektif"],
+    slides: 23,
+    minutes: 45,
+    level: "SMP",
+    thumb: "sets",
+    Component: lazy(() => import("./decks/HimpunanRelasiFungsiDeck")),
+  },
   {
     slug: "sistem-persamaan-linear",
     title: "Sistem persamaan linear",

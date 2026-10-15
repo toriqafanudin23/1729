@@ -19,6 +19,9 @@ html {
   --line: #e2e8f0; /* slate-200 */
   --wash: #f8fafc; /* slate-50 */
   --paper: #ffffff;
+  --accent: #c96442;
+  --accent-hover: #b5573a;
+  --accent-soft: #fbeee8;
 
   --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -100,11 +103,13 @@ html {
 }
 
 .lp .lp-btn--solid {
-  background: var(--ink);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 .lp .lp-btn--solid:hover {
-  background: #1e293b;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .lp .lp-btn--ghost {
@@ -122,7 +127,10 @@ html {
   font-size: 14px;
 }
 
-.lp-btn:focus-visible,
+.lp-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
 .lp-link:focus-visible,
 .lp-topic:focus-visible {
   outline: 2px solid var(--ink);

@@ -1,10 +1,25 @@
 .site-footer {
   --footer-ink: #f8fafc;
-  --footer-muted: #cbd5e1;
-  --footer-line: rgba(226, 232, 240, 0.2);
+  --footer-muted: #94a3b8;
+  --footer-soft: #cbd5e1;
+  --footer-line: rgba(148, 163, 184, 0.18);
+  --footer-accent: #d9785a;
+  --footer-accent-strong: #c96442;
 
-  background: #0f172a;
+  position: relative;
+  background:
+    radial-gradient(700px 220px at 8% 0%, rgba(201, 100, 66, 0.14), transparent 70%),
+    #0f172a;
   color: var(--footer-ink);
+}
+
+/* Garis aksen tipis di tepi atas */
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--footer-accent-strong), rgba(201, 100, 66, 0) 55%);
 }
 
 .site-footer,
@@ -19,104 +34,160 @@
 
 .site-footer__inner {
   display: grid;
-  grid-template-columns: minmax(190px, 1fr) auto auto;
-  align-items: center;
-  gap: 24px 40px;
+  grid-template-columns: minmax(220px, 1.2fr) auto auto;
+  align-items: start;
+  gap: 28px 56px;
   width: min(100%, 1280px);
   margin-inline: auto;
-  padding: 32px clamp(20px, 5vw, 48px);
+  padding: 44px clamp(20px, 5vw, 48px) 28px;
+}
+
+/* Identitas */
+.site-footer__brand {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.site-footer__brand::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--footer-accent-strong);
 }
 
 .site-footer .site-footer__identity p {
-  margin: 6px 0 0;
-  color: var(--footer-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.site-footer__brand {
-  display: inline-block;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.site-footer__nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 24px;
-}
-
-.site-footer .site-footer__nav a,
-.site-footer .site-footer__contact {
+  max-width: 28ch;
+  margin: 12px 0 0;
   color: var(--footer-muted);
   font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Navigasi */
+.site-footer__nav {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 12px 40px;
+  padding-top: 4px;
+}
+
+.site-footer .site-footer__nav a {
+  position: relative;
+  width: fit-content;
+  color: var(--footer-soft);
+  font-size: 14px;
+  font-weight: 500;
   transition: color 160ms ease;
 }
-
+.site-footer .site-footer__nav a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 1px;
+  background: var(--footer-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
 .site-footer .site-footer__nav a:hover,
-.site-footer .site-footer__nav a[aria-current="page"],
-.site-footer .site-footer__contact:hover {
+.site-footer .site-footer__nav a[aria-current="page"] {
   color: #fff;
 }
+.site-footer .site-footer__nav a:hover::after,
+.site-footer .site-footer__nav a[aria-current="page"]::after {
+  transform: scaleX(1);
+}
 
-.site-footer__contact {
+/* Kontak: tombol pil */
+.site-footer .site-footer__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   justify-self: end;
+  padding: 10px 18px;
+  color: #fff;
+  background: rgba(201, 100, 66, 0.14);
+  border: 1px solid rgba(217, 120, 90, 0.5);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
-
+.site-footer .site-footer__contact:hover {
+  background: var(--footer-accent-strong);
+  border-color: var(--footer-accent-strong);
+  transform: translateY(-1px);
+}
 .site-footer__contact span {
-  margin-left: 4px;
+  margin-left: 2px;
+  transition: transform 160ms ease;
+}
+.site-footer__contact:hover span {
+  transform: translate(2px, -2px);
 }
 
+/* Baris hak cipta */
 .site-footer__legal {
   grid-column: 1 / -1;
-  margin: 0;
-  padding-top: 16px;
+  margin: 8px 0 0;
+  padding-top: 20px;
   border-top: 1px solid var(--footer-line);
   color: var(--footer-muted);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .site-footer a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--footer-accent);
   outline-offset: 4px;
+  border-radius: 4px;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .site-footer__inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 22px 16px;
-    padding: 28px clamp(20px, 5vw, 32px) 20px;
+    grid-template-columns: 1fr auto;
+    gap: 28px 32px;
   }
-
   .site-footer__identity {
     grid-column: 1 / -1;
   }
-
   .site-footer__nav {
-    display: grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+  }
+}
+
+@media (max-width: 560px) {
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    padding: 36px clamp(20px, 5vw, 32px) 24px;
+  }
+  .site-footer__nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    justify-content: start;
     gap: 14px 20px;
   }
-
-  .site-footer__contact {
-    justify-self: end;
-    text-align: right;
+  .site-footer .site-footer__contact {
+    justify-self: start;
   }
-
   .site-footer__legal {
-    padding-top: 14px;
+    margin-top: 0;
+    padding-top: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .site-footer__nav a,
-  .site-footer__contact {
+  .site-footer__nav a::after,
+  .site-footer__contact,
+  .site-footer__contact span {
     transition: none;
   }
+  .site-footer .site-footer__contact:hover { transform: none; }
 }

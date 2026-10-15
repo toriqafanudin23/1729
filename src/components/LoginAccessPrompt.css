@@ -1,0 +1,106 @@
+.login-access-prompt {
+  --lap-ink: #0f172a;
+  --lap-mute: #64748b;
+  --lap-line: #e2e8f0;
+  --lap-accent: #c96442;
+  --lap-accent-hover: #b5573a;
+  --lap-accent-soft: #fbeee8;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px 24px;
+  padding: 22px 26px;
+  background: #fff;
+  border: 1px solid var(--lap-line);
+  border-radius: 14px;
+}
+
+.login-access-prompt,
+.login-access-prompt * {
+  box-sizing: border-box;
+}
+
+.login-access-prompt__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: var(--lap-accent);
+  background: var(--lap-accent-soft);
+  border-radius: 12px;
+}
+
+.login-access-prompt .login-access-prompt__title {
+  margin: 0;
+  color: var(--lap-ink);
+  font: 500 clamp(20px, 2.2vw, 24px) / 1.2 "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
+  letter-spacing: -0.015em;
+}
+
+.login-access-prompt .login-access-prompt__desc {
+  margin: 4px 0 0;
+  color: var(--lap-mute);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.login-access-prompt__action {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.login-access-prompt .login-access-prompt__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  color: #fff;
+  background: var(--lap-accent);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+}
+.login-access-prompt .login-access-prompt__btn:hover {
+  color: #fff;
+  background: var(--lap-accent-hover);
+  box-shadow: 0 8px 18px -8px rgba(201, 100, 66, 0.6);
+}
+.login-access-prompt .login-access-prompt__btn:focus-visible {
+  outline: 2px solid var(--lap-accent);
+  outline-offset: 3px;
+}
+
+.login-access-prompt .login-access-prompt__note {
+  color: var(--lap-mute);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .login-access-prompt {
+    grid-template-columns: auto 1fr;
+    padding: 20px;
+  }
+  .login-access-prompt__action {
+    grid-column: 1 / -1;
+    justify-items: stretch;
+  }
+  .login-access-prompt .login-access-prompt__btn {
+    justify-content: center;
+  }
+  .login-access-prompt .login-access-prompt__note {
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-access-prompt .login-access-prompt__btn {
+    transition: none;
+  }
+}

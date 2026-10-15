@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import "./SiteHeader.css";
 
 const NAV_ITEMS = [
@@ -12,6 +13,8 @@ const NAV_ITEMS = [
 
 export function SiteHeader({ variant = "default" }: { variant?: "default" | "hero" }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -21,6 +24,8 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "her
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [menuOpen]);
+
+  const displayName = user ? user.name || user.email : "";
 
   return (
     <header className={`site-header${variant === "hero" ? " site-header--hero" : ""}`}>
@@ -37,7 +42,7 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "her
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          {menuOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={2} />}
+          {menuOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
         </button>
 
         <nav
@@ -58,9 +63,21 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "her
               </NavLink>
             ))}
           </div>
-          <button className="site-header__login" type="button" disabled title="Login segera hadir">
-            Login
-          </button>
+          {user ? (
+            <div className="site-header__account">
+              <span className="site-header__avatar" aria-hidden="true">{displayName.trim().charAt(0)}</span>
+              <span className="site-header__account-name">{displayName}</span>
+              <button
+                className="site-header__login site-header__login--ghost"
+                type="button"
+                onClick={async () => { await logout(); setMenuOpen(false); navigate("/"); }}
+              >
+                Keluar
+              </button>
+            </div>
+          ) : (
+            <Link className="site-header__login" to="/login" onClick={() => setMenuOpen(false)} aria-busy={loading}>Login</Link>
+          )}
         </nav>
       </div>
     </header>

@@ -2,7 +2,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
 import { useSeo } from "../../useSeo";
+import { isSlidePublic } from "../../auth/accessPolicy";
 import { DECKS, type DeckMeta } from "../slides";
 import "../../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
 import "../styles/SlidesPages.css";
@@ -426,6 +428,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
         <p className="sl-card__meta">
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{deck.category}</span>
+          <span>{isSlidePublic(deck.slug) ? "Tanpa login" : "Perlu login"}</span>
         </p>
         <h3>{deck.title}</h3>
         <p className="sl-card__summary">{deck.summary}</p>
@@ -479,8 +482,9 @@ export default function SlidesLandingPage() {
     path: "/slides",
   });
 
-  const catalogDecks = DECKS;
-  const first = catalogDecks[0];
+  const publicDecks = DECKS.filter((deck) => isSlidePublic(deck.slug));
+  const memberDecks = DECKS.filter((deck) => !isSlidePublic(deck.slug));
+  const first = publicDecks[0];
 
   return (
     <div className="lp sl">
@@ -529,9 +533,14 @@ export default function SlidesLandingPage() {
             <h2 className="lp-h2">Pilih materi, tekan mulai.</h2>
 
             <div className="sl-cards">
-              {catalogDecks.map((d, i) => (
-                <DeckCard deck={d} index={i} key={d.slug} />
-              ))}
+              {publicDecks.map((d, i) => <DeckCard deck={d} index={i} key={d.slug} />)}
+              {memberDecks.length > 0 && (
+                <LoginAccessPrompt
+                  title="Ingin membuka lebih banyak slides?"
+                  description="Login atau daftar untuk membuka presentasi lainnya."
+                />
+              )}
+              {memberDecks.map((d, i) => <DeckCard deck={d} index={publicDecks.length + i} key={d.slug} />)}
               <div className="sl-card sl-card--soon">
                 <p className="lp-eyebrow">Segera</p>
                 <h3>Materi berikutnya sedang disiapkan.</h3>

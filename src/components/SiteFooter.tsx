@@ -21,7 +21,7 @@ export function SiteFooter() {
           <p>Memahami matematika secara visual.</p>
         </div>
 
-        <nav className="site-footer__nav" aria-label="Navigasi utama">
+        <nav className="site-footer__nav" aria-label="Navigasi footer">
           {navigation.map(({ label, to, end }) => (
             <NavLink key={to} to={to} end={end}>
               {label}
@@ -34,7 +34,7 @@ export function SiteFooter() {
           Kirim email <span aria-hidden="true">↗</span>
         </a>
 
-        <p className="site-footer__legal">© {new Date().getFullYear()} 1729</p>
+        <p className="site-footer__legal">© {new Date().getFullYear()} 1729. Semua hak dilindungi.</p>
       </div>
     </footer>
   );

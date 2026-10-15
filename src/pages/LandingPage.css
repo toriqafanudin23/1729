@@ -19,9 +19,9 @@ html {
   --line: #e2e8f0; /* slate-200 */
   --wash: #f8fafc; /* slate-50 */
   --paper: #ffffff;
-  --accent: #c96442;
-  --accent-hover: #b5573a;
-  --accent-soft: #fbeee8;
+  --accent: #0f172a; /* slate-900 */
+  --accent-hover: #1e293b; /* slate-800 */
+  --accent-soft: #f1f5f9; /* slate-100 */
 
   --serif: "Source Serif 4", "Newsreader", Georgia, "Times New Roman", serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

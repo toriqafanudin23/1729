@@ -16,7 +16,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const API_URL = import.meta.env.DEV ? "" : "https://1729be.vercel.app";
+// Production routes API calls through the frontend origin (Vercel rewrite) so
+// the session cookie remains first-party in the browser. Vite proxies /api in dev.
+const API_URL = "";
 
 export async function authRequest<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`${API_URL}/api/auth${path}`, {

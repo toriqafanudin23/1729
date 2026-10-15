@@ -3,21 +3,13 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { SiteFooter } from "../components/SiteFooter";
 import { SiteHeader } from "../components/SiteHeader";
 import { authRequest, useAuth } from "../auth/AuthContext";
+import { Mail, MailWarning } from "lucide-react";
 import { useSeo } from "../useSeo";
 import "./LoginPage.css";
 
 type Stage = "email" | "sent" | "profile";
 type EmailFlow = "login" | "register";
 type Role = "GURU" | "SISWA";
-
-function MailIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="14" rx="3" />
-      <path d="m4 7 8 6 8-6" />
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   useSeo({ title: "Login — 1729", description: "Masuk atau buat akun 1729 dengan email.", path: "/login" });
@@ -121,7 +113,7 @@ export default function LoginPage() {
 
           {stage === "sent" && (
             <>
-              <div className="login-sent-icon"><MailIcon /></div>
+              <div className="login-sent-icon"><Mail size={22} strokeWidth={1.8} aria-hidden="true" /></div>
               {emailFlow === "login" ? (
                 <>
                   <p className="login-sent">Tautan login telah dikirim ke <strong>{email}</strong>. Buka email tersebut, lalu tekan tombol login untuk masuk.</p>
@@ -137,6 +129,10 @@ export default function LoginPage() {
                   </form>
                 </>
               )}
+              <p className="login-spam-note">
+                <MailWarning size={18} strokeWidth={1.8} aria-hidden="true" />
+                <span>Belum menerima email? Periksa folder Spam atau Junk.</span>
+              </p>
               <button className="login-back" type="button" onClick={() => { setStage("email"); setCode(""); setError(""); }}>Gunakan email lain</button>
             </>
           )}

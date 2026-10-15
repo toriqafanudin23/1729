@@ -7,9 +7,7 @@
   --footer-accent-strong: #c96442;
 
   position: relative;
-  background:
-    radial-gradient(700px 220px at 8% 0%, rgba(201, 100, 66, 0.14), transparent 70%),
-    #0f172a;
+  background: #0f172a;
   color: var(--footer-ink);
 }
 
@@ -19,7 +17,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--footer-accent-strong), rgba(201, 100, 66, 0) 55%);
+  background: var(--footer-accent-strong);
 }
 
 .site-footer,

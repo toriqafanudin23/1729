@@ -79,6 +79,33 @@
   line-height: 1.65;
 }
 .login-intro { margin: 10px 0 0; }
+.login-sent { margin: 18px 0; }
+
+.login-sent-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin: 24px auto 0;
+  place-items: center;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 14px;
+}
+
+.login-spam-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 18px 0;
+  padding: 12px 14px;
+  color: var(--text);
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.login-spam-note svg { flex: 0 0 auto; margin-top: 1px; color: var(--accent); }
 
 .login-form {
   display: grid;

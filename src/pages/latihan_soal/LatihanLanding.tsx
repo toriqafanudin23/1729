@@ -337,7 +337,7 @@ export default function LatihanLanding() {
 
   return (
     <div className="lk">
-      <SiteHeader />
+      <SiteHeader variant="hero" />
 
       <main>
         {/* ---------------------------- Hero ---------------------------- */}

@@ -128,6 +128,10 @@ html {
   overflow: hidden;
   padding: clamp(40px, 8vw, 104px) 0 clamp(48px, 7vw, 96px);
 }
+
+.site-header--hero + main .lk-hero {
+  padding-top: clamp(112px, 14vw, 184px);
+}
 /* kertas grafik yang memudar */
 .lk-hero::before {
   content: "";

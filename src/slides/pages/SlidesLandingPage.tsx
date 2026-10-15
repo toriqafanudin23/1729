@@ -484,7 +484,7 @@ export default function SlidesLandingPage() {
 
   return (
     <div className="lp sl">
-      <SiteHeader />
+      <SiteHeader variant="hero" />
 
       <main>
         {/* ---------------------------- Hero ---------------------------- */}

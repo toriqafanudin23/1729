@@ -17,6 +17,15 @@ import { QUIZ } from "./quizzes/BilanganKompleksQuiz";
 const raw = String.raw;
 const BB: BBox = [-7, 5, 7, -5];
 const NONE = {};
+/* bbox harus stabil (konstanta modul): SimBoard membangun ulang papan bila identitas bbox berubah. */
+const BB_WHY: BBox = [-6, 8, 6, -4];
+const BB_UNIT: BBox = [-3, 2.4, 3, -2.4];
+const BB_PARAB: BBox = [-6, 8, 6, -2];
+const BB_CPLX: BBox = [-6, 5, 6, -5];
+const BB_WIDE: BBox = [-7, 6, 7, -6];
+const BB_MOIVRE: BBox = [-8, 7, 8, -7];
+const BB_ROOTS: BBox = [-4, 3.5, 4, -3.5];
+const BB_IMP: BBox = [-2, 7, 10, -7];
 
 /* ───────── Aritmetika kompleks kecil ───────── */
 type Z = Vec;
@@ -142,7 +151,7 @@ function WhySlide() {
         <p className="fragment">Daripada menyerah, kita <b>sepakati</b> ada bilangan {tex("i")} dengan {tex(raw`i^2=-1`)}. Maka {tex(raw`x=\pm i`)} adalah akarnya.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-6, 8, 6, -4]} aspect={1.4} params={{ c }} build={buildWhy} maxH={340} />
+        <SimBoard bbox={BB_WHY} aspect={1.4} params={{ c }} build={buildWhy} maxH={340} />
         <div className="ds-controls ds-controls--one">
           <Range label={tex("c")} value={c} min={-4} max={4} onChange={setC} color={C.blue} />
         </div>
@@ -218,7 +227,7 @@ function PowerSlide() {
         <p className="fragment">Aturannya: bagi pangkat dengan 4, <b>sisanya</b> yang menentukan. Jadi {tex(raw`i^{2026}=i^2=-1`)}.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-3, 2.4, 3, -2.4]} params={{ ang }} build={buildPow} maxH={330} />
+        <SimBoard bbox={BB_UNIT} params={{ ang }} build={buildPow} maxH={330} />
         <div className="ds-controls ds-controls--one">
           <Range label="pangkat n" value={k} min={0} max={24} onChange={setK} color={C.orange} />
         </div>
@@ -580,8 +589,8 @@ function QuadraticSlide() {
       </>}
       stage={<>
         <div className="ds-row" style={{ alignItems: "flex-start", gap: 12 }}>
-          <SimBoard bbox={[-6, 8, 6, -2]} aspect={1.2} params={{ a, b, c }} build={buildParab} maxH={250} />
-          <SimBoard bbox={[-6, 5, 6, -5]} aspect={1.2} params={{ a, b, c }} build={buildRoots} maxH={250} />
+          <SimBoard bbox={BB_PARAB} aspect={1.2} params={{ a, b, c }} build={buildParab} maxH={250} />
+          <SimBoard bbox={BB_CPLX} aspect={1.2} params={{ a, b, c }} build={buildRoots} maxH={250} />
         </div>
         <div className="ds-controls">
           <Range label="a" value={a} min={1} max={3} onChange={setA} color={C.blue} />
@@ -797,7 +806,7 @@ function PolarMulSlide() {
         <p className="fragment">Lingkaran putus-putus berjari-jari {tex("r_1r_2")}: modulusnya dikalikan. Rumus {tex(raw`(ac-bd)+(ad+bc)i`)} tadi adalah isi di baliknya.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-7, 6, 7, -6]} params={{ r1, t1, r2, t2, step }} build={buildPolMul} maxH={330} />
+        <SimBoard bbox={BB_WIDE} params={{ r1, t1, r2, t2, step }} build={buildPolMul} maxH={330} />
         <div className="ds-controls">
           <Range label="r₁" value={r1} min={0.5} max={2.5} step={0.5} onChange={setR1} color={C.blue} />
           <Range label="θ₁" value={t1} min={0} max={180} step={15} onChange={setT1} color={C.blue} shown={`${t1}°`} />
@@ -897,7 +906,7 @@ function MoivreSlide() {
         <p className="fragment">Pada r = 1 spiralnya menjadi <b>lingkaran</b>: hanya berputar, tidak membesar. Contoh {tex(raw`(1+i)^8=16`)}.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-8, 7, 8, -7]} params={{ r, th, n: k, step }} build={buildMoivre} maxH={340} />
+        <SimBoard bbox={BB_MOIVRE} params={{ r, th, n: k, step }} build={buildMoivre} maxH={340} />
         <div className="ds-controls">
           <Range label="r" value={r} min={0.7} max={1.3} step={0.1} onChange={setR} color={C.teal} />
           <Range label="θ" value={th} min={10} max={120} step={5} onChange={setTh} color={C.orange} shown={`${th}°`} />
@@ -943,7 +952,7 @@ function NthRootSlide() {
         <p className="fragment">Pada {tex("R=1,\\ \\varphi=0")}, inilah <b>akar satuan</b>. Jumlah semua akarnya selalu 0 (untuk n ≥ 2).</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-4, 3.5, 4, -3.5]} params={{ n: nn, R, phi, step }} build={buildRoots2} maxH={330} />
+        <SimBoard bbox={BB_ROOTS} params={{ n: nn, R, phi, step }} build={buildRoots2} maxH={330} />
         <div className="ds-controls">
           <Range label="n" value={nn} min={2} max={8} onChange={setN} color={C.violet} />
           <Range label="R" value={R} min={1} max={8} onChange={setR} color={C.blue} />
@@ -987,7 +996,7 @@ function EulerSlide() {
         <p className="fragment">Pada {tex(raw`\theta=\pi`)} (setengah putaran): {tex(raw`e^{i\pi}+1=0`)}, yang mempertemukan lima konstanta termasyhur {tex(raw`e,i,\pi,1,0`)}.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-3, 2.4, 3, -2.4]} params={{ th, step }} build={buildEuler} maxH={320} />
+        <SimBoard bbox={BB_UNIT} params={{ th, step }} build={buildEuler} maxH={320} />
         <Chips value={String(th)} onPick={(v) => setTh(Number(v))}
           items={[{ v: "90", label: "θ = π/2" }, { v: "180", label: "θ = π" }, { v: "270", label: "θ = 3π/2" }, { v: "360", label: "θ = 2π" }]} />
         <div className="ds-controls ds-controls--one">
@@ -1111,7 +1120,7 @@ function ImpedanceSlide() {
         <p className="fragment">Saat {tex("X_L=X_C")}, bagian imajiner lenyap: <b>resonansi</b>, Z paling kecil dan hanya real.</p>
       </>}
       stage={<>
-        <SimBoard bbox={[-2, 7, 10, -7]} params={{ R, L, Cc }} build={buildImp} maxH={330} />
+        <SimBoard bbox={BB_IMP} params={{ R, L, Cc }} build={buildImp} maxH={330} />
         <div className="ds-controls">
           <Range label="R (Ω)" value={R} min={0} max={8} onChange={setR} color={C.blue} />
           <Range label="X_L (Ω)" value={L} min={0} max={6} onChange={setL} color={C.violet} />

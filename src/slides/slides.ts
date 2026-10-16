@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid" | "similar";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid" | "similar" | "complex";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -82,6 +82,19 @@ export const DECKS: DeckMeta[] = [
     level: "SMP dan SMA",
     thumb: "quadratic",
     Component: lazy(() => import("./decks/FungsiKuadratDeck")),
+  },
+  {
+    slug: "bilangan-kompleks",
+    title: "Bilangan kompleks",
+    category: "Aljabar",
+    summary:
+      "Dari persamaan yang tak punya akar real sampai bidang Argand: bilangan kompleks digambar sebagai titik, dioperasikan sebagai panah, lalu dipangkatkan dan diakarkan lewat bentuk polar. Termasuk lokus, De Moivre, rumus Euler, fraktal Mandelbrot, impedansi listrik, tantangan, dan kuis berbasis simulasi.",
+    concepts: ["i dan i²", "Bidang Argand", "Sekawan", "Modulus", "Bentuk polar", "De Moivre", "Akar ke-n", "Rumus Euler"],
+    slides: 27,
+    minutes: 70,
+    level: "SMA kelas 10 (pengayaan)",
+    thumb: "complex",
+    Component: lazy(() => import("./decks/BilanganKompleksDeck")),
   },
   {
     slug: "lingkaran",

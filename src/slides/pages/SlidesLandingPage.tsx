@@ -403,6 +403,24 @@ function ThumbSolid() {
   );
 }
 
+function ThumbComplex() {
+  return (
+    <ThumbFrame label="Bilangan kompleks z dan sekawannya digambar sebagai dua titik yang simetris terhadap sumbu real">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="90" x2="320" y2="90" />
+        <line x1="120" y1="0" x2="120" y2="180" />
+      </g>
+      <path d="M150 90 A30 30 0 0 0 144.5 72.4" fill="none" stroke="#0f766e" strokeWidth="2" />
+      <line x1="200" y1="40" x2="200" y2="140" stroke="#6557d2" strokeWidth="1.5" strokeDasharray="4 4" />
+      <line x1="120" y1="90" x2="200" y2="40" stroke="#e65100" strokeWidth="2.75" strokeLinecap="round" />
+      <line x1="120" y1="90" x2="200" y2="140" stroke="#1565c0" strokeWidth="2.75" strokeLinecap="round" />
+      <circle cx="120" cy="90" r="4.5" fill="#0f172a" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="200" cy="40" r="5.5" fill="#e65100" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="200" cy="140" r="5.5" fill="#1565c0" stroke="#fff" strokeWidth="1.5" />
+    </ThumbFrame>
+  );
+}
+
 function ThumbSimilar() {
   return (
     <ThumbFrame label="Dua segitiga sebangun: yang kecil dan yang besar dengan sudut sama">
@@ -422,7 +440,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : deck.thumb === "similar" ? <ThumbSimilar /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : deck.thumb === "similar" ? <ThumbSimilar /> : deck.thumb === "complex" ? <ThumbComplex /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

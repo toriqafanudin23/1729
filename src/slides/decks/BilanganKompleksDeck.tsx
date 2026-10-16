@@ -589,8 +589,10 @@ function QuadraticSlide() {
       </>}
       stage={<>
         <div className="ds-row" style={{ alignItems: "flex-start", gap: 12 }}>
-          <SimBoard bbox={BB_PARAB} aspect={1.2} params={{ a, b, c }} build={buildParab} maxH={250} />
-          <SimBoard bbox={BB_CPLX} aspect={1.2} params={{ a, b, c }} build={buildRoots} maxH={250} />
+          {/* Rentang kedua bbox sudah 1.2:1, jadi biarkan SimBoard mengunci skala
+              sumbu saat Reveal mengukur ulang layout pada perpindahan slide. */}
+          <SimBoard bbox={BB_PARAB} params={{ a, b, c }} build={buildParab} maxH={250} />
+          <SimBoard bbox={BB_CPLX} params={{ a, b, c }} build={buildRoots} maxH={250} />
         </div>
         <div className="ds-controls">
           <Range label="a" value={a} min={1} max={3} onChange={setA} color={C.blue} />

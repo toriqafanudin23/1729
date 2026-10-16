@@ -413,6 +413,48 @@ export default function LatihanLanding() {
                   Unduh berkas <span aria-hidden="true">↓</span>
                 </a>
               </article>
+              <article className="lk-download-card">
+                <div className="lk-download-card__copy">
+                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 10</span>
+                  <h3>Latihan soal kelas 10</h3>
+                  <p>Cakupan materi: eksponensial dan logaritma, barisan dan deret, sistem persamaan dan pertidaksamaan linear, fungsi kuadrat, perbandingan trigonometri, peluang, statistika, dan vektor.</p>
+                </div>
+                <a
+                  className="lk-btn lk-btn--solid lk-download-card__button"
+                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_10_pdf.zip"
+                  download
+                >
+                  Unduh berkas <span aria-hidden="true">↓</span>
+                </a>
+              </article>
+              <article className="lk-download-card">
+                <div className="lk-download-card__copy">
+                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 11</span>
+                  <h3>Latihan soal kelas 11</h3>
+                  <p>Cakupan materi: bilangan kompleks, polinomial, lingkaran, matriks, transformasi geometri, komposisi fungsi, dan invers.</p>
+                </div>
+                <a
+                  className="lk-btn lk-btn--solid lk-download-card__button"
+                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_11_pdf.zip"
+                  download
+                >
+                  Unduh berkas <span aria-hidden="true">↓</span>
+                </a>
+              </article>
+              <article className="lk-download-card">
+                <div className="lk-download-card__copy">
+                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 12</span>
+                  <h3>Latihan soal kelas 12</h3>
+                  <p>Cakupan materi: fungsi dan pemodelan, irisan kerucut, kombinatorika, transformasi fungsi, analisis data dan peluang, limit, turunan, dan integral.</p>
+                </div>
+                <a
+                  className="lk-btn lk-btn--solid lk-download-card__button"
+                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_12_pdf.zip"
+                  download
+                >
+                  Unduh berkas <span aria-hidden="true">↓</span>
+                </a>
+              </article>
             </div>
           </div>
         </section>

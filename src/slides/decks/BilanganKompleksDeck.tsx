@@ -588,11 +588,12 @@ function QuadraticSlide() {
         <p className="fragment">Pada bidang kompleks (kanan), akar-akar itu simetris terhadap sumbu real. Cari c terkecil agar akarnya real lagi.</p>
       </>}
       stage={<>
-        <div className="ds-row" style={{ alignItems: "flex-start", gap: 12 }}>
-          {/* Rentang kedua bbox sudah 1.2:1, jadi biarkan SimBoard mengunci skala
-              sumbu saat Reveal mengukur ulang layout pada perpindahan slide. */}
-          <SimBoard bbox={BB_PARAB} params={{ a, b, c }} build={buildParab} maxH={250} />
-          <SimBoard bbox={BB_CPLX} params={{ a, b, c }} build={buildRoots} maxH={250} />
+        {/* Dua papan berdampingan: lebar kolom dibuat pasti (grid 1fr 1fr) dan rasio papan dikunci lewat `aspect`
+            (= rentang bbox 12:10). Dengan begitu pengukuran ulang oleh Reveal saat berpindah slide hanya
+            menskalakan papan, tidak lagi menghitung ulang bbox (yang tampak sebagai zoom/reset). */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%", justifyItems: "center", alignItems: "start" }}>
+          <SimBoard bbox={BB_PARAB} aspect={1.2} params={{ a, b, c }} build={buildParab} maxH={250} />
+          <SimBoard bbox={BB_CPLX} aspect={1.2} params={{ a, b, c }} build={buildRoots} maxH={250} />
         </div>
         <div className="ds-controls">
           <Range label="a" value={a} min={1} max={3} onChange={setA} color={C.blue} />

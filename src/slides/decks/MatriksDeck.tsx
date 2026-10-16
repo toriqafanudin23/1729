@@ -9,7 +9,7 @@ import { buildSys, n, Quiz, solve, tex, type MP as SysP, type Sys } from "../com
 import { QUIZ } from "./quizzes/MatriksQuiz";
 
 /* Deck "Matriks" (SMA kelas 11): sejarah → ordo dan elemen → jumlah dan skalar → perkalian baris × kolom
-   → matriks sebagai transformasi → komposisi (AB ≠ BA) → determinan = faktor luas → invers → SPL → kuis.
+   → matriks sebagai transformasi → komposisi (AB ≠ BA) → determinan = faktor luas → invers → SPL → matriks 3×3 (minor, kofaktor, Sarrus, adjoin, invers) → kuis.
    Gagasan utama: matriks 2×2 = ke mana î dan ĵ mendarat; semua operasi dilihat sebagai gerakan bidang. */
 
 const raw = String.raw;
@@ -406,7 +406,168 @@ function SolveSlide() {
   );
 }
 
-/* ═════════ 10 · Ringkasan ═════════ */
+/* ═════════ Matriks 3×3: minor, kofaktor, determinan, adjoin, invers ═════════ */
+type Mx = number[][];
+const MATS3: [string, Mx][] = [
+  ["det = 1", [[1, 2, 3], [0, 1, 4], [5, 6, 0]]],
+  ["det = −1", [[2, 1, 1], [1, 3, 2], [1, 0, 0]]],
+  ["det = 0", [[2, 0, 1], [1, 3, 2], [1, 1, 1]]],
+];
+const pick3 = (k: string) => MATS3.find((x) => x[0] === k)![1];
+const SUB = (A: Mx, i: number, j: number) => A.filter((_, x) => x !== i).map((r) => r.filter((_, y) => y !== j));
+const d2 = (m: Mx) => m[0][0] * m[1][1] - m[0][1] * m[1][0];
+const cof = (A: Mx, i: number, j: number) => ((i + j) % 2 ? -1 : 1) * d2(SUB(A, i, j));
+const det3 = (A: Mx) => A[0].reduce((s, v, j) => s + v * cof(A, 0, j), 0);
+const adj = (A: Mx) => A.map((_, i) => A.map((_, j) => cof(A, j, i)));
+const vmx = (m: Mx) => mxs(m).replace(/bmatrix/g, "vmatrix");
+const MatChips = (p: { v: string; set: (v: string) => void }) => (
+  <Chips value={p.v} onPick={p.set} items={MATS3.map((x) => ({ v: x[0], label: x[0] }))} />
+);
+const mid = { textAlign: "center" } as const;
+
+/* ═════════ 9 · Minor dan kofaktor ═════════ */
+function MinorSlide() {
+  const ref = useRef<HTMLDivElement>(null);
+  const step = useStep(ref);
+  const [k, setK] = useState("det = 1"), [i, setI] = useState(2), [j, setJ] = useState(3);
+  const A = pick3(k), I = i - 1, J = j - 1, S = SUB(A, I, J), M = d2(S), sg = (I + J) % 2 ? -1 : 1;
+  const hl = (x: number, y: number) => (x === I && y === J ? C.blue : x === I || y === J ? "#cbd5e1" : C.orange);
+  const pat = [[1, -1, 1], [-1, 1, -1], [1, -1, 1]];
+  const signs = raw`\begin{bmatrix}${pat.map((r, x) => r.map((v, y) => { const t = v > 0 ? "+" : "-"; return x === I && y === J ? raw`{\color{${C.orange}}${t}}` : t; }).join("&")).join(raw`\\`)}\end{bmatrix}`;
+  return (
+    <Frame
+      innerRef={ref}
+      eyebrow="09 · Minor dan kofaktor"
+      title="Coret baris dan kolom"
+      copy={<>
+        <p><b>Minor</b> {tex(raw`M_{ij}`)} adalah determinan matriks yang tersisa setelah <b>baris i dan kolom j dicoret</b> (abu-abu).</p>
+        <p className="fragment">Kofaktor menambahkan tanda: {tex(raw`C_{ij}=(-1)^{i+j}M_{ij}`)}.</p>
+        <p className="fragment">Tandanya berpola <b>papan catur</b>: + di pojok kiri atas, lalu bergantian. Ubah i dan j, lihat tanda yang berlaku.</p>
+      </>}
+      stage={<>
+        <div className="ds-read ds-math" style={mid}>{tex(raw`A=${mxs(A, hl)}`)}</div>
+        <MatChips v={k} set={setK} />
+        <div className="ds-controls">
+          <Range label="baris i" value={i} min={1} max={3} onChange={setI} color={C.blue} />
+          <Range label="kolom j" value={j} min={1} max={3} onChange={setJ} color={C.blue} />
+        </div>
+        <div className="ds-read ds-math" style={mid}>
+          {tex(raw`M_{${i}${j}}=${vmx(S)}=${nt(M)}`)}
+          {step >= 1 && <div>{tex(raw`C_{${i}${j}}=(-1)^{${i}+${j}}\cdot${pr(M)}=${nt(sg * M)}`)}</div>}
+          {step >= 2 && <div>{tex(signs)}</div>}
+        </div>
+      </>}
+    />
+  );
+}
+
+/* ═════════ 10 · Determinan 3×3: ekspansi kofaktor ═════════ */
+function ExpandSlide() {
+  const ref = useRef<HTMLDivElement>(null);
+  const step = useStep(ref);
+  const [k, setK] = useState("det = 1"), [ax, setAx] = useState("b1");
+  const A = pick3(k), row = ax[0] === "b", t = Number(ax[1]) - 1, shown = Math.min(step, 3);
+  const terms = [0, 1, 2].map((q) => (row ? [A[t][q], cof(A, t, q)] : [A[q][t], cof(A, q, t)]));
+  const expr = terms.slice(0, shown).map(([e, c]) => raw`${pr(e)}\cdot${pr(c)}`).join("+");
+  return (
+    <Frame
+      innerRef={ref}
+      eyebrow="10 · Determinan 3 × 3"
+      title="Elemen × kofaktor, disusun sepanjang satu garis"
+      copy={<>
+        <p>Pilih satu baris (atau kolom). Determinan = jumlah <b>elemen × kofaktornya</b>.</p>
+        <p className="ds-math">{tex(raw`\det A=a_{i1}C_{i1}+a_{i2}C_{i2}+a_{i3}C_{i3}`)}</p>
+        <p className="fragment">Tekan →: suku demi suku muncul. Elemen yang disorot oranye adalah garis ekspansi.</p>
+        <p className="fragment">Suku kedua dan ketiga menyusul. Kofaktor sudah membawa tandanya sendiri.</p>
+        <p className="fragment">Hasilnya <b>sama</b> untuk baris atau kolom mana pun. Pilih yang banyak <b>nol</b>: sukunya hilang.</p>
+      </>}
+      stage={<>
+        <div className="ds-read ds-math" style={mid}>{tex(raw`A=${mxs(A, (x, y) => ((row ? x : y) === t ? C.orange : null))}`)}</div>
+        <MatChips v={k} set={setK} />
+        <Chips value={ax} onPick={setAx} items={["b1", "b2", "b3", "k1", "k2", "k3"].map((v) => ({ v, label: `${v[0] === "b" ? "baris" : "kolom"} ${v[1]}` }))} />
+        <div className="ds-read ds-math" style={mid}>
+          {tex(raw`\det A=${expr || raw`\,?`}${shown >= 3 ? raw`=${nt(det3(A))}` : ""}`)}
+        </div>
+      </>}
+    />
+  );
+}
+
+/* ═════════ 11 · Sarrus ═════════ */
+function SarrusSlide() {
+  const ref = useRef<HTMLDivElement>(null);
+  const step = useStep(ref);
+  const [k, setK] = useState("det = 1");
+  const A = pick3(k), E = (r: number, c: number) => A[r][c % 3];
+  const dn = [0, 1, 2].map((d) => E(0, d) * E(1, d + 1) * E(2, d + 2));
+  const up = [0, 1, 2].map((d) => E(2, d) * E(1, d + 1) * E(0, d + 2));
+  const sd = dn.reduce((a, b) => a + b, 0), su = up.reduce((a, b) => a + b, 0);
+  const col = (r: number, c: number) =>
+    step === 1 && c >= r && c - r <= 2 ? C.blue : step === 2 && c + r >= 2 && c + r - 2 <= 2 ? C.red : null;
+  const body = [0, 1, 2].map((r) => [0, 1, 2, 3, 4].map((c) => { const cc = col(r, c), v = nt(E(r, c)); return cc ? raw`{\color{${cc}}${v}}` : v; }).join("&")).join(raw`\\`);
+  return (
+    <Frame
+      innerRef={ref}
+      eyebrow="11 · Cara Sarrus"
+      title="Salin dua kolom, tarik diagonal"
+      copy={<>
+        <p>Salin <b>dua kolom pertama</b> di sisi kanan matriks, lalu cari tiga diagonal turun dan tiga diagonal naik.</p>
+        <p className="fragment">Diagonal turun (<b style={{ color: C.blue }}>biru</b>): kalikan tiap diagonal, <b>jumlahkan</b>.</p>
+        <p className="fragment">Diagonal naik (<b style={{ color: C.red }}>merah</b>): kalikan tiap diagonal, jumlahnya <b>dikurangkan</b>.</p>
+        <p className="fragment">det = biru − merah, sama dengan ekspansi kofaktor. Awas: cara Sarrus <b>hanya untuk 3 × 3</b>.</p>
+      </>}
+      stage={<>
+        <div className="ds-read ds-math" style={{ ...mid, fontSize: 30 }}>{tex(raw`\left|\begin{array}{ccc|cc}${body}\end{array}\right|`)}</div>
+        <MatChips v={k} set={setK} />
+        <div className="ds-read ds-math" style={mid}>
+          {step < 1 && <span className="ds-muted">Tekan → untuk menarik diagonal.</span>}
+          {step >= 1 && <div>{tex(raw`{\color{${C.blue}}${dn.map(pr).join("+")}=${nt(sd)}}`)}</div>}
+          {step >= 2 && <div>{tex(raw`{\color{${C.red}}${up.map(pr).join("+")}=${nt(su)}}`)}</div>}
+          {step >= 3 && <div>{tex(raw`\det A=${nt(sd)}-${pr(su)}=${nt(sd - su)}`)}</div>}
+        </div>
+      </>}
+    />
+  );
+}
+
+/* ═════════ 12 · Adjoin dan invers 3×3 ═════════ */
+const B3 = [1, 2, 3];
+function Inv3Slide() {
+  const ref = useRef<HTMLDivElement>(null);
+  const step = useStep(ref);
+  const [k, setK] = useState("det = 1");
+  const A = pick3(k), D = det3(A), K = A.map((_, i) => A.map((_, j) => cof(A, i, j))), J = adj(A);
+  const X = D === 0 ? [] : J.map((r) => r.reduce((s, v, j) => s + v * B3[j], 0) / D);
+  const none = raw`\det A=0\ \Rightarrow\ A^{-1}\text{ tidak ada}`;
+  const lines = [
+    raw`A=${mxs(A)}`,
+    raw`\operatorname{kof}(A)=${mxs(K)}`,
+    raw`\operatorname{adj}(A)=\operatorname{kof}(A)^{T}=${mxs(J)}`,
+    D ? raw`A^{-1}=\dfrac{1}{${nt(D)}}${mxs(J)}` : none,
+    D ? raw`AX=${mxs(B3.map((v) => [v]))}\Rightarrow X=A^{-1}B=${mxs(X.map((v) => [v]))}` : none,
+  ];
+  return (
+    <Frame
+      innerRef={ref}
+      eyebrow="12 · Adjoin dan invers"
+      title="Invers 3 × 3 lewat kofaktor"
+      copy={<>
+        <p>Rumusnya mirip 2×2: {tex(raw`A^{-1}=\dfrac{1}{\det A}\operatorname{adj}(A)`)}. Adjoin dibangun dari kofaktor.</p>
+        <p className="fragment">Langkah 1: ganti setiap elemen dengan <b>kofaktornya</b>, hasilnya matriks kofaktor.</p>
+        <p className="fragment">Langkah 2: <b>transpos</b> matriks kofaktor. Itulah adjoin. (Pada 2×2, ini yang menukar a dan d.)</p>
+        <p className="fragment">Langkah 3: bagi dengan determinan. Bila <b>det = 0</b>, tidak ada invers.</p>
+        <p className="fragment">Terapan: sistem tiga persamaan {tex(raw`AX=B`)} berpenyelesaian {tex(raw`X=A^{-1}B`)}.</p>
+      </>}
+      stage={<>
+        <div className="ds-read ds-math" style={{ ...mid, minHeight: 130, display: "grid", alignItems: "center" }}>{tex(lines[Math.min(step, 4)])}</div>
+        <MatChips v={k} set={setK} />
+        <div className={`ds-read ds-math ${D === 0 ? "ds-bad" : ""}`} style={mid}>{tex(raw`\det A=${nt(D)}`)} <span className="ds-muted">{D === 0 ? "tak punya invers" : "punya invers"}</span></div>
+      </>}
+    />
+  );
+}
+
+/* ═════════ 13 · Ringkasan ═════════ */
 function SummarySlide() {
   const rows: [string, string][] = [
     ["Ordo", raw`m\times n\ (\text{baris}\times\text{kolom})`],
@@ -416,6 +577,9 @@ function SummarySlide() {
     ["Determinan", raw`\det\begin{bmatrix}a&b\\c&d\end{bmatrix}=ad-bc`],
     ["Invers", raw`A^{-1}=\dfrac{1}{ad-bc}\begin{bmatrix}d&-b\\-c&a\end{bmatrix}`],
     ["Sistem", raw`AX=B\ \Rightarrow\ X=A^{-1}B`],
+    ["Minor, kofaktor", raw`C_{ij}=(-1)^{i+j}M_{ij}`],
+    ["Det 3×3", raw`\det A=\sum_j a_{ij}C_{ij}\ (\text{atau Sarrus})`],
+    ["Invers 3×3", raw`A^{-1}=\dfrac{1}{\det A}\operatorname{adj}(A),\ \operatorname{adj}=\operatorname{kof}^{T}`],
   ];
   return (
     <Frame
@@ -427,7 +591,7 @@ function SummarySlide() {
         <p className="fragment">Sekarang uji pemahaman dengan kuis.</p>
       </>}
       stage={
-        <table className="ds-table" style={{ fontSize: 16 }}>
+        <table className="ds-table" style={{ fontSize: 15 }}>
           <tbody>{rows.map(([a, t]) => <tr key={a}><th style={{ whiteSpace: "nowrap" }}>{a}</th><td>{tex(t)}</td></tr>)}</tbody>
         </table>
       }
@@ -448,8 +612,12 @@ export function MatriksDeck() {
       <DetSlide />
       <InvSlide />
       <SolveSlide />
+      <MinorSlide />
+      <ExpandSlide />
+      <SarrusSlide />
+      <Inv3Slide />
       <SummarySlide />
-      <Quiz eyebrow="Latihan · Kuis" title="Kuis 9 soal" items={QUIZ} />
+      <Quiz eyebrow="Latihan · Kuis" title="Kuis 13 soal" items={QUIZ} />
     </SlideDeck>
   );
 }

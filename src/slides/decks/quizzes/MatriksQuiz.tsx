@@ -54,4 +54,24 @@ export const QUIZ: QItem[] = [
     opts: ["det(AB) = det(A) · det(B)", "AB = BA selalu berlaku", "A + B = AB", "det(A + B) = det(A) + det(B)", "setiap matriks persegi punya invers"], ans: 0,
     why: <>Perkalian matriks <b>tidak komutatif</b> (urutan penting), dan matriks berdeterminan 0 tak punya invers. Yang selalu benar: determinan hasil kali = hasil kali determinan.</>,
   },
+  {
+    q: <>Pada {tex(raw`A=\begin{bmatrix}1&2&3\\0&1&4\\5&6&0\end{bmatrix}`)}, kofaktor {tex(raw`C_{23}`)} adalah ....</>,
+    opts: ["4", "−4", "2", "−2", "0"], ans: 0,
+    why: <>Coret baris 2 dan kolom 3: minor {tex(raw`M_{23}=\begin{vmatrix}1&2\\5&6\end{vmatrix}=6-10=-4`)}. Tanda {tex(raw`(-1)^{2+3}=-1`)}, jadi {tex(raw`C_{23}=4`)}.</>,
+  },
+  {
+    q: <>Determinan {tex(raw`\begin{bmatrix}2&1&0\\1&3&1\\0&1&2\end{bmatrix}`)} adalah ....</>,
+    opts: ["8", "10", "6", "12", "−8"], ans: 0,
+    why: <>Sarrus: diagonal turun {tex("12+0+0=12")}, diagonal naik {tex("0+2+2=4")}. Determinan {tex("12-4=8")}.</>,
+  },
+  {
+    q: <>Matriks {tex(raw`\begin{bmatrix}1&2&3\\4&5&6\\7&8&k\end{bmatrix}`)} tidak punya invers bila k = ....</>,
+    opts: ["9", "8", "6", "0", "3"], ans: 0,
+    why: <>{tex(raw`\det=-3k+27`)} (ekspansi baris 1). Tak punya invers bila det = 0, yaitu k = 9.</>,
+  },
+  {
+    q: <>Rumus invers matriks 3 × 3 adalah ....</>,
+    opts: [raw`\dfrac{1}{\det A}\operatorname{adj}(A)`, raw`\det A\cdot\operatorname{adj}(A)`, raw`\dfrac{\det A}{\operatorname{adj}(A)}`, raw`\dfrac{1}{\det A}\operatorname{kof}(A)`, raw`\dfrac{1}{\det A}A^{T}`], ans: 0,
+    why: <>Adjoin adalah <b>transpos</b> matriks kofaktor. Pilihan yang memakai kofaktor tanpa transpos keliru.</>,
+  },
 ];

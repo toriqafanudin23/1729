@@ -30,14 +30,20 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("SISWA");
   const [classLevel, setClassLevel] = useState("10");
-  const [notice, setNotice] = useState(() => (
-    (location.state as { loginRequired?: boolean } | null)?.loginRequired
-      ? "Materi ini memerlukan login. Masuk atau daftar untuk melanjutkan."
-      : ""
-  ));
+  const [notice, setNotice] = useState(() => {
+    const state = location.state as { loginRequired?: boolean; notice?: string } | null;
+    if (state?.notice) return state.notice;
+    if (state?.loginRequired) return "Materi ini memerlukan login. Masuk atau daftar untuk melanjutkan.";
+    return "";
+  });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const loginToken = searchParams.get("token");
+
+  const redirectTarget = (() => {
+    const raw = (location.state as { from?: string } | null)?.from || searchParams.get("next") || searchParams.get("from") || "/";
+    return raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  })();
 
   useEffect(() => {
     if (!loginToken) return;
@@ -46,14 +52,14 @@ export default function LoginPage() {
     authRequest("/verify-link", { token: loginToken })
       .then(async () => {
         await refresh();
-        if (active) navigate("/", { replace: true });
+        if (active) navigate(redirectTarget, { replace: true });
       })
       .catch((reason: Error) => { if (active) setError(reason.message); })
       .finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
-  }, [loginToken, navigate, refresh]);
+  }, [loginToken, navigate, refresh, redirectTarget]);
 
-  useEffect(() => { if (user && !loginToken) navigate("/", { replace: true }); }, [user, loginToken, navigate]);
+  useEffect(() => { if (user && !loginToken) navigate(redirectTarget, { replace: true }); }, [user, loginToken, navigate, redirectTarget]);
 
   async function submitEmail(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError(""); setNotice("");
@@ -81,7 +87,7 @@ export default function LoginPage() {
     try {
       await authRequest("/complete-profile", { name, role, classLevel: role === "SISWA" ? Number(classLevel) : null });
       await refresh();
-      navigate("/", { replace: true });
+      navigate(redirectTarget, { replace: true });
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Akun belum dapat dibuat."); }
     finally { setBusy(false); }
   }
@@ -89,7 +95,7 @@ export default function LoginPage() {
   async function confirmMagicLink() {
     setBusy(true); setError("");
     const signedIn = await refresh();
-    if (signedIn) navigate("/", { replace: true });
+    if (signedIn) navigate(redirectTarget, { replace: true });
     else setError("Sesi login belum ditemukan. Buka tombol login dari email pada perangkat ini.");
     setBusy(false);
   }

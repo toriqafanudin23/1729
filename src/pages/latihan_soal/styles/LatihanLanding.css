@@ -364,6 +364,9 @@ html {
 .lk-downloads {
   padding-top: 52px;
 }
+.lk-downloads__prompt {
+  margin-top: 28px;
+}
 .lk-download-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -380,11 +383,40 @@ html {
   border-radius: 18px;
   background: var(--paper);
 }
+.lk-download-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .lk-download-card__meta {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--mute);
+}
+.lk-download-card__date {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+}
+.lk-download-card__access {
+  padding: 1px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--wash);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 1.7;
+  white-space: nowrap;
+  color: var(--mute);
+}
+.lk-download-card__access--member {
+  border-color: #f0cbbd;
+  background: #fbeee8;
+  color: #b5573a;
 }
 .lk-download-card h3 {
   margin: 8px 0;

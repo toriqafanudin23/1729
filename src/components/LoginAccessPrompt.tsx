@@ -5,6 +5,7 @@ import "./LoginAccessPrompt.css";
 interface LoginAccessPromptProps {
   title: string;
   description: string;
+  from?: string;
 }
 
 function LockIcon() {
@@ -16,7 +17,7 @@ function LockIcon() {
   );
 }
 
-export function LoginAccessPrompt({ title, description }: LoginAccessPromptProps) {
+export function LoginAccessPrompt({ title, description, from }: LoginAccessPromptProps) {
   const { user } = useAuth();
   if (user) return null;
 
@@ -28,7 +29,7 @@ export function LoginAccessPrompt({ title, description }: LoginAccessPromptProps
         <p className="login-access-prompt__desc">{description}</p>
       </div>
       <div className="login-access-prompt__action">
-        <Link to="/login" className="login-access-prompt__btn">
+        <Link to="/login" state={{ loginRequired: true, from }} className="login-access-prompt__btn">
           Masuk atau daftar <span aria-hidden="true">→</span>
         </Link>
         <span className="login-access-prompt__note">Gratis. Cukup dengan email, tanpa kata sandi.</span>

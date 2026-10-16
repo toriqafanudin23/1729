@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
+import { useAuth } from "../../auth/AuthContext";
 import { useSeo } from "../../useSeo";
 import "./styles/LatihanLanding.css";
 import { PACK_CATALOG } from "./catalog";
@@ -33,6 +35,55 @@ const CATEGORIES = [
   "Kombinatorika",
   "Kalkulus",
 ] as const;
+
+interface DownloadItem {
+  meta: string;
+  title: string;
+  desc: string;
+  url: string;
+  publishedAt: string;
+  requiresAuth?: boolean;
+}
+
+const DOWNLOAD_ITEMS: DownloadItem[] = [
+  {
+    meta: "TKA · SMA · 2026",
+    title: "Latihan soal TKA SMA 2026",
+    desc: "Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.",
+    url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMA_2026.zip",
+    publishedAt: "15 Oktober 2026",
+  },
+  {
+    meta: "TKA · SMP · 2026",
+    title: "Latihan soal TKA SMP 2026",
+    desc: "Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.",
+    url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMP_2026.zip",
+    publishedAt: "15 Oktober 2026",
+  },
+  {
+    meta: "LATIHAN SOAL · KELAS 10",
+    title: "Latihan soal kelas 10",
+    desc: "Cakupan materi: eksponensial dan logaritma, barisan dan deret, sistem persamaan dan pertidaksamaan linear, fungsi kuadrat, perbandingan trigonometri, peluang, statistika, dan vektor.",
+    url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_10_pdf.zip",
+    publishedAt: "16 Oktober 2026",
+  },
+  {
+    meta: "LATIHAN SOAL · KELAS 11",
+    title: "Latihan soal kelas 11",
+    desc: "Cakupan materi: bilangan kompleks, polinomial, lingkaran, matriks, transformasi geometri, komposisi fungsi, dan invers.",
+    url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_11_pdf.zip",
+    publishedAt: "16 Oktober 2026",
+    requiresAuth: true,
+  },
+  {
+    meta: "LATIHAN SOAL · KELAS 12",
+    title: "Latihan soal kelas 12",
+    desc: "Cakupan materi: fungsi dan pemodelan, irisan kerucut, kombinatorika, transformasi fungsi, analisis data dan peluang, limit, turunan, dan integral.",
+    url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_12_pdf.zip",
+    publishedAt: "16 Oktober 2026",
+    requiresAuth: true,
+  },
+];
 
 /* ------------------------------------------------------------------ *
  *  Konten
@@ -322,6 +373,7 @@ export default function LatihanLanding() {
     path: "/latihan",
   });
 
+  const { user } = useAuth();
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");
 
   const types = new Set(PACK_CATALOG.flatMap((material) => material.types));
@@ -384,77 +436,64 @@ export default function LatihanLanding() {
           <div className="lk-wrap">
             <p className="lk-eyebrow">Bahan belajar</p>
             <h2 className="lk-h2">Unduh latihan soal.</h2>
+
+            {!user && (
+              <div className="lk-downloads__prompt">
+                <LoginAccessPrompt
+                  title="Ingin mengunduh latihan soal kelas 11 dan 12?"
+                  description="Masuk atau daftar dengan email secara gratis untuk mengunduh berkas latihan kelas 11 dan 12."
+                  from="/latihan#unduhan"
+                />
+              </div>
+            )}
+
             <div className="lk-download-grid">
-              <article className="lk-download-card">
-                <div className="lk-download-card__copy">
-                  <span className="lk-download-card__meta">TKA · SMA · 2026</span>
-                  <h3>Latihan soal TKA SMA 2026</h3>
-                  <p>Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.</p>
-                </div>
-                <a
-                  className="lk-btn lk-btn--solid lk-download-card__button"
-                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMA_2026.zip"
-                  download
-                >
-                  Unduh berkas <span aria-hidden="true">↓</span>
-                </a>
-              </article>
-              <article className="lk-download-card">
-                <div className="lk-download-card__copy">
-                  <span className="lk-download-card__meta">TKA · SMP · 2026</span>
-                  <h3>Latihan soal TKA SMP 2026</h3>
-                  <p>Unduh paket latihan dalam format ZIP untuk dikerjakan secara luring.</p>
-                </div>
-                <a
-                  className="lk-btn lk-btn--solid lk-download-card__button"
-                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/slide-berdasarkan-kelas/1729/latihan_soal_TKA_SMP_2026.zip"
-                  download
-                >
-                  Unduh berkas <span aria-hidden="true">↓</span>
-                </a>
-              </article>
-              <article className="lk-download-card">
-                <div className="lk-download-card__copy">
-                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 10</span>
-                  <h3>Latihan soal kelas 10</h3>
-                  <p>Cakupan materi: eksponensial dan logaritma, barisan dan deret, sistem persamaan dan pertidaksamaan linear, fungsi kuadrat, perbandingan trigonometri, peluang, statistika, dan vektor.</p>
-                </div>
-                <a
-                  className="lk-btn lk-btn--solid lk-download-card__button"
-                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_10_pdf.zip"
-                  download
-                >
-                  Unduh berkas <span aria-hidden="true">↓</span>
-                </a>
-              </article>
-              <article className="lk-download-card">
-                <div className="lk-download-card__copy">
-                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 11</span>
-                  <h3>Latihan soal kelas 11</h3>
-                  <p>Cakupan materi: bilangan kompleks, polinomial, lingkaran, matriks, transformasi geometri, komposisi fungsi, dan invers.</p>
-                </div>
-                <a
-                  className="lk-btn lk-btn--solid lk-download-card__button"
-                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_11_pdf.zip"
-                  download
-                >
-                  Unduh berkas <span aria-hidden="true">↓</span>
-                </a>
-              </article>
-              <article className="lk-download-card">
-                <div className="lk-download-card__copy">
-                  <span className="lk-download-card__meta">LATIHAN SOAL · KELAS 12</span>
-                  <h3>Latihan soal kelas 12</h3>
-                  <p>Cakupan materi: fungsi dan pemodelan, irisan kerucut, kombinatorika, transformasi fungsi, analisis data dan peluang, limit, turunan, dan integral.</p>
-                </div>
-                <a
-                  className="lk-btn lk-btn--solid lk-download-card__button"
-                  href="https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_12_pdf.zip"
-                  download
-                >
-                  Unduh berkas <span aria-hidden="true">↓</span>
-                </a>
-              </article>
+              {DOWNLOAD_ITEMS.map((item) => {
+                const isLocked = item.requiresAuth && !user;
+                return (
+                  <article className="lk-download-card" key={item.title}>
+                    <div className="lk-download-card__copy">
+                      <div className="lk-download-card__header">
+                        <span className="lk-download-card__meta">{item.meta}</span>
+                        <span className="lk-download-card__date">Rilis {item.publishedAt}</span>
+                        <span
+                          className={`lk-download-card__access${
+                            item.requiresAuth ? " lk-download-card__access--member" : ""
+                          }`}
+                        >
+                          {item.requiresAuth ? "Perlu login" : "Tanpa login"}
+                        </span>
+                      </div>
+                      <h3>{item.title}</h3>
+                      <p>{item.desc}</p>
+                    </div>
+
+                    {isLocked ? (
+                      <Link
+                        to="/login"
+                        state={{
+                          loginRequired: true,
+                          from: "/latihan#unduhan",
+                          notice: "Silakan masuk atau daftar terlebih dahulu untuk mengunduh latihan soal kelas 11 dan 12.",
+                        }}
+                        className="lk-btn lk-btn--solid lk-download-card__button"
+                        aria-label={`Masuk untuk mengunduh ${item.title}`}
+                      >
+                        Masuk untuk unduh <span aria-hidden="true">→</span>
+                      </Link>
+                    ) : (
+                      <a
+                        className="lk-btn lk-btn--solid lk-download-card__button"
+                        href={item.url}
+                        download
+                        aria-label={`Unduh berkas ${item.title}`}
+                      >
+                        Unduh berkas <span aria-hidden="true">↓</span>
+                      </a>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>

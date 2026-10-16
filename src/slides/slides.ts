@@ -13,7 +13,7 @@ export interface DeckMeta {
   slides: number; // jumlah slide
   minutes: number; // perkiraan durasi
   level: string;
-  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid" | "similar" | "complex";
+  thumb: "transform" | "calculus" | "linear" | "inequality" | "program" | "quadratic" | "circle" | "conic" | "sets" | "solid" | "similar" | "complex" | "matrix";
   Component: LazyExoticComponent<ComponentType>;
 }
 
@@ -95,6 +95,19 @@ export const DECKS: DeckMeta[] = [
     level: "SMA kelas 10 (pengayaan)",
     thumb: "complex",
     Component: lazy(() => import("./decks/BilanganKompleksDeck")),
+  },
+  {
+    slug: "matriks",
+    title: "Matriks",
+    category: "Aljabar",
+    summary:
+      "Matriks bukan sekadar tabel angka: ia adalah gerakan bidang. Dari ordo, jumlah, dan perkalian baris × kolom sampai matriks sebagai transformasi, komposisi (AB ≠ BA), determinan sebagai faktor luas, invers, dan penyelesaian sistem persamaan. Setiap rumus ditemukan lewat simulasi, ditutup dengan kuis.",
+    concepts: ["Ordo", "Jumlah dan skalar", "Perkalian", "Transformasi", "Determinan", "Invers", "Sistem persamaan"],
+    slides: 12,
+    minutes: 45,
+    level: "SMA kelas 11",
+    thumb: "matrix",
+    Component: lazy(() => import("./decks/MatriksDeck")),
   },
   {
     slug: "lingkaran",

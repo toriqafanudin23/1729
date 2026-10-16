@@ -421,6 +421,32 @@ function ThumbComplex() {
   );
 }
 
+function ThumbMatrix() {
+  return (
+    <ThumbFrame label="Matriks 2 kali 2 dan kotak satuan yang berubah menjadi jajar genjang">
+      <g stroke="#94a3b8" strokeWidth="1.25">
+        <line x1="0" y1="130" x2="320" y2="130" />
+        <line x1="160" y1="0" x2="160" y2="180" />
+      </g>
+      <path d="M160 130 L200 130 L200 90 L160 90 Z" fill="rgba(15,23,42,.05)" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" />
+      <path d="M160 130 L220 110 L260 60 L200 80 Z" fill="rgba(230,81,0,.12)" stroke="#e65100" strokeWidth="2.25" strokeLinejoin="round" />
+      <line x1="160" y1="130" x2="220" y2="110" stroke="#0f766e" strokeWidth="2.75" strokeLinecap="round" />
+      <line x1="160" y1="130" x2="200" y2="80" stroke="#6557d2" strokeWidth="2.75" strokeLinecap="round" />
+      <circle cx="220" cy="110" r="5.5" fill="#0f766e" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="200" cy="80" r="5.5" fill="#6557d2" stroke="#fff" strokeWidth="1.5" />
+      <circle cx="160" cy="130" r="4.5" fill="#0f172a" stroke="#fff" strokeWidth="1.5" />
+      <g fill="none" stroke="#0f172a" strokeWidth="2" strokeLinecap="round">
+        <path d="M60 56 H50 V104 H60" />
+        <path d="M110 56 H120 V104 H110" />
+      </g>
+      <g fill="#0f172a" fontFamily="ui-monospace, monospace" fontSize="17" textAnchor="middle">
+        <text x="68" y="76">a</text><text x="98" y="76">b</text>
+        <text x="68" y="98">c</text><text x="98" y="98">d</text>
+      </g>
+    </ThumbFrame>
+  );
+}
+
 function ThumbSimilar() {
   return (
     <ThumbFrame label="Dua segitiga sebangun: yang kecil dan yang besar dengan sudut sama">
@@ -440,7 +466,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
   return (
     <Link to={`/slides/${deck.slug}`} className="sl-card">
       <div className="sl-card__thumb">
-        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : deck.thumb === "similar" ? <ThumbSimilar /> : deck.thumb === "complex" ? <ThumbComplex /> : <ThumbCalculus />}
+        {deck.thumb === "transform" ? <ThumbTransform /> : deck.thumb === "linear" ? <ThumbLinear /> : deck.thumb === "inequality" ? <ThumbInequality /> : deck.thumb === "program" ? <ThumbProgram /> : deck.thumb === "quadratic" ? <ThumbQuadratic /> : deck.thumb === "circle" ? <ThumbCircle /> : deck.thumb === "conic" ? <ThumbConic /> : deck.thumb === "sets" ? <ThumbSets /> : deck.thumb === "solid" ? <ThumbSolid /> : deck.thumb === "similar" ? <ThumbSimilar /> : deck.thumb === "complex" ? <ThumbComplex /> : deck.thumb === "matrix" ? <ThumbMatrix /> : <ThumbCalculus />}
       </div>
       <div className="sl-card__body">
         <p className="sl-card__meta">

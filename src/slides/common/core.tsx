@@ -204,10 +204,7 @@ export function SimBoard<P extends object>(props: {
       const b = JXG.JSXGraph.initBoard(id, {
         boundingbox: bbox, keepAspectRatio: aspect === undefined, axis: false, grid: false, showCopyright: false,
         showNavigation: false, showInfobox: false, pan: { enabled: false }, zoom: { enabled: false },
-        // Reveal mengubah ukuran slide dengan transform CSS. Resize bawaan
-        // JSXGraph juga mengatur ulang viewport saat section aktif, sehingga
-        // bbox tampak melakukan zoom ketika masuk dari slide sebelumnya.
-        resize: { enabled: false, throttle: 60 },
+        resize: { enabled: true, throttle: 60 },
       } as never) as B;
       board.current = b;
       backdrop(b);

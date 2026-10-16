@@ -6,7 +6,7 @@ const raw = String.raw;
 const mt = (a: number, b: number, c: number, d: number) => raw`\begin{bmatrix}${a}&${b}\\${c}&${d}\end{bmatrix}`;
 
 // Bank soal dipisah dari susunan slide agar mudah dirawat.
-export const QUIZ: QItem[] = [
+const RAW: QItem[] = [
   {
     q: <>Matriks A berordo 3 × 4 dan B berordo 4 × 2. Ordo AB adalah ....</>,
     opts: ["3 × 2", "4 × 4", "3 × 4", "2 × 3", "AB tidak terdefinisi"], ans: 0,
@@ -75,3 +75,13 @@ export const QUIZ: QItem[] = [
     why: <>Adjoin adalah <b>transpos</b> matriks kofaktor. Pilihan yang memakai kofaktor tanpa transpos keliru.</>,
   },
 ];
+
+/* Letak jawaban benar diacak secara tetap (bukan acak tiap muat), supaya kunci tidak selalu A
+   dan pembahasan tetap sesuai. Pilihan lain mempertahankan urutan semula. */
+const POS = [2, 4, 0, 3, 1, 3, 0, 4, 2, 1, 3, 0, 4];
+const put = (it: QItem, pos: number): QItem => {
+  const rest = it.opts.filter((_, i) => i !== it.ans);
+  rest.splice(pos, 0, it.opts[it.ans]);
+  return { ...it, opts: rest, ans: pos };
+};
+export const QUIZ: QItem[] = RAW.map((it, i) => put(it, POS[i] % it.opts.length));

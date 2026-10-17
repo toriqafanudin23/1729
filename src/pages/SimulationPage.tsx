@@ -4,9 +4,10 @@ import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
 import NotFoundPage from "./NotFoundPage";
-import { fitSeoDescription, useSeo, breadcrumb } from "../useSeo";
+import { useSeo } from "../useSeo";
+import { simulationSeo } from "../seoText";
 import { CpList } from "../components/CpFilter";
-import { CP_SIMULASI, cpLabel } from "../curriculum/cp";
+import { CP_SIMULASI } from "../curriculum/cp";
 import "./pages.css";
 
 /**
@@ -18,48 +19,15 @@ import "./pages.css";
  */
 export default function SimulationPage({ slug }: { slug?: string }) {
   const sim = findSimulation(slug);
-  const description = fitSeoDescription(
-    sim?.summary ?? "Simulasi yang kamu cari tidak ada. Jelajahi daftar simulasi matematika interaktif di 1729.",
-  );
+  const seo = sim ? simulationSeo(sim) : null;
 
   // Hook harus dipanggil sebelum return awal. Slug tak dikenal => noindex.
   useSeo(
-    sim
-      ? {
-          title: `${sim.title}: Simulasi Interaktif`,
-          description,
-          path: simulationPath(sim.slug),
-          jsonLd: [
-            {
-              "@context": "https://schema.org",
-              "@type": "LearningResource",
-              name: `${sim.title}: Simulasi Interaktif`,
-              description,
-              url: `https://1729.blog${simulationPath(sim.slug)}`,
-              inLanguage: "id-ID",
-              learningResourceType: "Simulasi interaktif",
-              interactivityType: "active",
-              isAccessibleForFree: true,
-              teaches: sim.concepts,
-              educationalAlignment: (CP_SIMULASI[sim.slug] ?? []).map((tag) => ({
-                "@type": "AlignmentObject",
-                alignmentType: "teaches",
-                educationalFramework: "Capaian Pembelajaran Matematika Kurikulum Merdeka",
-                targetName: `${cpLabel(tag)}: ${tag.fokus}`,
-              })),
-              about: sim.category,
-              isPartOf: { "@id": "https://1729.blog/#website" },
-            },
-            breadcrumb([
-              { name: "Beranda", path: "/" },
-              { name: "Simulasi", path: CATALOG_PATH },
-              { name: sim.title, path: simulationPath(sim.slug) },
-            ]),
-          ],
-        }
+    sim && seo
+      ? { title: seo.title, description: seo.description, path: simulationPath(sim.slug), jsonLd: seo.jsonLd }
       : {
           title: "Simulasi tidak ditemukan",
-          description,
+          description: "Simulasi yang kamu cari tidak ada. Jelajahi daftar simulasi matematika interaktif di 1729.",
           path: `${CATALOG_PATH}/${slug ?? ""}`,
           noindex: true,
         },

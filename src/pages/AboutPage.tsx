@@ -2,16 +2,12 @@ import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { useSeo } from "../useSeo";
+import { ABOUT_SEO } from "../seoText";
 import "./LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
 import "./AboutPage.css";
 
 export default function AboutPage() {
-  useSeo({
-    title: "Tentang 1729",
-    description:
-      "Mengapa 1729 dibuat: simulasi dan presentasi interaktif untuk membantu guru menjelaskan konsep matematika SMP dan SMA.",
-    path: "/about",
-  });
+  useSeo({ ...ABOUT_SEO, path: "/about" });
 
   return (
     <div className="lp ab">

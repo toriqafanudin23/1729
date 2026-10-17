@@ -18,7 +18,7 @@ const STEPS: { stage: Stage; label: string }[] = [
 ];
 
 export default function LoginPage() {
-  useSeo({ title: "Login — 1729", description: "Masuk atau buat akun 1729 dengan email.", path: "/login" });
+  useSeo({ title: "Masuk atau Daftar", description: "Masuk atau buat akun 1729 dengan email untuk membuka simulasi, slide, dan latihan soal matematika.", path: "/login", noindex: true });
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

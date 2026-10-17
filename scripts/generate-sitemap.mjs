@@ -1,42 +1,17 @@
 // scripts/generate-sitemap.mjs
-// Membuat public/sitemap.xml dari slug di simulations.ts dan data latihan.
-// Jalankan sebelum build: "build": "node scripts/generate-sitemap.mjs && tsc -b && vite build"
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+// Membuat public/sitemap.xml dari daftar rute di scripts/routes.mjs.
+// Hanya halaman yang benar-benar bisa dibuka tanpa login yang dimasukkan.
+import { writeFileSync } from "node:fs";
+import { getRoutes } from "./routes.mjs";
 
 const SITE = "https://1729.blog";
-const SIMULATIONS_FILE = "src/pages/simulations.ts";
-const SLIDES_FILE = "src/slides/slides.ts";
-const LATIHAN_DATA_DIR = "src/pages/latihan_soal/data"; // sesuaikan bila berbeda
+const routes = (await getRoutes()).filter((r) => r.inSitemap);
 
-const STATIC_PATHS = ["/", "/about", "/simulasi", "/latihan", "/toko", "/slides"];
-
-const slugsIn = (file) =>
-  [...readFileSync(file, "utf8").matchAll(/\bslug:\s*["']([a-z0-9-]+)["']/g)].map((m) => m[1]);
-
-function walk(dir) {
-  return readdirSync(dir).flatMap((name) => {
-    const p = join(dir, name);
-    return statSync(p).isDirectory() ? walk(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
-  });
-}
-
-const simulasi = [...new Set(slugsIn(SIMULATIONS_FILE))].map((s) => `/simulasi/${s}`);
-const slides = [...new Set(slugsIn(SLIDES_FILE))].map((s) => `/slides/${s}`);
-
-let latihan = [];
-try {
-  latihan = [...new Set(walk(LATIHAN_DATA_DIR).flatMap(slugsIn))].map((s) => `/latihan/${s}`);
-} catch {
-  console.warn(`[sitemap] folder ${LATIHAN_DATA_DIR} tidak ditemukan; /latihan/<slug> dilewati.`);
-}
-
-const paths = [...STATIC_PATHS, ...simulasi, ...latihan, ...slides];
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paths.map((p) => `  <url><loc>${SITE}${p}</loc></url>`).join("\n")}
+${routes.map((r) => `  <url><loc>${SITE}${r.path === "/" ? "/" : r.path}</loc></url>`).join("\n")}
 </urlset>
 `;
 
 writeFileSync("public/sitemap.xml", xml);
-console.log(`[sitemap] ${paths.length} URL (${simulasi.length} simulasi, ${latihan.length} latihan, ${slides.length} slides)`);
+console.log(`[sitemap] ${routes.length} URL publik ditulis ke public/sitemap.xml`);

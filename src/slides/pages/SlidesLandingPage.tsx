@@ -4,6 +4,7 @@ import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
 import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
 import { useSeo } from "../../useSeo";
+import { SLIDES_HUB_SEO } from "../../seoText";
 import { isSlidePublic } from "../../auth/accessPolicy";
 import { DECKS, type DeckMeta } from "../slides";
 import { CpBadges, CpFilter } from "../../components/CpFilter";
@@ -522,12 +523,7 @@ const KEYS: { keys: string[]; label: string }[] = [
 ];
 
 export default function SlidesLandingPage() {
-  useSeo({
-    title: "1729 Slides | Another Level: Presentasi Matematika Interaktif",
-    description:
-      "Slide presentasi matematika yang ikut bergerak. Setiap langkah penjelasan menggerakkan simulasinya. Tersedia transformasi geometri serta limit dan turunan.",
-    path: "/slides",
-  });
+  useSeo({ ...SLIDES_HUB_SEO, path: "/slides" });
 
   const [cpFilter, setCpFilter] = useState<CpFilterState>(EMPTY_CP_FILTER);
   const visibleDecks = DECKS.filter((deck) =>

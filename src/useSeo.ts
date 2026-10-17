@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 
-const SITE = "https://1729.blog";
-const MIN_DESCRIPTION_LENGTH = 120;
-const MAX_DESCRIPTION_LENGTH = 160;
-const DESCRIPTION_EXTENSION = " Latihan berjenjang dan pembahasan bertahap membantu memperkuat pemahaman.";
+import { DEFAULT_OG_IMAGE, SITE, breadcrumb, fitSeoDescription, fullTitle } from "./seoText";
+
+export { breadcrumb, fitSeoDescription };
 
 type SeoOptions = {
   /** Judul halaman, tanpa nama situs. Contoh: "Turunan" */
@@ -18,17 +17,6 @@ type SeoOptions = {
   /** Data terstruktur khusus halaman (BreadcrumbList, LearningResource, dll). */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
-
-export function fitSeoDescription(description: string) {
-  let normalized = description.replace(/\s+/g, " ").trim();
-  while (normalized.length < MIN_DESCRIPTION_LENGTH) normalized += DESCRIPTION_EXTENSION;
-  if (normalized.length <= MAX_DESCRIPTION_LENGTH) return normalized;
-
-  const candidate = normalized.slice(0, MAX_DESCRIPTION_LENGTH);
-  const boundary = candidate.lastIndexOf(" ");
-  const clipped = candidate.slice(0, boundary > MIN_DESCRIPTION_LENGTH ? boundary : MAX_DESCRIPTION_LENGTH - 1);
-  return `${clipped.replace(/[.,;:!?]+$/, "")}.`;
-}
 
 function upsert(selector: string, create: () => HTMLElement, set: (el: HTMLElement) => void) {
   let el = document.head.querySelector<HTMLElement>(selector);
@@ -52,12 +40,12 @@ const meta = (attr: "name" | "property", key: string, content: string) =>
 
 export function useSeo({ title, description, path, image, noindex = false, jsonLd }: SeoOptions) {
   useEffect(() => {
-    const fullTitle = path === "/" ? title : `${title} | 1729`;
+    const pageTitle = fullTitle(path, title);
     const url = new URL(path, SITE).toString();
     const metaDescription = fitSeoDescription(description);
-    const imageUrl = new URL(image ?? "/favicon.png", SITE).toString();
+    const imageUrl = new URL(image ?? DEFAULT_OG_IMAGE, SITE).toString();
 
-    document.title = fullTitle;
+    document.title = pageTitle;
     meta("name", "description", metaDescription);
     meta(
       "name",
@@ -77,16 +65,23 @@ export function useSeo({ title, description, path, image, noindex = false, jsonL
       (el) => el.setAttribute("href", url),
     );
 
-    meta("property", "og:title", fullTitle);
+    meta("property", "og:title", pageTitle);
     meta("property", "og:description", metaDescription);
     meta("property", "og:url", url);
     meta("property", "og:type", "website");
     meta("property", "og:image", imageUrl);
-    meta("property", "og:image:alt", "Logo 1729 — simulasi matematika dan latihan soal");
+    meta("property", "og:image:width", "1200");
+    meta("property", "og:image:height", "630");
+    meta("property", "og:image:alt", "1729: simulasi matematika interaktif, latihan soal, dan slide");
+    meta("property", "og:locale", "id_ID");
+    meta("property", "og:site_name", "1729");
     meta("name", "twitter:card", "summary_large_image");
     meta("name", "twitter:image", imageUrl);
-    meta("name", "twitter:title", fullTitle);
+    meta("name", "twitter:title", pageTitle);
     meta("name", "twitter:description", metaDescription);
+
+    // Hasil prerender sudah memuat JSON-LD halaman; buang agar tidak ganda.
+    document.head.querySelectorAll('script[type="application/ld+json"][data-route]').forEach((el) => el.remove());
 
     let script: HTMLScriptElement | null = null;
     if (jsonLd) {
@@ -101,15 +96,3 @@ export function useSeo({ title, description, path, image, noindex = false, jsonL
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, description, path, image, noindex]);
 }
-
-/** BreadcrumbList siap pakai. */
-export const breadcrumb = (items: { name: string; path: string }[]) => ({
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: items.map((it, i) => ({
-    "@type": "ListItem",
-    position: i + 1,
-    name: it.name,
-    item: new URL(it.path, SITE).toString(),
-  })),
-});

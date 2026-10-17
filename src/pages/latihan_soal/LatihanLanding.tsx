@@ -4,6 +4,7 @@ import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
 import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
 import { useAuth } from "../../auth/AuthContext";
+import { LATIHAN_HUB_SEO } from "../../seoText";
 import { useSeo } from "../../useSeo";
 import "./styles/LatihanLanding.css";
 import { PACK_CATALOG } from "./catalog";
@@ -370,11 +371,7 @@ function PackCard({ material, no }: { material: (typeof PACK_CATALOG)[number]; n
  *  Halaman
  * ------------------------------------------------------------------ */
 export default function LatihanLanding() {
-  useSeo({
-    title: "Latihan Soal Matematika",
-    description: "Paket latihan soal matematika berjenjang dari mudah sampai HOTS, dengan umpan balik seketika dan pembahasan langkah demi langkah.",
-    path: "/latihan",
-  });
+  useSeo({ ...LATIHAN_HUB_SEO, path: "/latihan" });
 
   const { user } = useAuth();
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");

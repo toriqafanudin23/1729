@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
+import { latihanSeo } from "../../seoText";
 import { useSeo } from "../../useSeo";
 import "katex/dist/katex.min.css";
 import "./styles/LatihanPage.css";
@@ -16,10 +17,12 @@ import type { Material } from "./types";
  *  Halaman latihan untuk satu materi. Semua isi datang dari `material`.
  * ------------------------------------------------------------------ */
 export default function LatihanPage({ material }: { material: Material }) {
+  const seo = latihanSeo(material);
   useSeo({
-    title: material.title,
-    description: material.description,
+    title: seo.title,
+    description: seo.description,
     path: `/latihan/${material.slug}`,
+    jsonLd: seo.jsonLd,
   });
 
   const stats = useMemo(() => {

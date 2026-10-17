@@ -3,6 +3,7 @@ import type JXG from "jsxgraph";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { HOME_SEO } from "../seoText";
 import { useSeo } from "../useSeo";
 import "./LandingPage.css";
 
@@ -558,11 +559,7 @@ const TOPICS: { name: string; sym: string; href: string }[] = [
  *  Halaman
  * ------------------------------------------------------------------ */
 export default function Landing() {
-  useSeo({
-    title: "1729 | Simulasi Matematika dan Latihan Soal SMP/SMA",
-    description: "Belajar matematika SMP dan SMA lewat simulasi interaktif, latihan soal berjenjang, pembahasan, dan slide aljabar, geometri, serta kalkulus.",
-    path: "/",
-  });
+  useSeo({ ...HOME_SEO, path: "/" });
 
   return (
     <div className="lp">

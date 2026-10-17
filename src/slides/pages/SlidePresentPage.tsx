@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
 import { useSeo } from "../../useSeo";
+import { slideSeo } from "../../seoText";
 import { DECKS, findDeck } from "../slides";
 import { useFullscreen } from "../common/useFullscreen";
 import "../../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
@@ -27,10 +28,13 @@ export default function SlidePresentPage() {
   const { active, fallback, toggle } = useFullscreen(stageRef);
   const [chrome, setChrome] = useState(true);
 
+  const seo = deck ? slideSeo(deck) : null;
   useSeo({
-    title: deck ? `${deck.title} | 1729 Slides` : "1729 Slides",
-    description: deck?.summary ?? "Presentasi matematika interaktif dari 1729.",
+    title: seo?.title ?? "Slide Matematika Interaktif",
+    description: seo?.description ?? "Presentasi matematika interaktif dari 1729.",
     path: `/slides/${slug ?? ""}`,
+    jsonLd: seo?.jsonLd,
+    noindex: !deck,
   });
 
   // pintasan F: ditangkap lebih dulu agar tidak bentrok dengan pintasan bawaan reveal.js

@@ -124,8 +124,8 @@ const PRESETS: { label: string; expr: string }[] = [
 
 const finite = (value: number) => Number.isFinite(value);
 const fmt = formatText;
-const fmtPt = ([x, y]: Vec) => `(${fmt(x)}; ${fmt(y)})`;
-const ptTex = ([x, y]: Vec) => String.raw`(${texNumber(x)};\,${texNumber(y)})`;
+const fmtPt = ([x, y]: Vec) => `(${fmt(x)}, ${fmt(y)})`;
+const ptTex = ([x, y]: Vec) => String.raw`(${texNumber(x)},${texNumber(y)})`;
 
 /** Parameter dari penyimpanan: angka terhingga, a dan b tidak nol. */
 function cleanParams(raw: Partial<Params> | undefined): Params {
@@ -385,12 +385,12 @@ const wrap = (piece: Piece, min: number) =>
 function num(value: number, digits = 2) {
   if (!Number.isFinite(value)) return String.raw`\text{—}`;
   if (Math.abs(value) < Math.pow(10, -digits) / 2) return "0";
-  return new Intl.NumberFormat("id-ID", {
+  return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: digits,
     useGrouping: false,
   })
     .format(value)
-    .replace(",", "{,}");
+    ;
 }
 
 /** Bagian kanan boleh dirapatkan dengan koefisien angka (2x, 2\sin, 2(x−1)). */
@@ -487,12 +487,12 @@ function transformedTex(root: Node, p: Params) {
 
 const originalTex = (root: Node) => renderNode(root, { s: "x", p: 5 }).s;
 
-/** Aturan titik (x; y) → (h + x/b; a·y + k) dengan angka saat ini. */
+/** Aturan titik (x, y) → (h + x/b, a·y + k) dengan angka saat ini. */
 function pointRuleTex({ h, k, a, b }: Params) {
   const xPart =
     b === 1 ? "x" : b === -1 ? "-x" : String.raw`\dfrac{x}{${num(b)}}`;
   const yPart = a === 1 ? "y" : a === -1 ? "-y" : `${num(a)}y`;
-  return String.raw`(x;\,y)\to\left(${plusConst(xPart, h)};\,${plusConst(yPart, k)}\right)`;
+  return String.raw`(x,y)\to\left(${plusConst(xPart, h)},${plusConst(yPart, k)}\right)`;
 }
 
 function describeEffects({ h, k, a, b }: Params) {
@@ -650,7 +650,7 @@ export function FunctionTransformationSimulation() {
   keysRef.current = keys;
   const scene = useRef<Scene | null>(null);
 
-  /** Titik uji diseret: tetap berada pada grafik f, absis dibulatkan 0,1. */
+  /** Titik uji diseret: tetap berada pada grafik f, absis dibulatkan 0.1. */
   const moveProbe = (rawX: number) => {
     const handle = scene.current?.handle;
     if (!handle) return;
@@ -839,7 +839,7 @@ export function FunctionTransformationSimulation() {
         },
       );
     const withCoords = (name: string, x: number, y: number) =>
-      `${name}${viewRef.current.pointLabels ? `(${fmt(x)}; ${fmt(y)})` : ""}`;
+      `${name}${viewRef.current.pointLabels ? `(${fmt(x)}, ${fmt(y)})` : ""}`;
 
     // titik kunci: asal (A, B, ...) pada f dan bayangannya (A′, B′, ...) pada g
     const keyBase = (i: number): Vec => {

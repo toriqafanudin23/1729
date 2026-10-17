@@ -9,12 +9,12 @@ export function snap(value: number, step: number) {
   return Number((Math.round(value / step) * step).toFixed(6));
 }
 
-const numberFormat = new Intl.NumberFormat("id-ID", {
+const numberFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
   useGrouping: false,
 });
 
-/** Angka gaya Indonesia (koma desimal). Nilai ≈ 0 ditulis "0". */
+/** Angka dengan titik desimal. Nilai ≈ 0 ditulis "0". */
 export function formatNumber(value: number) {
   if (!Number.isFinite(value)) return "—";
   if (Math.abs(value) < 0.005) return "0";
@@ -26,7 +26,7 @@ export function formatText(value: number) {
   return formatNumber(value).replace("-", "−");
 }
 
-/** Angka untuk KaTeX. `{,}` mencegah spasi setelah koma desimal. */
+/** Angka untuk KaTeX. Tanpa pemisah ribuan. */
 export function texNumber(value: number) {
-  return formatNumber(value).replace(",", "{,}");
+  return formatNumber(value);
 }

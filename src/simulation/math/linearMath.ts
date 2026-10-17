@@ -280,7 +280,7 @@ export function optimize(region: Region, p: number, q: number, goal: Goal): Opt 
 export function fmtN(v: number, digits = 2): string {
   if (!Number.isFinite(v)) return "—";
   if (Math.abs(v) < Math.pow(10, -digits) / 2) return "0";
-  return new Intl.NumberFormat("id-ID", {
+  return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: digits,
     useGrouping: false,
   })
@@ -289,7 +289,7 @@ export function fmtN(v: number, digits = 2): string {
 }
 
 export function ptText(p: Pt): string {
-  return `(${fmtN(p.x)}; ${fmtN(p.y)})`;
+  return `(${fmtN(p.x)}, ${fmtN(p.y)})`;
 }
 
 export function formatEq(c: Cons): string {

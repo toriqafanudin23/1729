@@ -146,8 +146,8 @@ function relationText(info: ReturnType<typeof analyze>) {
 
 /* ───────── Format ───────── */
 
-const coordText = ([x, y]: Vec) => `(${formatText(x)}; ${formatText(y)})`;
-const vecTex = ([x, y]: Vec) => String.raw`(${texNumber(x)};\,${texNumber(y)})`;
+const coordText = ([x, y]: Vec) => `(${formatText(x)}, ${formatText(y)})`;
+const vecTex = ([x, y]: Vec) => String.raw`(${texNumber(x)},${texNumber(y)})`;
 const paren = (value: number) =>
   value < 0 ? `(${texNumber(value)})` : texNumber(value);
 const undefinedTex = String.raw`\text{tak terdefinisi}`;
@@ -910,7 +910,7 @@ export function VectorSimulation() {
           <p style={{ margin: 0 }}>
             <strong style={{ color: colors.sum }}>Penjumlahan</strong>
             {": "}
-            <SimMath tex={String.raw`\vec{a}+\vec{b}=(a_{1}+b_{1};\,a_{2}+b_{2})`} />
+            <SimMath tex={String.raw`\vec{a}+\vec{b}=(a_{1}+b_{1},a_{2}+b_{2})`} />
             {" adalah diagonal jajar genjang yang dibentuk oleh a dan b."}
           </p>
           <p style={{ margin: 0 }}>

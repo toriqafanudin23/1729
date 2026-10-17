@@ -207,7 +207,7 @@ const PARTS: { key: PartKey; label: string; color: string; def: string }[] = [
 ];
 
 const PI_OPTIONS: { id: PiMode; label: string; value: number; tex: string }[] = [
-  { id: "314", label: "3,14", value: 3.14, tex: "3{,}14" },
+  { id: "314", label: "3.14", value: 3.14, tex: "3.14" },
   { id: "227", label: "22/7", value: 22 / 7, tex: String.raw`\dfrac{22}{7}` },
   { id: "pi", label: "π", value: Math.PI, tex: String.raw`\pi` },
 ];
@@ -237,7 +237,7 @@ const ANIMS: Record<Mode, { id: Exclude<Anim, null>; on: string; off: string }[]
   line: [],
 };
 
-/* ───────── Format angka (koma desimal, minus sebenarnya) ───────── */
+/* ───────── Format angka (titik desimal, minus sebenarnya) ───────── */
 
 const finite = (v: number) => Number.isFinite(v);
 const formatters = new Map<number, Intl.NumberFormat>();
@@ -245,7 +245,7 @@ function fmt(value: number, digits = 2) {
   if (!finite(value)) return "—";
   let nf = formatters.get(digits);
   if (!nf) {
-    nf = new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits, useGrouping: false });
+    nf = new Intl.NumberFormat("en-US", { maximumFractionDigits: digits, useGrouping: false });
     formatters.set(digits, nf);
   }
   if (Math.abs(value) < 0.5 * 10 ** -digits) return "0";
@@ -253,11 +253,11 @@ function fmt(value: number, digits = 2) {
 }
 function tex(value: number, digits = 2) {
   if (!finite(value)) return "?";
-  return fmt(value, digits).replace("−", "-").replace(",", "{,}");
+  return fmt(value, digits).replace("−", "-");
 }
-const fmtPt = (x: number, y: number) => `(${fmt(x)}; ${fmt(y)})`;
-const texPt = (p: Vec) => String.raw`(${tex(p[0])};\,${tex(p[1])})`;
-const stepText = (v: number) => String(v).replace(".", ",");
+const fmtPt = (x: number, y: number) => `(${fmt(x)}, ${fmt(y)})`;
+const texPt = (p: Vec) => String.raw`(${tex(p[0])},${tex(p[1])})`;
+const stepText = (v: number) => String(v);
 
 function polyTex(terms: [number, string][]) {
   const parts: string[] = [];
@@ -1681,7 +1681,7 @@ export function CircleSectorSimulation() {
     const r = sec.r;
     switch (key) {
       case "center":
-        return { color: colors.radius, tex: String.raw`O(0;\,0)` };
+        return { color: colors.radius, tex: String.raw`O(0,0)` };
       case "radius":
         return { color: colors.radius, tex: String.raw`OA=OB=r=${tex(r)}` };
       case "diameter":

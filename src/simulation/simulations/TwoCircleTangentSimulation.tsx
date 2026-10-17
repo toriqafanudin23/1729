@@ -319,7 +319,7 @@ function lineTex(t: Tangent) {
   return `${out || "0"}=${texNumber(t.c)}`;
 }
 
-const ptTex = (p: Vec) => String.raw`(${texNumber(p[0])};\,${texNumber(p[1])})`;
+const ptTex = (p: Vec) => String.raw`(${texNumber(p[0])},${texNumber(p[1])})`;
 
 const samePoint = (a: Params, b: Params) =>
   (Object.keys(a) as (keyof Params)[]).every((key) => Math.abs(a[key] - b[key]) < 1e-9);
@@ -531,7 +531,7 @@ export function TwoCircleTangentSimulation() {
         () =>
           `${name}${
             viewRef.current.pointLabels
-              ? `(${formatText(x())}; ${formatText(y())})`
+              ? `(${formatText(x())}, ${formatText(y())})`
               : ""
           }`,
         color,
@@ -856,7 +856,7 @@ export function TwoCircleTangentSimulation() {
       () =>
         `O₁${
           viewRef.current.pointLabels
-            ? `(${formatText(center1.X())}; ${formatText(center1.Y())})`
+            ? `(${formatText(center1.X())}, ${formatText(center1.Y())})`
             : ""
         }`,
       colors.c1,
@@ -867,7 +867,7 @@ export function TwoCircleTangentSimulation() {
       () =>
         `O₂${
           viewRef.current.pointLabels
-            ? `(${formatText(center2.X())}; ${formatText(center2.Y())})`
+            ? `(${formatText(center2.X())}, ${formatText(center2.Y())})`
             : ""
         }`,
       colors.c2,

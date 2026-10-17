@@ -127,7 +127,7 @@ const presets: Preset[] = [
   {
     label: "2, 3",
     params: { a: 2, b: 3, gamma: RIGHT },
-    note: "Sisi miring √13 ≈ 3,61. Teorema tetap berlaku walau c bukan bilangan bulat.",
+    note: "Sisi miring √13 ≈ 3.61. Teorema tetap berlaku walau c bukan bilangan bulat.",
   },
   {
     label: "Sudut lancip",
@@ -1063,7 +1063,7 @@ export function PythagorasSimulation() {
                   aria-pressed={view.snap}
                   onClick={() => updateView({ snap: !view.snap })}
                 >
-                  Tempel ke 0,5
+                  Tempel ke 0.5
                 </button>
               </div>
             </SimSection>

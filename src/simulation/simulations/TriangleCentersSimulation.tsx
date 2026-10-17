@@ -261,8 +261,8 @@ const sumTex = (values: number[]) =>
     .map((v, i) => (i === 0 ? tn(v) : v < 0 ? ` - ${tn(-v)}` : ` + ${tn(v)}`))
     .join("");
 const paren = (v: number) => (v < 0 ? `(${tn(v)})` : tn(v));
-const ptTex = (name: string, p: Pt) => String.raw`${name}(${tn(p.x)};\,${tn(p.y)})`;
-const ptText = (p: Pt) => `(${formatText(p.x)}; ${formatText(p.y)})`;
+const ptTex = (name: string, p: Pt) => String.raw`${name}(${tn(p.x)},${tn(p.y)})`;
+const ptText = (p: Pt) => `(${formatText(p.x)}, ${formatText(p.y)})`;
 
 const validVerts = (v: Verts | undefined): v is Verts =>
   !!v &&
@@ -871,7 +871,7 @@ export function TriangleCentersSimulation() {
     setVerts(next);
     const s = scene.current;
     if (s) {
-      // Bentuk persis (mis. segitiga sama sisi) tidak berada di grid 0,5:
+      // Bentuk persis (mis. segitiga sama sisi) tidak berada di grid 0.5:
       // matikan tempel ke grid agar titik tidak bergeser.
       const onGrid = [next.A, next.B, next.C].every((p) =>
         [p.x, p.y].every((n) => Math.abs(n * 2 - Math.round(n * 2)) < 1e-9),

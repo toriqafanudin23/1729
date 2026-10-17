@@ -501,7 +501,7 @@ export function TrigonometrySimulation() {
         () => px() + 10 / board.unitX,
         () => py() + 8 / board.unitY,
         () =>
-          `P(${formatText(Math.cos(rad()))}; ${formatText(Math.sin(rad()))})`,
+          `P(${formatText(Math.cos(rad()))}, ${formatText(Math.sin(rad()))})`,
       ],
       {
         anchorX: "left",
@@ -814,7 +814,7 @@ export function TrigonometrySimulation() {
               </SimRow>
               <SimRow>
                 <SimMath
-                  tex={String.raw`P(\cos\theta;\,\sin\theta)=(${texNumber(cosine)};\,${texNumber(sine)})`}
+                  tex={String.raw`P(\cos\theta,\sin\theta)=(${texNumber(cosine)},${texNumber(sine)})`}
                 />
               </SimRow>
             </ul>
@@ -829,7 +829,7 @@ export function TrigonometrySimulation() {
           <p style={{ margin: 0 }}>
             <strong style={{ color: colors.theta }}>Lingkaran satuan</strong>
             {": titik "}
-            <SimMath tex={String.raw`P(\cos\theta;\,\sin\theta)`} />
+            <SimMath tex={String.raw`P(\cos\theta,\sin\theta)`} />
             {" berada pada lingkaran berjari-jari 1, sehingga "}
             <SimMath
               tex={String.raw`\sin^{2}\theta+\cos^{2}\theta=${num(sine)}^{2}+${num(cosine)}^{2}=1`}

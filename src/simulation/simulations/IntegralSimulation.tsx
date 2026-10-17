@@ -99,14 +99,14 @@ type Scene = {
 const finite = (value: number) => Number.isFinite(value);
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
-/* ───────── Format angka (koma desimal, minus sebenarnya) ───────── */
+/* ───────── Format angka (titik desimal, minus sebenarnya) ───────── */
 
 const formatters = new Map<number, Intl.NumberFormat>();
 function fmt(value: number, digits = 2) {
   if (!finite(value)) return "—";
   let nf = formatters.get(digits);
   if (!nf) {
-    nf = new Intl.NumberFormat("id-ID", {
+    nf = new Intl.NumberFormat("en-US", {
       maximumFractionDigits: digits,
       useGrouping: false,
     });
@@ -116,9 +116,9 @@ function fmt(value: number, digits = 2) {
   return nf.format(value).replace("-", "−");
 }
 
-/** Angka untuk KaTeX: koma desimal tanpa spasi, minus sebagai "-". */
+/** Angka untuk KaTeX: titik desimal tanpa spasi, minus sebagai "-". */
 function tex(value: number, digits = 2) {
-  return fmt(value, digits).replace("−", "-").replace(",", "{,}");
+  return fmt(value, digits).replace("−", "-");
 }
 
 /* ───────── Jumlah Riemann ───────── */
@@ -327,7 +327,7 @@ export function IntegralSimulation() {
           () => (finite(x()) ? x() + 8 / board.unitX : 0),
           () => (finite(y()) ? y() + 6 / board.unitY : 0),
           () =>
-            finite(x()) && finite(y()) ? `(${fmt(x())}; ${fmt(y())})` : "",
+            finite(x()) && finite(y()) ? `(${fmt(x())}, ${fmt(y())})` : "",
         ],
         {
           anchorX: "left",

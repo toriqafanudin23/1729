@@ -255,7 +255,7 @@ export function QuadraticSimulation() {
           () => (finite(y()) ? y() + 6 / board.unitY : 0),
           () =>
             finite(x()) && finite(y())
-              ? `(${formatText(x())}; ${formatText(y())})`
+              ? `(${formatText(x())}, ${formatText(y())})`
               : "",
         ],
         {
@@ -376,9 +376,9 @@ export function QuadraticSimulation() {
       const [lo, hi] = [(-b - sqrtD) / (2 * a), (-b + sqrtD) / (2 * a)].sort(
         (m, n) => m - n,
       );
-      rootsTex = String.raw`A(${texNumber(lo)};\,0),\ B(${texNumber(hi)};\,0)`;
+      rootsTex = String.raw`A(${texNumber(lo)},0),\ B(${texNumber(hi)},0)`;
     } else if (discriminant === 0) {
-      rootsTex = String.raw`A(${texNumber(-b / (2 * a))};\,0)`;
+      rootsTex = String.raw`A(${texNumber(-b / (2 * a))},0)`;
     } else {
       rootsTex = String.raw`\text{tidak ada akar real}`;
     }
@@ -484,7 +484,7 @@ export function QuadraticSimulation() {
                   aria-checked={parameterStep === step}
                   onClick={() => setParameterStep(step)}
                 >
-                  ±{step.toLocaleString("id-ID")}
+                  ±{step.toLocaleString("en-US")}
                 </button>
               ))}
             </div>
@@ -544,7 +544,7 @@ export function QuadraticSimulation() {
                   tex={
                     vx === null || vy === null
                       ? undefinedTex
-                      : String.raw`P(${texNumber(vx)};\,${texNumber(vy)})`
+                      : String.raw`P(${texNumber(vx)},${texNumber(vy)})`
                   }
                 />
               </SimRow>
@@ -562,7 +562,7 @@ export function QuadraticSimulation() {
                 onToggle={() => toggleShow("intercept")}
                 toggleLabel="Tampilkan atau sembunyikan titik potong sumbu y"
               >
-                <SimMath tex={String.raw`C(0;\,${texNumber(c)})`} />
+                <SimMath tex={String.raw`C(0,${texNumber(c)})`} />
               </SimRow>
               <SimRow>
                 <SimMath
@@ -617,7 +617,7 @@ export function QuadraticSimulation() {
             <strong style={{ color: colors.c }}>Pengaruh </strong>
             <SimMath tex="c" />
             {": grafik selalu memotong sumbu y di "}
-            <SimMath tex={String.raw`(0;\,${texNumber(c)})`} />
+            <SimMath tex={String.raw`(0,${texNumber(c)})`} />
             . Mengubah c menggeser seluruh parabola secara vertikal.
           </p>
         </>

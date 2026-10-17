@@ -42,7 +42,7 @@ import "./LinearSystemSimulation.css";
                          daerah hasil muncul setelah tombol ditekan.
    3. Program linear   : kendala, fungsi tujuan Z, garis selidik yang bisa digeser.
    Tidak ada titik potong / titik sudut / daerah di grafik sebelum tombol "Tampilkan"
-   ditekan. Tombol − / + memakai langkah yang dipilih (0,2 / 0,5 / 1). */
+   ditekan. Tombol − / + memakai langkah yang dipilih (0.2 / 0.5 / 1). */
 
 /* ───────── Tipe ───────── */
 
@@ -175,9 +175,9 @@ const NO_REVEAL: Record<Mode, Reveal> = {
 
 const round6 = (v: number) => Math.round(v * 1e6) / 1e6;
 const fmtInput = (v: number) => String(Math.round(v * 1000) / 1000);
-const tx = (v: number) => fmtN(v).replace("−", "-").replace(",", "{,}");
-const ptTex = (pt: Pt) => String.raw`(${tx(pt.x)};\,${tx(pt.y)})`;
-const stepText = (v: number) => String(v).replace(".", ",");
+const tx = (v: number) => fmtN(v).replace("−", "-");
+const ptTex = (pt: Pt) => String.raw`(${tx(pt.x)},${tx(pt.y)})`;
+const stepText = (v: number) => String(v);
 
 function polyTex(terms: [number, string][]) {
   const parts: string[] = [];

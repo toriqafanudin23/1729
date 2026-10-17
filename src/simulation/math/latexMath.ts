@@ -58,7 +58,7 @@ function tokenize(src: string): Tok[] {
       i += 1;
       continue;
     }
-    // angka (titik atau koma desimal)
+    // angka (titik atau titik desimal)
     const num = /^(\d+([.,]\d+)?|[.,]\d+)/.exec(src.slice(i));
     if (num) {
       toks.push({ t: "num", v: Number(num[0].replace(",", ".")) });

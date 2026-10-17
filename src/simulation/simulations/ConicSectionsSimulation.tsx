@@ -252,10 +252,10 @@ function conicBranch(
 /* ───────── Format ───────── */
 
 const fmt = (value: number) => formatText(value);
-const fmtPt = (x: number, y: number) => `(${fmt(x)}; ${fmt(y)})`;
+const fmtPt = (x: number, y: number) => `(${fmt(x)}, ${fmt(y)})`;
 const tex = (value: number) => (finite(value) ? texNumber(value) : "?");
 const texPt = (x: number, y: number) =>
-  String.raw`(${tex(x)};\,${tex(y)})`;
+  String.raw`(${tex(x)},${tex(y)})`;
 
 /** Menyusun suku "koef·simbol" menjadi LaTeX dengan tanda yang rapi. */
 function polyTex(terms: [number, string][]) {
@@ -1011,7 +1011,7 @@ export function ConicSectionsSimulation() {
               {kind === "circle" && (
                 <SimRow color={colors.l}>
                   <span>
-                    Pusat = fokus <SimMath tex="(0;\,0)" />,{" "}
+                    Pusat = fokus <SimMath tex="(0,0)" />,{" "}
                     <SimMath tex={`r=\\ell=${tex(l)}`} />
                   </span>
                 </SimRow>
@@ -1051,8 +1051,8 @@ export function ConicSectionsSimulation() {
                 <SimMath
                   tex={
                     an.f2
-                      ? String.raw`F_1(0;\,0),\ F_2${texPt(an.f2[0], 0)}`
-                      : String.raw`F(0;\,0)`
+                      ? String.raw`F_1(0,0),\ F_2${texPt(an.f2[0], 0)}`
+                      : String.raw`F(0,0)`
                   }
                 />
               </SimRow>

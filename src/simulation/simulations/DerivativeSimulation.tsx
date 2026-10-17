@@ -82,14 +82,14 @@ type Scene = {
 
 const finite = (value: number) => Number.isFinite(value);
 
-/* ───────── Format angka (koma desimal, minus sebenarnya) ───────── */
+/* ───────── Format angka (titik desimal, minus sebenarnya) ───────── */
 
 const formatters = new Map<number, Intl.NumberFormat>();
 function fmt(value: number, digits = 2) {
   if (!finite(value)) return "—";
   let nf = formatters.get(digits);
   if (!nf) {
-    nf = new Intl.NumberFormat("id-ID", {
+    nf = new Intl.NumberFormat("en-US", {
       maximumFractionDigits: digits,
       useGrouping: false,
     });
@@ -99,9 +99,9 @@ function fmt(value: number, digits = 2) {
   return nf.format(value).replace("-", "−");
 }
 
-/** Angka untuk KaTeX: koma desimal tanpa spasi, minus sebagai "-". */
+/** Angka untuk KaTeX: titik desimal tanpa spasi, minus sebagai "-". */
 function tex(value: number, digits = 2) {
-  return fmt(value, digits).replace("−", "-").replace(",", "{,}");
+  return fmt(value, digits).replace("−", "-");
 }
 
 /** Angka negatif diberi kurung agar aman dipakai di rumus. */
@@ -294,7 +294,7 @@ export function DerivativeSimulation() {
           () => (finite(y()) ? y() + 6 / board.unitY : 0),
           () =>
             finite(x()) && finite(y())
-              ? `${name}(${fmt(x())}; ${fmt(y())})`
+              ? `${name}(${fmt(x())}, ${fmt(y())})`
               : "",
         ],
         {
@@ -624,7 +624,7 @@ export function DerivativeSimulation() {
                 toggleLabel="Tampilkan atau sembunyikan titik P"
               >
                 <SimMath
-                  tex={String.raw`P(${tex(x0, 1)};\,${tex(fx0)})`}
+                  tex={String.raw`P(${tex(x0, 1)},${tex(fx0)})`}
                 />
               </SimRow>
               <SimRow
@@ -637,7 +637,7 @@ export function DerivativeSimulation() {
                   tex={
                     hZero
                       ? String.raw`Q:\ \text{berimpit dengan }P`
-                      : String.raw`Q(${tex(qxVal, 3)};\,${tex(qyVal, 3)})`
+                      : String.raw`Q(${tex(qxVal, 3)},${tex(qyVal, 3)})`
                   }
                 />
               </SimRow>

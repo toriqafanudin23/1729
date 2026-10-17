@@ -379,7 +379,7 @@ function cleanNumber(value: number) {
   return Math.abs(rounded) < 1e-9 ? 0 : rounded;
 }
 
-const coordText = ([x, y]: Vec) => `(${formatText(x)}; ${formatText(y)})`;
+const coordText = ([x, y]: Vec) => `(${formatText(x)}, ${formatText(y)})`;
 
 function vertexNames(count: number) {
   return count === 1 ? ["P"] : ["A", "B", "C", "D"].slice(0, count);
@@ -388,7 +388,7 @@ function vertexNames(count: number) {
 function describeStep(step: Step): { name: string; detail: string } {
   switch (step.type) {
     case "translation":
-      return { name: "Translasi", detail: `T(${formatText(step.tx)}; ${formatText(step.ty)})` };
+      return { name: "Translasi", detail: `T(${formatText(step.tx)}, ${formatText(step.ty)})` };
     case "reflection":
       return {
         name: "Refleksi",
@@ -1163,7 +1163,7 @@ export function TransformationSimulation() {
   const sampleStart: Vec = vertices[sample] ?? [0, 0];
   const sampleEnd = applyMat(finalMatrix, sampleStart);
   const progressPct = total === 0 ? 0 : (progress / total) * 100;
-  const speedText = String(speed).replace(".", ",");
+  const speedText = String(speed);
   const vertexStep = view.snap ? 1 : 0.1;
 
   let caption = "Belum ada langkah. Tambahkan di bagian Langkah.";

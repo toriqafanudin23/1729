@@ -8,6 +8,8 @@ import { useSeo } from "../../useSeo";
 import "./styles/LatihanLanding.css";
 import { PACK_CATALOG } from "./catalog";
 import type { Level } from "./types";
+import { CpBadges, CpFilter } from "../../components/CpFilter";
+import { CP_LATIHAN, EMPTY_CP_FILTER, matchesCp, type CpFilterState } from "../../curriculum/cp";
 
 /* ------------------------------------------------------------------ *
  *  Tautan: sesuaikan dengan route di aplikasi 1729.
@@ -334,6 +336,7 @@ function PackCard({ material, no }: { material: (typeof PACK_CATALOG)[number]; n
 
       <h3>{material.topic}</h3>
       <p className="lk-card__desc">{material.description}</p>
+      <CpBadges tags={CP_LATIHAN[material.slug]} max={2} />
 
       <ul className="lk-facts">
         <li>{material.questions} soal</li>
@@ -375,6 +378,7 @@ export default function LatihanLanding() {
 
   const { user } = useAuth();
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");
+  const [cpFilter, setCpFilter] = useState<CpFilterState>(EMPTY_CP_FILTER);
 
   const types = new Set(PACK_CATALOG.flatMap((material) => material.types));
   const totals = {
@@ -384,7 +388,13 @@ export default function LatihanLanding() {
   };
 
   const shown = PACK_CATALOG.map((material, i) => ({ material, no: i + 1 })).filter(
-    ({ material }) => cat === "Semua" || material.category === cat,
+    ({ material }) =>
+      (cat === "Semua" || material.category === cat) &&
+      matchesCp(
+        CP_LATIHAN[material.slug],
+        [material.topic, material.category, material.description, ...material.parts],
+        cpFilter,
+      ),
   );
 
   return (
@@ -543,6 +553,14 @@ export default function LatihanLanding() {
                 </button>
               ))}
             </div>
+
+            <CpFilter
+              value={cpFilter}
+              onChange={setCpFilter}
+              total={PACK_CATALOG.length}
+              shown={shown.length}
+              placeholder="Cari paket, topik, atau Capaian Pembelajaran…"
+            />
 
             <div className="lk-grid">
               {shown.map(({ material, no }) => (

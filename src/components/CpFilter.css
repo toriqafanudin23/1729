@@ -1,0 +1,178 @@
+/* Tag dan filter Capaian Pembelajaran. Warna mengikuti variabel halaman bila ada. */
+
+.cpf {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 24px;
+  font-size: 14px;
+  color: var(--text, #172033);
+}
+
+.cpf__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.cpf__search {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.cpf__search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong, #cbd2dc);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  color: inherit;
+}
+
+.cpf__search input:focus-visible,
+.cpf__chip:focus-visible,
+.cpf__reset:focus-visible {
+  outline: 2px solid var(--ink, #0f172a);
+  outline-offset: 2px;
+}
+
+.cpf__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.cpf__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.cpf__label {
+  min-width: 52px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #687386);
+}
+
+.cpf__chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong, #cbd2dc);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.cpf__chip small {
+  margin-left: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.cpf__chip:hover {
+  border-color: var(--ink, #0f172a);
+}
+
+.cpf__chip[aria-pressed="true"] {
+  border-color: var(--ink, #0f172a);
+  background: var(--ink, #0f172a);
+  color: #fff;
+}
+
+.cpf__reset {
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cpf__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted, #687386);
+}
+
+/* ───────── Tag pada kartu dan halaman detail ───────── */
+
+.cpf-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cpf-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  background: #eef2ff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #3730a3;
+  white-space: nowrap;
+}
+
+.cpf-badge--more {
+  border-color: var(--line-strong, #cbd2dc);
+  background: #f8fafc;
+  color: var(--muted, #687386);
+}
+
+.cpf-list ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cpf-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.cpf-list__fokus {
+  font-size: 14px;
+}
+
+.cpf-list__kelas {
+  font-size: 12px;
+  color: var(--muted, #687386);
+}
+
+.cpf-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted, #687386);
+}
+
+@media (max-width: 560px) {
+  .cpf__chip small {
+    display: none;
+  }
+}

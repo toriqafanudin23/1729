@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
@@ -6,6 +6,8 @@ import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
 import { useSeo } from "../../useSeo";
 import { isSlidePublic } from "../../auth/accessPolicy";
 import { DECKS, type DeckMeta } from "../slides";
+import { CpBadges, CpFilter } from "../../components/CpFilter";
+import { CP_SLIDE, EMPTY_CP_FILTER, isCpFilterActive, matchesCp, type CpFilterState } from "../../curriculum/cp";
 import "../../pages/LandingPage.css"; // dasar tema 1729 (kelas .lp-*)
 import "../styles/SlidesPages.css";
 
@@ -476,6 +478,7 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
         </p>
         <h3>{deck.title}</h3>
         <p className="sl-card__summary">{deck.summary}</p>
+        <CpBadges tags={CP_SLIDE[deck.slug]} max={2} />
         <ul className="sl-chips" aria-label="Konsep yang dibahas">
           {deck.concepts.map((c) => (
             <li className="sl-chip" key={c}>{c}</li>
@@ -526,9 +529,13 @@ export default function SlidesLandingPage() {
     path: "/slides",
   });
 
-  const publicDecks = DECKS.filter((deck) => isSlidePublic(deck.slug));
-  const memberDecks = DECKS.filter((deck) => !isSlidePublic(deck.slug));
-  const first = publicDecks[0];
+  const [cpFilter, setCpFilter] = useState<CpFilterState>(EMPTY_CP_FILTER);
+  const visibleDecks = DECKS.filter((deck) =>
+    matchesCp(CP_SLIDE[deck.slug], [deck.title, deck.category, deck.summary, deck.level, ...deck.concepts], cpFilter),
+  );
+  const publicDecks = visibleDecks.filter((deck) => isSlidePublic(deck.slug));
+  const memberDecks = visibleDecks.filter((deck) => !isSlidePublic(deck.slug));
+  const first = DECKS.find((deck) => isSlidePublic(deck.slug));
 
   return (
     <div className="lp sl">
@@ -576,6 +583,14 @@ export default function SlidesLandingPage() {
             <p className="lp-eyebrow">Katalog</p>
             <h2 className="lp-h2">Pilih materi, tekan mulai.</h2>
 
+            <CpFilter
+              value={cpFilter}
+              onChange={setCpFilter}
+              total={DECKS.length}
+              shown={visibleDecks.length}
+              placeholder="Cari materi, konsep, atau Capaian Pembelajaran…"
+            />
+
             <div className="sl-cards">
               {publicDecks.map((d, i) => <DeckCard deck={d} index={i} key={d.slug} />)}
               {memberDecks.length > 0 && (
@@ -585,11 +600,11 @@ export default function SlidesLandingPage() {
                 />
               )}
               {memberDecks.map((d, i) => <DeckCard deck={d} index={publicDecks.length + i} key={d.slug} />)}
-              <div className="sl-card sl-card--soon">
+              {!isCpFilterActive(cpFilter) && <div className="sl-card sl-card--soon">
                 <p className="lp-eyebrow">Segera</p>
                 <h3>Materi berikutnya sedang disiapkan.</h3>
                 <p className="sl-card__summary">Katalog ini akan terus bertambah.</p>
-              </div>
+              </div>}
             </div>
           </div>
         </section>

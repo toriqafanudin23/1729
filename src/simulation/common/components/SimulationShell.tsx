@@ -7,8 +7,10 @@ import {
   Plus,
   RotateCcw,
   Settings,
+  Share2,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { buildShareUrl } from "../utils/shareState";
 import "../styles/simulation.css";
 
 /* Kerangka umum semua simulasi (gaya GeoGebra).
@@ -85,6 +87,41 @@ export function SimulationShell({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shareNote, setShareNote] = useState("");
+  const shareTimer = useRef<number | undefined>(undefined);
+
+  /* ───────── Tautan bagikan ───────── */
+
+  const announceShare = (text: string) => {
+    setShareNote(text);
+    window.clearTimeout(shareTimer.current);
+    shareTimer.current = window.setTimeout(() => setShareNote(""), 2500);
+  };
+  useEffect(() => () => window.clearTimeout(shareTimer.current), []);
+
+  const shareLink = async () => {
+    const url = buildShareUrl();
+    if (!url) {
+      announceShare("Pengaturan terlalu panjang untuk dibagikan");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      announceShare("Tautan disalin");
+      return;
+    } catch {
+      /* clipboard ditolak: coba lembar bagikan bawaan, lalu kotak salin manual */
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+    } catch {
+      return; // pengguna membatalkan
+    }
+    window.prompt("Salin tautan ini:", url);
+  };
 
   /* ───────── Layar penuh + kunci lanskap ───────── */
 
@@ -220,6 +257,16 @@ export function SimulationShell({
             <span className="sim-btn__label">Atur ulang</span>
           </button>
         )}
+        <button
+          type="button"
+          className="sim-btn"
+          aria-label="Bagikan simulasi dengan pengaturan saat ini"
+          title="Salin tautan dengan pengaturan saat ini"
+          onClick={shareLink}
+        >
+          <Share2 size={17} aria-hidden="true" />
+          <span className="sim-btn__label">Bagikan</span>
+        </button>
         {settings && (
           <button
             ref={settingsButtonRef}
@@ -235,6 +282,10 @@ export function SimulationShell({
           </button>
         )}
       </div>
+
+      <span className="sim-share-note" role="status" aria-live="polite">
+        {shareNote}
+      </span>
 
       {settingsOpen && settings && (
         <div

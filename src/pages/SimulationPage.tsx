@@ -5,6 +5,8 @@ import { SiteFooter } from "../components/SiteFooter";
 import { CATALOG_PATH, SIMULATIONS, findSimulation, simulationPath } from "./simulations";
 import NotFoundPage from "./NotFoundPage";
 import { fitSeoDescription, useSeo, breadcrumb } from "../useSeo";
+import { CpList } from "../components/CpFilter";
+import { CP_SIMULASI, cpLabel } from "../curriculum/cp";
 import "./pages.css";
 
 /**
@@ -39,6 +41,12 @@ export default function SimulationPage({ slug }: { slug?: string }) {
               interactivityType: "active",
               isAccessibleForFree: true,
               teaches: sim.concepts,
+              educationalAlignment: (CP_SIMULASI[sim.slug] ?? []).map((tag) => ({
+                "@type": "AlignmentObject",
+                alignmentType: "teaches",
+                educationalFramework: "Capaian Pembelajaran Matematika Kurikulum Merdeka",
+                targetName: `${cpLabel(tag)}: ${tag.fokus}`,
+              })),
               about: sim.category,
               isPartOf: { "@id": "https://1729.blog/#website" },
             },
@@ -95,6 +103,13 @@ export default function SimulationPage({ slug }: { slug?: string }) {
               ))}
             </ul>
           </div>
+
+          {CP_SIMULASI[sim.slug] && (
+            <div>
+              <h2 className="sp-h3">Capaian Pembelajaran</h2>
+              <CpList tags={CP_SIMULASI[sim.slug]} />
+            </div>
+          )}
 
           {others.length > 0 && (
             <div>

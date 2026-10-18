@@ -1,6 +1,6 @@
 // scripts/generate-sitemap.mjs
 // Membuat public/sitemap.xml dari daftar rute di scripts/routes.mjs.
-// Hanya halaman yang benar-benar bisa dibuka tanpa login yang dimasukkan.
+// Semua halaman publik (simulasi, slide, latihan) dimasukkan.
 import { writeFileSync } from "node:fs";
 import { getRoutes } from "./routes.mjs";
 

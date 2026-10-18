@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
-import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
-import { useAuth } from "../../auth/AuthContext";
 import { LATIHAN_HUB_SEO } from "../../seoText";
 import { useSeo } from "../../useSeo";
 import "./styles/LatihanLanding.css";
@@ -45,7 +43,6 @@ interface DownloadItem {
   desc: string;
   url: string;
   publishedAt: string;
-  requiresAuth?: boolean;
 }
 
 const DOWNLOAD_ITEMS: DownloadItem[] = [
@@ -76,7 +73,6 @@ const DOWNLOAD_ITEMS: DownloadItem[] = [
     desc: "Cakupan materi: bilangan kompleks, polinomial, lingkaran, matriks, transformasi geometri, komposisi fungsi, dan invers.",
     url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_11_pdf.zip",
     publishedAt: "16 Oktober 2026",
-    requiresAuth: true,
   },
   {
     meta: "LATIHAN SOAL · KELAS 12",
@@ -84,7 +80,6 @@ const DOWNLOAD_ITEMS: DownloadItem[] = [
     desc: "Cakupan materi: fungsi dan pemodelan, irisan kerucut, kombinatorika, transformasi fungsi, analisis data dan peluang, limit, turunan, dan integral.",
     url: "https://tpaknparzpagspfgwigx.supabase.co/storage/v1/object/public/berbagi/Latihan_soal_kelas_12_pdf.zip",
     publishedAt: "16 Oktober 2026",
-    requiresAuth: true,
   },
 ];
 
@@ -373,7 +368,6 @@ function PackCard({ material, no }: { material: (typeof PACK_CATALOG)[number]; n
 export default function LatihanLanding() {
   useSeo({ ...LATIHAN_HUB_SEO, path: "/latihan" });
 
-  const { user } = useAuth();
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("Semua");
   const [cpFilter, setCpFilter] = useState<CpFilterState>(EMPTY_CP_FILTER);
 
@@ -444,51 +438,19 @@ export default function LatihanLanding() {
             <p className="lk-eyebrow">Bahan belajar</p>
             <h2 className="lk-h2">Unduh latihan soal.</h2>
 
-            {!user && (
-              <div className="lk-downloads__prompt">
-                <LoginAccessPrompt
-                  title="Ingin mengunduh latihan soal kelas 11 dan 12?"
-                  description="Masuk atau daftar dengan email secara gratis untuk mengunduh berkas latihan kelas 11 dan 12."
-                  from="/latihan#unduhan"
-                />
-              </div>
-            )}
-
             <div className="lk-download-grid">
               {DOWNLOAD_ITEMS.map((item) => {
-                const isLocked = item.requiresAuth && !user;
                 return (
                   <article className="lk-download-card" key={item.title}>
                     <div className="lk-download-card__copy">
                       <div className="lk-download-card__header">
                         <span className="lk-download-card__meta">{item.meta}</span>
                         <span className="lk-download-card__date">Rilis {item.publishedAt}</span>
-                        <span
-                          className={`lk-download-card__access${
-                            item.requiresAuth ? " lk-download-card__access--member" : ""
-                          }`}
-                        >
-                          {item.requiresAuth ? "Perlu login" : "Tanpa login"}
-                        </span>
                       </div>
                       <h3>{item.title}</h3>
                       <p>{item.desc}</p>
                     </div>
 
-                    {isLocked ? (
-                      <Link
-                        to="/login"
-                        state={{
-                          loginRequired: true,
-                          from: "/latihan#unduhan",
-                          notice: "Silakan masuk atau daftar terlebih dahulu untuk mengunduh latihan soal kelas 11 dan 12.",
-                        }}
-                        className="lk-btn lk-btn--solid lk-download-card__button"
-                        aria-label={`Masuk untuk mengunduh ${item.title}`}
-                      >
-                        Masuk untuk unduh <span aria-hidden="true">→</span>
-                      </Link>
-                    ) : (
                       <a
                         className="lk-btn lk-btn--solid lk-download-card__button"
                         href={item.url}
@@ -497,7 +459,6 @@ export default function LatihanLanding() {
                       >
                         Unduh berkas <span aria-hidden="true">↓</span>
                       </a>
-                    )}
                   </article>
                 );
               })}

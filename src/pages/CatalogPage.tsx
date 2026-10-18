@@ -5,8 +5,6 @@ import { SiteFooter } from "../components/SiteFooter";
 import { simulasiHubSeo } from "../seoText";
 import { useSeo } from "../useSeo";
 import { SIMULATIONS, simulationPath } from "./simulations";
-import { isSimulationPublic } from "../auth/accessPolicy";
-import { LoginAccessPrompt } from "../components/LoginAccessPrompt";
 import { SimThumb } from "./SimThumbs";
 import { CpBadges, CpFilter } from "../components/CpFilter";
 import { CP_SIMULASI, EMPTY_CP_FILTER, matchesCp, type CpFilterState } from "../curriculum/cp";
@@ -21,8 +19,6 @@ export default function CatalogPage() {
       cpFilter,
     ),
   );
-  const publicSimulations = visible.filter((simulation) => isSimulationPublic(simulation.slug));
-  const memberSimulations = visible.filter((simulation) => !isSimulationPublic(simulation.slug));
   const renderSimulationCard = (s: (typeof SIMULATIONS)[number], index: number) => (
     <li key={s.slug}>
       <Link
@@ -38,9 +34,6 @@ export default function CatalogPage() {
           <p className="sp-card__meta">
             <span aria-hidden>{String(index + 1).padStart(2, "0")}</span>
             <span>{s.category}</span>
-            <span className={`sp-card__access${isSimulationPublic(s.slug) ? "" : " sp-card__access--member"}`}>
-              {isSimulationPublic(s.slug) ? "Tanpa login" : "Perlu login"}
-            </span>
           </p>
           <h3 className="sp-card__title" id={`sim-${s.slug}-judul`}>{s.title}</h3>
           <p className="sp-card__summary" id={`sim-${s.slug}-ringkasan`}>{s.summary}</p>
@@ -76,20 +69,9 @@ export default function CatalogPage() {
             placeholder="Cari simulasi, konsep, atau Capaian Pembelajaran…"
           />
 
-          <ul className="sp-cards" aria-label="Simulasi tanpa login">
-            {publicSimulations.map(renderSimulationCard)}
+          <ul className="sp-cards" aria-label="Daftar simulasi">
+            {visible.map(renderSimulationCard)}
           </ul>
-          {memberSimulations.length > 0 && (
-            <>
-              <LoginAccessPrompt
-                title="Ingin melakukan lebih banyak simulasi?"
-                description="Login atau daftar untuk membuka simulasi lainnya."
-              />
-              <ul className="sp-cards sp-cards--members" aria-label="Simulasi yang memerlukan login">
-                {memberSimulations.map((s, index) => renderSimulationCard(s, publicSimulations.length + index))}
-              </ul>
-            </>
-          )}
         </div>
       </main>
       <SiteFooter />

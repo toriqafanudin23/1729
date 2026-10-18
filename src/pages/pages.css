@@ -173,14 +173,6 @@
 .sp-cards > li {
   display: flex;
 }
-.sp .sp-catalog .login-access-prompt,
-.sp-catalog .login-access-prompt {
-  margin: clamp(36px, 5vw, 56px) 0 0;
-}
-.sp .login-access-prompt + .sp-cards {
-  margin-top: 32px;
-}
-
 .sp-card {
   display: flex;
   flex-direction: column;
@@ -239,23 +231,6 @@
 }
 .sp-card__meta span:nth-child(2) {
   color: var(--mute);
-}
-.sp-card__meta .sp-card__access {
-  margin-left: auto;
-  padding: 1px 9px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--wash);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  line-height: 1.7;
-  white-space: nowrap;
-  color: var(--mute);
-}
-.sp .sp-card__meta .sp-card__access--member {
-  border-color: #f0cbbd;
-  background: var(--accent-soft);
-  color: var(--accent-hover);
 }
 .sp-card__title {
   font: 500 clamp(24px, 2.4vw, 28px) / 1.12 var(--serif);

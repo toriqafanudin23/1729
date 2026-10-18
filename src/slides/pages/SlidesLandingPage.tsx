@@ -2,10 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
-import { LoginAccessPrompt } from "../../components/LoginAccessPrompt";
 import { useSeo } from "../../useSeo";
 import { SLIDES_HUB_SEO } from "../../seoText";
-import { isSlidePublic } from "../../auth/accessPolicy";
 import { DECKS, type DeckMeta } from "../slides";
 import { CpBadges, CpFilter } from "../../components/CpFilter";
 import { CP_SLIDE, EMPTY_CP_FILTER, isCpFilterActive, matchesCp, type CpFilterState } from "../../curriculum/cp";
@@ -475,7 +473,6 @@ function DeckCard({ deck, index }: { deck: DeckMeta; index: number }) {
         <p className="sl-card__meta">
           <span>{String(index + 1).padStart(2, "0")}</span>
           <span>{deck.category}</span>
-          <span>{isSlidePublic(deck.slug) ? "Tanpa login" : "Perlu login"}</span>
         </p>
         <h3>{deck.title}</h3>
         <p className="sl-card__summary">{deck.summary}</p>
@@ -529,9 +526,7 @@ export default function SlidesLandingPage() {
   const visibleDecks = DECKS.filter((deck) =>
     matchesCp(CP_SLIDE[deck.slug], [deck.title, deck.category, deck.summary, deck.level, ...deck.concepts], cpFilter),
   );
-  const publicDecks = visibleDecks.filter((deck) => isSlidePublic(deck.slug));
-  const memberDecks = visibleDecks.filter((deck) => !isSlidePublic(deck.slug));
-  const first = DECKS.find((deck) => isSlidePublic(deck.slug));
+  const first = DECKS[0];
 
   return (
     <div className="lp sl">
@@ -588,14 +583,7 @@ export default function SlidesLandingPage() {
             />
 
             <div className="sl-cards">
-              {publicDecks.map((d, i) => <DeckCard deck={d} index={i} key={d.slug} />)}
-              {memberDecks.length > 0 && (
-                <LoginAccessPrompt
-                  title="Ingin membuka lebih banyak slides?"
-                  description="Login atau daftar untuk membuka presentasi lainnya."
-                />
-              )}
-              {memberDecks.map((d, i) => <DeckCard deck={d} index={publicDecks.length + i} key={d.slug} />)}
+              {visibleDecks.map((d, i) => <DeckCard deck={d} index={i} key={d.slug} />)}
               {!isCpFilterActive(cpFilter) && <div className="sl-card sl-card--soon">
                 <p className="lp-eyebrow">Segera</p>
                 <h3>Materi berikutnya sedang disiapkan.</h3>

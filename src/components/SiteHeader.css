@@ -122,85 +122,10 @@
   font-weight: 650;
 }
 
-/* Tombol Login / Keluar */
-.site-header__login {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 46px;
-  margin-top: 12px;
-  padding: 0 18px;
-  color: #fff;
-  background: var(--sh-accent);
-  border: 1px solid var(--sh-accent);
-  border-radius: 10px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-}
-.site-header .site-header__login:hover {
-  color: #fff;
-  background: var(--sh-accent-hover);
-  border-color: var(--sh-accent-hover);
-  box-shadow: 0 8px 16px -8px rgba(201, 100, 66, 0.6);
-}
-
-/* Tombol Keluar: gaya outline agar tidak bersaing dengan Login */
-.site-header__login--ghost {
-  color: var(--sh-ink);
-  background: #fff;
-  border-color: #cbd5e1;
-}
-.site-header .site-header__login--ghost:hover {
-  color: var(--sh-ink);
-  background: #f8fafc;
-  border-color: #94a3b8;
-  box-shadow: none;
-}
-
-/* Akun */
-.site-header__account {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--sh-line);
-}
-.site-header__account .site-header__login { margin-top: 0; flex: 1 1 100%; }
-.site-header__avatar {
-  display: grid;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  color: var(--sh-accent-hover);
-  background: var(--sh-accent-soft);
-  border-radius: 50%;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.site-header__account-name {
-  max-width: 180px;
-  overflow: hidden;
-  color: var(--sh-text);
-  font-size: 13.5px;
-  font-weight: 550;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Fokus keyboard */
 .site-header__brand:focus-visible,
 .site-header__menu-toggle:focus-visible,
-.site-header__link:focus-visible,
-.site-header__login:focus-visible {
+.site-header__link:focus-visible {
   outline: 2px solid var(--sh-accent);
   outline-offset: 3px;
 }
@@ -268,32 +193,11 @@
     opacity: 1;
     transform: scaleX(1);
   }
-
-  .site-header__login {
-    width: auto;
-    min-width: 88px;
-    min-height: 38px;
-    margin: 0;
-    padding: 0 16px;
-    border-radius: 9px;
-    font-size: 14px;
-  }
-
-  .site-header__account {
-    flex-wrap: nowrap;
-    gap: 10px;
-    margin: 0;
-    padding: 0 0 0 20px;
-    border-top: 0;
-    border-left: 1px solid var(--sh-line);
-  }
-  .site-header__account .site-header__login { flex: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .site-header__link,
   .site-header__link::after,
-  .site-header__login,
   .site-header__menu-toggle {
     transition: none;
   }

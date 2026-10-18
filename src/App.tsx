@@ -1,11 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
-import { AuthProvider } from "./auth/AuthContext";
-import { RequireLogin } from "./auth/RequireLogin";
-import { isSimulationPublic, isSlidePublic } from "./auth/accessPolicy";
-import { findSimulation } from "./pages/simulations";
-import { findDeck } from "./slides/slides";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
@@ -16,7 +11,6 @@ const LatihanLanding = lazy(() => import("./pages/latihan_soal/LatihanLanding"))
 const LatihanRoute = lazy(() => import("./pages/latihan_soal/LatihanPage").then((m) => ({ default: m.LatihanRoute })));
 const SlidesLandingPage = lazy(() => import("./slides/pages/SlidesLandingPage"));
 const SlidePresentPage = lazy(() => import("./slides/pages/SlidePresentPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -56,40 +50,32 @@ function PageLoading() {
 
 function SimulationRoute() {
   const { slug } = useParams();
-  if (!slug || !findSimulation(slug) || isSimulationPublic(slug)) return <SimulationPage slug={slug} />;
-  return <RequireLogin><SimulationPage slug={slug} /></RequireLogin>;
-}
-
-function SlideRoute() {
-  const { slug } = useParams();
-  if (!slug || !findDeck(slug) || isSlidePublic(slug)) return <SlidePresentPage />;
-  return <RequireLogin><SlidePresentPage /></RequireLogin>;
+  return <SimulationPage slug={slug} />;
 }
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ScrollToTop />
-        <Suspense fallback={<PageLoading />}>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/verify" element={<LoginPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/simulasi" element={<CatalogPage />} />
-            <Route path="/simulasi/:slug" element={<SimulationRoute />} />
-            <Route path="/latihan" element={<LatihanLanding />} />
-            <Route path="/latihan/:slug" element={<LatihanRoute />} />
-            <Route path="/toko" element={<ShopLanding />} />
-            <Route path="/slides" element={<SlidesLandingPage />} />
-            <Route path="/slides/:slug" element={<SlideRoute />} />
-            <Route path="/slide" element={<Navigate to="/slides" replace />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-        <Analytics />
-      </AuthProvider>
+      <ScrollToTop />
+      <Suspense fallback={<PageLoading />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          {/* Halaman login sudah dihapus; tautan lama dialihkan ke beranda. */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/auth/verify" element={<Navigate to="/" replace />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/simulasi" element={<CatalogPage />} />
+          <Route path="/simulasi/:slug" element={<SimulationRoute />} />
+          <Route path="/latihan" element={<LatihanLanding />} />
+          <Route path="/latihan/:slug" element={<LatihanRoute />} />
+          <Route path="/toko" element={<ShopLanding />} />
+          <Route path="/slides" element={<SlidesLandingPage />} />
+          <Route path="/slides/:slug" element={<SlidePresentPage />} />
+          <Route path="/slide" element={<Navigate to="/slides" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+      <Analytics />
     </BrowserRouter>
   );
 }

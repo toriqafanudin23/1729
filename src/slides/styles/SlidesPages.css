@@ -11,9 +11,6 @@
   gap: 20px;
   margin-top: clamp(28px, 4vw, 44px);
 }
-.sl-cards > .login-access-prompt {
-  grid-column: 1 / -1;
-}
 .sl-card {
   display: flex;
   flex-direction: column;

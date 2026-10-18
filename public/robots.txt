@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /auth/
 
 Sitemap: https://1729.blog/sitemap.xml

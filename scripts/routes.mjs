@@ -12,14 +12,13 @@ const load = (file) => import(pathToFileURL(resolve(file)).href);
 
 /** @returns {Promise<Route[]>} */
 export async function getRoutes() {
-  let seo, sims, decks, packs, policy;
+  let seo, sims, decks, packs;
   try {
-    [seo, sims, decks, packs, policy] = await Promise.all([
+    [seo, sims, decks, packs] = await Promise.all([
       load("src/seoText.ts"),
       load("src/pages/simulations.ts"),
       load("src/slides/slides.ts"),
       load("src/pages/latihan_soal/catalog.ts"),
-      load("src/auth/accessPolicy.ts"),
     ]);
   } catch (err) {
     throw new Error(
@@ -50,21 +49,17 @@ export async function getRoutes() {
 
   for (const s of SIMULATIONS) {
     const page = seo.simulationSeo(s);
-    const pub = policy.isSimulationPublic(s.slug);
     routes.push({
       path: `/simulasi/${s.slug}`, ...page, jsonLd: page.jsonLd ?? [],
-      // Halaman di balik login: tetap dibuat agar pratinjau tautan (WhatsApp, dll.) benar,
-      // tetapi tidak diindeks dan tidak masuk sitemap karena Google hanya akan melihat halaman login.
-      noindex: !pub, inSitemap: pub,
+      noindex: false, inSitemap: true,
       points: s.concepts, links: [{ href: "/simulasi", text: "Semua simulasi" }, { href: "/latihan", text: "Latihan soal" }],
     });
   }
   for (const d of DECKS) {
     const page = seo.slideSeo(d);
-    const pub = policy.isSlidePublic(d.slug);
     routes.push({
       path: `/slides/${d.slug}`, ...page, jsonLd: page.jsonLd ?? [],
-      noindex: !pub, inSitemap: pub,
+      noindex: false, inSitemap: true,
       points: d.concepts, links: [{ href: "/slides", text: "Semua slide" }, { href: "/simulasi", text: "Simulasi interaktif" }],
     });
   }

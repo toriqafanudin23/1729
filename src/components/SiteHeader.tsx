@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: "Simulasi", to: "/simulasi" },
   { label: "Presentasi", to: "/slides" },
   { label: "Latihan", to: "/latihan" },
+  { label: "Tentang", to: "/about" },
 ];
 
 export function SiteHeader({ variant = "default" }: { variant?: "default" | "hero" }) {

@@ -54,6 +54,16 @@ export default function SimulationPage({ slug }: { slug?: string }) {
         <div className="sp-sim__head">
           <h1 className="sp-h1 sp-h1--sm">{sim.title}</h1>
           <p className="sp-sim__summary">{sim.summary}</p>
+          {sim.slug === "fungsi-kuadrat" && (
+            <a
+              href="https://classroom.google.com/c/ODc0MDg4MzY3MjM0?cjc=6nhuoks6"
+              target="_blank"
+              rel="noreferrer"
+              className="sp-classroom-link"
+            >
+              Pembelajaran terintegrasi di Google Classroom <span aria-hidden>↗</span>
+            </a>
+          )}
         </div>
 
         <div className="sp-stage">

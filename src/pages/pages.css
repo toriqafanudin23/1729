@@ -315,6 +315,22 @@
 .sp-sim__summary {
   font-size: 15.5px;
 }
+.sp-classroom-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.sp-classroom-link:hover {
+  border-color: var(--ink);
+  text-decoration: underline;
+}
 
 /* Jangan beri transform/filter/contain pada elemen di atas simulasi:
    mode layar penuh simulasi memakai position: fixed. */

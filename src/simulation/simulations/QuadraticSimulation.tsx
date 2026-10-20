@@ -587,6 +587,7 @@ export function QuadraticSimulation() {
               </SimRow>
             </ul>
           </SimSection>
+
         </>
       }
       notes={

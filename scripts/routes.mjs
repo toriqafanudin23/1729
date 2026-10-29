@@ -45,6 +45,7 @@ export async function getRoutes() {
     { path: "/latihan", ...seo.LATIHAN_HUB_SEO, links: hubLinks.latihan },
     { path: "/slides", ...seo.SLIDES_HUB_SEO, links: hubLinks.slides },
     { path: "/toko", ...seo.SHOP_SEO, links: [{ href: "/", text: "Beranda" }] },
+    { path: "/pesan-website", ...seo.WEBSITE_SEO, links: [{ href: "/", text: "Beranda" }] },
   ].map((r) => ({ jsonLd: [], noindex: false, inSitemap: true, points: [], ...r }));
 
   for (const s of SIMULATIONS) {

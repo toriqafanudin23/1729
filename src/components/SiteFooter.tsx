@@ -8,6 +8,7 @@ const navigation = [
   { label: "Latihan soal", to: "/latihan" },
   { label: "Slides", to: "/slides" },
 //   { label: "Toko", to: "/toko" },
+  { label: "Pesan website", to: "/pesan-website" },
 ];
 
 export function SiteFooter() {

@@ -59,6 +59,9 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "her
               </NavLink>
             ))}
           </div>
+          <Link className="site-header__cta" to="/pesan-website" onClick={() => setMenuOpen(false)}>
+            Pesan website
+          </Link>
         </nav>
       </div>
     </header>

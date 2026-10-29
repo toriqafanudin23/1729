@@ -159,6 +159,12 @@ export const SHOP_SEO: PageSeo = {
     "Pilih modul ajar, bank soal, slide, dan LKPD matematika untuk SMP atau SMA. Bahan ajar digital dapat diedit dan disesuaikan dengan kebutuhan kelas.",
 };
 
+export const WEBSITE_SEO: PageSeo = {
+  title: "Jasa Pembuatan Website Sekolah",
+  description:
+    "Jasa pembuatan website sekolah: landing page info, admin panel, dan pendaftaran online. Bayar setelah jadi, domain milik sendiri, garansi 6 bulan.",
+};
+
 /* ───────── Halaman per materi ───────── */
 
 export function simulationSeo(sim: {

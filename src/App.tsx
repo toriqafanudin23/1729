@@ -7,6 +7,7 @@ const CatalogPage = lazy(() => import("./pages/CatalogPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const SimulationPage = lazy(() => import("./pages/SimulationPage"));
 const ShopLanding = lazy(() => import("./pages/shop/ShopLanding"));
+const WebsiteService = lazy(() => import("./pages/website/WebsiteService"));
 const LatihanLanding = lazy(() => import("./pages/latihan_soal/LatihanLanding"));
 const LatihanRoute = lazy(() => import("./pages/latihan_soal/LatihanPage").then((m) => ({ default: m.LatihanRoute })));
 const SlidesLandingPage = lazy(() => import("./slides/pages/SlidesLandingPage"));
@@ -69,6 +70,7 @@ function App() {
           <Route path="/latihan" element={<LatihanLanding />} />
           <Route path="/latihan/:slug" element={<LatihanRoute />} />
           <Route path="/toko" element={<ShopLanding />} />
+          <Route path="/pesan-website" element={<WebsiteService />} />
           <Route path="/slides" element={<SlidesLandingPage />} />
           <Route path="/slides/:slug" element={<SlidePresentPage />} />
           <Route path="/slide" element={<Navigate to="/slides" replace />} />

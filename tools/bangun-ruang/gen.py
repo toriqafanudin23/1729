@@ -416,8 +416,165 @@ def make_kubus() -> None:
         report.append(f"[tipe] kubus-{k}: {kubus_type(list(p))}")
 
 
-make_prisms()
-make_nets()
-make_kubus()
-print("\n".join(report))
-print(f"\n{len(built)} berkas dibuat di {OUT}")
+# ───────────────────────── jaring-jaring balok (54 bentuk, 11 pola) ─────────────────────────
+
+BALOK_UKURAN = (4.0, 3.0, 2.0)  # p, l, t (sama dengan model balok lama)
+# Pola (sel jaring) yang sudah dipakai model lama jaring-balok-1 dan jaring-balok-2.
+BALOK_LAMA = [
+    ((0, 1), (1, 0), (1, 1), (1, 2), (1, 3), (2, 1)),
+    ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 3)),
+]
+
+
+def colorize_box(s: Solid) -> Solid:
+    """Sisi berhadapan sewarna (3 pasang sisi kongruen): alas-atas, tegak depan-belakang, tegak kiri-kanan."""
+    pair = {"alas": "#f6d31c", "atas": "#f6d31c", "tegak1": "#3b82f6", "tegak3": "#3b82f6",
+            "tegak2": "#22b455", "tegak4": "#22b455"}
+    for f in s.faces:
+        f.color = pair[f.name]
+    return s
+
+
+def _spanning_trees(solid: Solid):
+    import itertools
+    edges = [tuple(v) for v in solid.edge_faces().values()]
+    for comb in itertools.combinations(range(len(edges)), len(solid.faces) - 1):
+        adj = {i: [] for i in range(len(solid.faces))}
+        for k in comb:
+            a, b = edges[k]
+            adj[a].append(b)
+            adj[b].append(a)
+        seen, q = {0}, [0]
+        while q:
+            u = q.pop(0)
+            for v in adj[u]:
+                if v not in seen:
+                    seen.add(v)
+                    q.append(v)
+        if len(seen) == len(solid.faces):
+            yield adj
+
+
+def _reroot(adj, root):
+    seen, q, tree = {root}, [root], []
+    while q:
+        u = q.pop(0)
+        for v in sorted(adj[u]):
+            if v not in seen:
+                seen.add(v)
+                q.append(v)
+                tree.append((v, u))
+    return tree
+
+
+def _net_signature(nf):
+    polys = [np.array(f.flat) for f in nf]
+    best = None
+    for flip in (0, 1):
+        for r in range(4):
+            rs = []
+            for p in polys:
+                q = p.copy()
+                if flip:
+                    q[:, 0] *= -1
+                for _ in range(r):
+                    q = np.c_[-q[:, 1], q[:, 0]]
+                rs.append(q)
+            mn = np.vstack(rs).min(axis=0)
+            key = tuple(sorted(tuple(np.round(np.r_[(q - mn).min(0), (q - mn).max(0)], 3)) for q in rs))
+            if best is None or key < best:
+                best = key
+    return best
+
+
+def _net_cells(nf):
+    """Sel grid tiap sisi, dari arah engsel terhadap induknya (pola heksomino jaring)."""
+    pos = {0: (0, 0)}
+    for k, f in enumerate(nf):
+        if f.parent is None:
+            continue
+        d = np.mean(f.flat, axis=0) - np.mean(nf[f.parent].flat, axis=0)
+        if abs(d[0]) > abs(d[1]):
+            step = (1 if d[0] > 0 else -1, 0)
+        else:
+            step = (0, 1 if d[1] > 0 else -1)
+        pos[k] = (pos[f.parent][0] + step[0], pos[f.parent][1] + step[1])
+    return pos
+
+
+def make_balok() -> None:
+    p, l, t = BALOK_UKURAN
+    box = colorize_box(prism(np.array([[-p / 2, -l / 2], [p / 2, -l / 2], [p / 2, l / 2], [-p / 2, l / 2]]), t))
+    found: dict = {}
+    for adj in _spanning_trees(box):
+        root = max(adj, key=lambda i: (len(adj[i]), -i))
+        tree = _reroot(adj, root)
+        nf = unfold(box, root, tree)
+        polys = [np.array(f.flat) for f in nf]
+        if any(overlap(polys[i], polys[j]) for i in range(6) for j in range(i + 1, 6)):
+            continue
+        found.setdefault(_net_signature(nf), (root, tree, nf))
+    report.append(f"[info] jaring balok berbeda: {len(found)}")
+    assert len(found) == 54, len(found)
+    by_pattern: dict = {}
+    for sig_, (root, tree, nf) in found.items():
+        pattern = canon_cells(list(_net_cells(nf).values()))
+        by_pattern.setdefault(pattern, []).append((sig_, root, tree))
+    assert len(by_pattern) == 11
+    lama = [canon_cells(list(k)) for k in BALOK_LAMA]
+    order = {"1-4-1": 0, "2-3-1": 1, "2-2-2": 2, "3-3": 3}
+    patterns = sorted(by_pattern, key=lambda q: (order.get(kubus_type(list(q)), 9), q))
+    nomor = 3
+    for pat in patterns:
+        tp = kubus_type(list(pat))
+        if pat in lama:
+            report.append(f"[lama] balok pola {pat} tipe {tp} ({len(by_pattern[pat])} variasi ukuran)")
+            continue
+        sig_, root, tree = sorted(by_pattern[pat], key=lambda v: v[0])[0]
+        name = f"jaring-balok-{nomor}"
+        report.append(f"[balok] {name} tipe {tp} {pat}")
+        emit_net(name, box, root, tree)
+        nomor += 1
+
+
+# ───────────────────────── jenis-jenis limas (statis) ─────────────────────────
+
+def _shoelace(poly_xz) -> float:
+    p = np.array(poly_xz, dtype=float)
+    return abs(0.5 * sum(p[i][0] * p[(i + 1) % len(p)][1] - p[(i + 1) % len(p)][0] * p[i][1] for i in range(len(p))))
+
+
+def emit_limas(name: str, base, height: float, apex=(0.0, 0.0)) -> None:
+    s = colorize(pyramid(np.array(base, dtype=float), height, apex))
+    # uji: V = 1/3 × luas alas × tinggi
+    assert abs(s.volume() - _shoelace(base) * height / 3) < 1e-9, name
+    emit_solid(name, s)
+
+
+def make_limas() -> None:
+    rect = lambda w, d: [(-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2)]
+    emit_limas("limas-segidelapan", regular_polygon(8, 0.8, 22.5), 1.7)
+    emit_limas("limas-persegi-panjang", rect(2.2, 1.4), 1.8)
+    emit_limas("limas-jajargenjang", [(-1.3, -0.6), (0.7, -0.6), (1.3, 0.6), (-0.7, 0.6)], 1.8)
+    emit_limas("limas-belah-ketupat", [(0, -1.1), (0.8, 0), (0, 1.1), (-0.8, 0)], 1.8)
+    emit_limas("limas-trapesium", [(-1.2, -0.7), (1.2, -0.7), (0.65, 0.7), (-0.65, 0.7)], 1.8)
+    emit_limas("limas-layang-layang", [(0, -0.8), (0.9, 0.0), (0, 1.5), (-0.9, 0.0)], 1.8, (0.0, 0.2))
+    tri = [(0, 0), (1.6, 0), (0, 1.2)]
+    emit_limas("limas-segitiga-siku", tri, 2.0, (1.6 / 3, 1.2 / 3))
+    # bidang empat beraturan: semua rusuk sama panjang (1,4)
+    a = 1.4
+    emit_limas("limas-bidang-empat", regular_polygon(3, a, 90), math.sqrt(2 / 3) * a)
+    # puncak di atas salah satu titik sudut alas: rusuk tegak = tinggi, semua sisi tegak segitiga siku-siku
+    emit_limas("limas-siku", rect(1.6, 1.6), 1.9, (-0.8, -0.8))
+    # puncak tidak di atas titik tengah alas (limas miring)
+    emit_limas("limas-miring", rect(1.8, 1.8), 1.8, (0.55, 0.25))
+
+
+if __name__ == "__main__":
+    make_prisms()
+    make_nets()
+    make_kubus()
+    make_balok()
+    make_limas()
+    print("\n".join(report))
+    print(f"\n{len(built)} berkas dibuat di {OUT}")

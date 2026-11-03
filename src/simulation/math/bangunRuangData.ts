@@ -127,15 +127,31 @@ function limasInfo(n: number): ModelInfo {
 
 /* ───────── Jaring-jaring ───────── */
 
-const JARING_KUBUS: ModelInfo = {
-  text: "Jaring-jaring kubus terdiri atas 6 persegi kongruen. Ada 11 bentuk jaring-jaring kubus yang berbeda; ini salah satunya. Putar dan amati bagaimana persegi-persegi itu terlipat membentuk kubus.",
-  facts: [
-    ["Banyak sisi", "6 persegi kongruen"],
-    ["Banyak rusuk", "12"],
-    ["Titik sudut", "8"],
-  ],
-  formulas: [String.raw`L = 6\,s^{2}`, String.raw`V = s^{3}`],
+/** Tipe tiap jaring-jaring kubus: banyak persegi pada tiap baris (11 bentuk: 6 × 1-4-1, 3 × 2-3-1, 1 × 2-2-2, 1 × 3-3). */
+const KUBUS_TIPE: Record<number, string> = {
+  1: "1-4-1", 2: "1-4-1", 3: "2-3-1", 4: "2-3-1", 5: "1-4-1", 6: "1-4-1",
+  7: "1-4-1", 8: "1-4-1", 9: "2-3-1", 10: "2-2-2", 11: "3-3",
 };
+const KUBUS_TIPE_TEKS: Record<string, string> = {
+  "1-4-1": "Tipe 1-4-1: empat persegi berderet lurus, dengan satu persegi di atas dan satu di bawah deretan.",
+  "2-3-1": "Tipe 2-3-1: tiga baris yang berisi 2, 3, dan 1 persegi.",
+  "2-2-2": "Tipe 2-2-2: tiga baris yang masing-masing berisi 2 persegi, tersusun seperti tangga.",
+  "3-3": "Tipe 3-3: dua baris yang masing-masing berisi 3 persegi, bergeser satu sama lain.",
+};
+
+function jaringKubusInfo(no: number): ModelInfo {
+  const tipe = KUBUS_TIPE[no];
+  return {
+    text: `Jaring-jaring kubus terdiri atas 6 persegi kongruen. Ada 11 bentuk jaring-jaring kubus yang berbeda; ini bentuk ke-${no}. ${KUBUS_TIPE_TEKS[tipe]} Putar dan amati bagaimana persegi-persegi itu terlipat membentuk kubus.`,
+    facts: [
+      ["Bentuk jaring-jaring", `${no} dari 11`],
+      ["Banyak sisi", "6 persegi kongruen"],
+      ["Banyak rusuk", "12"],
+      ["Titik sudut", "8"],
+    ],
+    formulas: [String.raw`L = 6\,s^{2}`, String.raw`V = s^{3}`],
+  };
+}
 
 const JARING_BALOK: ModelInfo = {
   text: "Jaring-jaring balok terdiri atas 6 persegi panjang yang membentuk 3 pasang sisi kongruen (depan–belakang, atas–bawah, kiri–kanan). Amati sisi mana yang saling berhadapan setelah terlipat.",
@@ -491,12 +507,18 @@ export const MODELS: SolidModel[] = [
   },
 
   /* Jaring-jaring */
-  { id: "jaring-kubus-1", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 1", short: "Kubus 1", file: file("jaring-kubus-1"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-2", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 2", short: "Kubus 2", file: file("jaring-kubus-2"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-3", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 3", short: "Kubus 3", file: file("jaring-kubus-3"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-4", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 4", short: "Kubus 4", file: file("jaring-kubus-4"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-balok-1", group: "jaring-kubus-balok", title: "Jaring-jaring balok 1", short: "Balok 1", file: file("jaring-balok-1"), frame: "all", info: JARING_BALOK },
-  { id: "jaring-balok-2", group: "jaring-kubus-balok", title: "Jaring-jaring balok 2", short: "Balok 2", file: file("jaring-balok-2"), frame: "all", info: JARING_BALOK },
+  ...Array.from({ length: 11 }, (_, i): SolidModel => ({
+    id: `jaring-kubus-${i + 1}`,
+    group: "jaring-kubus-balok",
+    family: "Kubus (11 bentuk)",
+    title: `Jaring-jaring kubus ${i + 1}`,
+    short: `${i + 1}`,
+    file: file(`jaring-kubus-${i + 1}`),
+    frame: "all",
+    info: jaringKubusInfo(i + 1),
+  })),
+  { id: "jaring-balok-1", group: "jaring-kubus-balok", family: "Balok", title: "Jaring-jaring balok 1", short: "1", file: file("jaring-balok-1"), frame: "all", info: JARING_BALOK },
+  { id: "jaring-balok-2", group: "jaring-kubus-balok", family: "Balok", title: "Jaring-jaring balok 2", short: "2", file: file("jaring-balok-2"), frame: "all", info: JARING_BALOK },
   /* Jaring-jaring prisma dan limas: lihat JARING_PRISMA dan JARING_LIMAS di bawah */
   ...JARING_PRISMA,
   ...JARING_LIMAS,

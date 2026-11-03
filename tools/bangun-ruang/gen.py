@@ -289,7 +289,135 @@ def make_nets() -> None:
             emit_net(f"jaring-limas-{NAMES[n]}-{v}", s, root, tree)
 
 
+# ───────────────────────── jaring-jaring kubus (11 bentuk) ─────────────────────────
+
+# Bentuk jaring kubus yang sudah ada sebagai model lama (kubus-1..4), dalam bentuk kanonik
+# (tahan putar dan cermin). Dipakai agar jaring baru tidak kembar dengan yang lama.
+KUBUS_LAMA = [
+    ((0, 1), (1, 0), (1, 1), (1, 2), (1, 3), (2, 1)),
+    ((0, 0), (0, 1), (1, 1), (2, 1), (3, 1), (3, 2)),
+    ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 1)),
+    ((0, 0), (0, 1), (1, 1), (1, 2), (1, 3), (2, 2)),
+]
+
+
+def canon_cells(cells):
+    best = None
+    for flip in (0, 1):
+        for r in range(4):
+            c = [(-x, y) if flip else (x, y) for x, y in cells]
+            for _ in range(r):
+                c = [(-y, x) for x, y in c]
+            mx, my = min(x for x, _ in c), min(y for _, y in c)
+            c = tuple(sorted((x - mx, y - my) for x, y in c))
+            if best is None or c < best:
+                best = c
+    return best
+
+
+def hexominoes():
+    seen = {canon_cells([(0, 0)])}
+    level = list(seen)
+    for _ in range(5):
+        nxt = set()
+        for p in level:
+            for (x, y) in p:
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    q = (x + dx, y + dy)
+                    if q not in p:
+                        nxt.add(canon_cells(list(p) + [q]))
+        level = list(nxt)
+    return sorted(level)
+
+
+def _rodrigues90(d):
+    d = np.array(d, dtype=float)
+    down = np.array([0.0, -1.0, 0.0])
+    axis = np.cross(d, down)
+    axis /= np.linalg.norm(axis)
+    K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    return np.eye(3) + K + K @ K  # sudut 90°
+
+
+def cube_net_tree(cube: Solid, cells, root_cell):
+    """Gelindingkan kubus pada jaring: cek 6 sisi berbeda, lalu kembalikan pohon (anak, induk) pada sisi Solid."""
+    cellset = set(cells)
+    normals = [cube.normal(f) for f in cube.faces]
+
+    def face_of(R):
+        body = R.T @ np.array([0.0, -1.0, 0.0])
+        return int(np.argmax([np.dot(body, n) for n in normals]))
+
+    R0 = np.eye(3)
+    face_at = {root_cell: face_of(R0)}
+    rot = {root_cell: R0}
+    tree = []
+    queue = [root_cell]
+    while queue:
+        c = queue.pop(0)
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            n = (c[0] + dx, c[1] + dy)
+            if n in cellset and n not in face_at:
+                R = _rodrigues90((dx, 0.0, dy)) @ rot[c]
+                rot[n] = R
+                face_at[n] = face_of(R)
+                tree.append((face_at[n], face_at[c]))
+                queue.append(n)
+    if len(set(face_at.values())) != 6:
+        return None
+    return face_at[root_cell], tree
+
+
+KUBUS_TIPE = {(1, 4, 1): "1-4-1", (2, 3, 1): "2-3-1", (1, 3, 2): "2-3-1", (2, 2, 2): "2-2-2", (3, 3): "3-3"}
+
+
+def kubus_type(cells):
+    """Tipe jaring: 1-4-1, 2-3-1, 2-2-2 atau 3-3 (banyak persegi tiap baris, dalam orientasi baku)."""
+    for swap in (False, True):
+        rows = {}
+        for x, y in cells:
+            rows.setdefault(x if swap else y, []).append(1)
+        counts = tuple(len(rows[k]) for k in sorted(rows))
+        for std, label in KUBUS_TIPE.items():
+            if counts == std or counts == std[::-1]:
+                return label
+    return "?"
+
+
+def make_kubus() -> None:
+    cube = colorize(prism(regular_polygon(4, 1.0, 45), 1.0))
+    nets = []
+    for p in hexominoes():
+        cells = list(p)
+        cx = np.mean([c[0] for c in cells]); cy = np.mean([c[1] for c in cells])
+        deg = lambda c: sum((c[0] + dx, c[1] + dy) in set(cells) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        root = min(cells, key=lambda c: (-deg(c), (c[0] - cx) ** 2 + (c[1] - cy) ** 2, c))
+        res = cube_net_tree(cube, cells, root)
+        if res is not None:
+            nets.append((p, res))
+    report.append(f"[info] jaring kubus yang sah: {len(nets)} dari {len(hexominoes())} heksomino")
+    assert len(nets) == 11, len(nets)
+    lama = [canon_cells(list(k)) for k in KUBUS_LAMA]
+    assert all(k in [n[0] for n in nets] for k in lama), "jaring lama bukan jaring kubus sah?"
+    # urut: tipe 1-4-1, 2-3-1, 2-2-2, 3-3
+    order = {"1-4-1": 0, "2-3-1": 1, "2-2-2": 2, "3-3": 3}
+    nets.sort(key=lambda n: (order.get(kubus_type(list(n[0])), 9), n[0]))
+    nomor = 5
+    for p, (root_face, tree) in nets:
+        tp = kubus_type(list(p))
+        if p in lama:
+            report.append(f"[lama] {p} tipe {tp}")
+            continue
+        name = f"jaring-kubus-{nomor}"
+        report.append(f"[kubus] {name} tipe {tp} {p}")
+        emit_net(name, cube, root_face, tree)
+        nomor += 1
+    for k, p in zip(range(1, 5), lama):
+        report.append(f"[tipe] kubus-{k}: {kubus_type(list(p))}")
+
+
 make_prisms()
 make_nets()
+make_kubus()
 print("\n".join(report))
 print(f"\n{len(built)} berkas dibuat di {OUT}")

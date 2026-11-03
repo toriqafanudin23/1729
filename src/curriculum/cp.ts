@@ -110,6 +110,7 @@ export const CP_SIMULASI: Record<string, CpTag[]> = {
   "sistem-linear": [...T.sistemLinear, e("Aljabar dan Fungsi", "Sistem pertidaksamaan linear dan program linear")],
   "irisan-kerucut": T.irisanKerucut,
   "sektor-lingkaran": T.lingkaran,
+  "bangun-ruang-sisi-datar": [d("Pengukuran", "Luas permukaan dan volume bangun ruang sisi datar")],
   "titik-istimewa-segitiga": [d("Geometri", "Garis dan titik istimewa segitiga", PENGAYAAN)],
   "teorema-pythagoras": [d("Geometri", "Teorema Pythagoras dan penerapannya")],
   "garis-singgung-dua-lingkaran": [f("Geometri", "Teorema lingkaran dan garis singgung persekutuan", PENGAYAAN)],

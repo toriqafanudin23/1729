@@ -98,6 +98,18 @@ export const SIMULATIONS: SimulationMeta[] = [
     ),
   },
   {
+    slug: "bangun-ruang-sisi-datar",
+    title: "Bangun Ruang Sisi Datar 3D",
+    category: "Geometri",
+    summary:
+      "Putar, perbesar, dan geser model 3D kubus, limas, dan prisma. Amati volume kubus dari kubus satuan, kubus yang terbagi menjadi tiga limas, jaring-jaring yang terlipat, serta unsur-unsur prisma dan limas.",
+    concepts: ["Volume kubus", "Volume limas", "Jaring-jaring", "Prisma", "Limas", "Sisi, rusuk, titik sudut"],
+    glyph: "3D",
+    component: lazy(() =>
+      import("../simulation/simulations/BangunRuangSimulation").then((m) => ({ default: m.BangunRuangSimulation })),
+    ),
+  },
+  {
     slug: "sektor-lingkaran",
     title: "Sektor Lingkaran",
     category: "Geometri",

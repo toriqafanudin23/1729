@@ -194,6 +194,26 @@ function Circle() {
   );
 }
 
+function Solids() {
+  // Kubus isometris (kiri) dan limas (kanan) dengan rusuk tersembunyi putus-putus.
+  return (
+    <Frame label="Kubus dan limas tiga dimensi">
+      <path d="M100 38 L146 62 L100 86 L54 62 Z" fill="rgba(21,101,192,.14)" />
+      <path d="M54 62 L100 86 L100 140 L54 116 Z" fill="rgba(230,81,0,.14)" />
+      <path d="M100 86 L146 62 L146 116 L100 140 Z" fill="rgba(101,87,210,.2)" />
+      <path d="M100 38 L146 62 L146 116 L100 140 L54 116 L54 62 Z" fill="none" stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M54 62 L100 86 L146 62 M100 86 L100 140" fill="none" stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M214 30 L268 118 L224 142 L180 118 Z" fill="rgba(15,118,110,.14)" />
+      <path d="M214 30 L268 118 L224 142 Z" fill="rgba(15,118,110,.22)" />
+      <path d="M214 30 L268 118 L224 142 L180 118 Z" fill="none" stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M214 30 L224 142 M180 118 L224 142 L268 118" fill="none" stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M180 118 L214 106 L268 118" fill="none" stroke={SOFT} strokeWidth="1.75" strokeDasharray="5 4" />
+      <path d="M214 30 L214 106" fill="none" stroke={SOFT} strokeWidth="1.75" strokeDasharray="5 4" />
+      <Dot x={214} y={30} c={RED} r={5} />
+    </Frame>
+  );
+}
+
 function TwoCircles() {
   const c1: [number, number] = [100, 90], c2: [number, number] = [232, 90], r1 = 52, r2 = 30;
   const nx = (r1 - r2) / (c2[0] - c1[0]), ny = Math.sqrt(1 - nx * nx);
@@ -289,6 +309,7 @@ function Pythagoras() {
 const PICKS: [RegExp, () => ReactNode][] = [
   [/pythagoras|phytagoras|pitagoras|teorema[- ]phyt/, Pythagoras],
   [/titik[- ]istimewa|garis[- ]istimewa|segitiga|centroid|sentroid|ortosentrum|lingkaran[- ](luar|dalam)/, TriangleCenters],
+  [/bangun[- ]ruang|kubus|limas|prisma/, Solids],
   [/dua[- ]lingkaran|persekutuan/, TwoCircles],
   [/transformasi[- ]fungsi|pergeseran|fungsi[- ]transformasi/, FnTransform],
   [/transformasi|refleksi|rotasi|dilatasi|translasi/, Transform],

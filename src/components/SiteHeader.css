@@ -122,32 +122,10 @@
   font-weight: 650;
 }
 
-/* Tombol ajakan: Pesan website */
-.site-header .site-header__cta {
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
-  padding: 0 18px;
-  color: #fff;
-  background: var(--sh-ink);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 160ms ease;
-}
-.site-header .site-header__cta:hover {
-  background: var(--sh-accent-hover);
-}
-
 /* Fokus keyboard */
 .site-header__brand:focus-visible,
 .site-header__menu-toggle:focus-visible,
-.site-header__link:focus-visible,
-.site-header__cta:focus-visible {
+.site-header__link:focus-visible {
   outline: 2px solid var(--sh-accent);
   outline-offset: 3px;
 }
@@ -188,11 +166,6 @@
     gap: 2px;
   }
 
-  .site-header .site-header__cta {
-    min-height: 38px;
-    margin-top: 0;
-  }
-
   /* Desktop: tautan polos, aktif ditandai garis oranye di bawah teks */
   .site-header__link {
     min-height: 68px;
@@ -225,7 +198,6 @@
 @media (prefers-reduced-motion: reduce) {
   .site-header__link,
   .site-header__link::after,
-  .site-header__cta,
   .site-header__menu-toggle {
     transition: none;
   }

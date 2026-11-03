@@ -7,7 +7,14 @@
  *  Grup, tombol pilihan, dan panel penjelasan menyesuaikan sendiri.
  * ------------------------------------------------------------------ */
 
-export type GroupId = "volume-kubus" | "volume-limas" | "jaring" | "prisma" | "limas";
+export type GroupId =
+  | "volume-kubus"
+  | "volume-limas"
+  | "jaring-kubus-balok"
+  | "jaring-prisma"
+  | "jaring-limas"
+  | "prisma"
+  | "limas";
 
 export interface GroupDef {
   id: GroupId;
@@ -18,9 +25,11 @@ export interface GroupDef {
 export const GROUPS: GroupDef[] = [
   { id: "volume-kubus", label: "Volume kubus", hint: "Menghitung kubus satuan" },
   { id: "volume-limas", label: "Volume limas", hint: "Kubus menjadi 3 limas" },
-  { id: "jaring", label: "Jaring-jaring", hint: "Membuka dan melipat sisi" },
-  { id: "prisma", label: "Prisma", hint: "Berbagai bentuk alas" },
-  { id: "limas", label: "Limas", hint: "Berbagai bentuk alas" },
+  { id: "jaring-kubus-balok", label: "Jaring-jaring kubus & balok", hint: "Membuka dan melipat sisi" },
+  { id: "jaring-prisma", label: "Jaring-jaring prisma", hint: "Berbagai alas dan susunan" },
+  { id: "jaring-limas", label: "Jaring-jaring limas", hint: "Berbagai alas dan susunan" },
+  { id: "prisma", label: "Jenis-jenis prisma", hint: "Beraturan, tidak beraturan, miring" },
+  { id: "limas", label: "Jenis-jenis limas", hint: "Berbagai bentuk alas" },
 ];
 
 export interface ModelInfo {
@@ -39,6 +48,8 @@ export interface SolidModel {
   title: string;
   /** Label pendek untuk tombol pilihan. */
   short: string;
+  /** Pengelompokan tombol pilihan di panel (mis. bentuk alas); tombol sekeluarga diberi satu judul kecil. */
+  family?: string;
   file: string;
   /**
    * Cara menentukan bingkai kamera.
@@ -58,21 +69,39 @@ const file = (name: string) => `${BASE}${name}.glb`;
 
 /* ───────── Prisma dan limas: unsur dihitung dari banyak sisi alas ───────── */
 
-const SISI_ALAS: Record<number, string> = { 3: "segitiga", 4: "segiempat", 5: "segilima", 6: "segienam" };
+const SISI_ALAS: Record<number, string> = { 3: "segitiga", 4: "segiempat", 5: "segilima", 6: "segienam", 8: "segidelapan" };
+const cap = (text: string) => text[0].toUpperCase() + text.slice(1);
 
-function prismaInfo(n: number): ModelInfo {
-  const bentuk = SISI_ALAS[n];
+interface PrismaOptions {
+  /** Nama alas, mis. "trapesium"; bawaan: segi-n beraturan. */
+  bentuk?: string;
+  /** Kalimat pembuka pengganti. */
+  text?: string;
+  /** Fakta tambahan di atas daftar unsur. */
+  facts?: [string, string][];
+  /** Rumus luas alas khusus. */
+  alasFormula?: string;
+  /** Rumus luas permukaan pengganti (mis. prisma miring). */
+  luasFormula?: string;
+}
+
+function prismaInfo(n: number, o: PrismaOptions = {}): ModelInfo {
+  const bentuk = o.bentuk ?? SISI_ALAS[n];
   return {
-    text: `Prisma ${bentuk} memiliki dua bidang sejajar yang kongruen (alas dan atas) berbentuk ${bentuk}, dihubungkan oleh ${n} sisi tegak berbentuk persegi panjang. Putar modelnya dan hitung sendiri sisi, rusuk, serta titik sudutnya.`,
+    text:
+      o.text ??
+      `Prisma ${bentuk} memiliki dua bidang sejajar yang kongruen (alas dan atas) berbentuk ${bentuk}, dihubungkan oleh ${n} sisi tegak berbentuk persegi panjang. Putar modelnya dan hitung sendiri sisi, rusuk, serta titik sudutnya.`,
     facts: [
       ["Bentuk alas", bentuk],
+      ...(o.facts ?? []),
       ["Banyak sisi", `${n + 2} (2 alas + ${n} sisi tegak)`],
       ["Banyak rusuk", `${3 * n}`],
       ["Titik sudut", `${2 * n}`],
     ],
     formulas: [
+      ...(o.alasFormula ? [o.alasFormula] : []),
       String.raw`V = L_{\text{alas}} \times t`,
-      String.raw`L = 2\,L_{\text{alas}} + K_{\text{alas}} \times t`,
+      o.luasFormula ?? String.raw`L = 2\,L_{\text{alas}} + K_{\text{alas}} \times t`,
       String.raw`T - R + S = ${2 * n} - ${3 * n} + ${n + 2} = 2`,
     ],
   };
@@ -117,6 +146,284 @@ const JARING_BALOK: ModelInfo = {
   ],
   formulas: [String.raw`L = 2\,(pl + pt + lt)`, String.raw`V = p \times l \times t`],
 };
+
+
+/* ───────── Jaring-jaring prisma ───────── */
+
+const PRISMA_VARIAN: Record<string, { label: string; text: (bentuk: string) => string }> = {
+  sejajar: {
+    label: "Sejajar",
+    text: () =>
+      "Kedua alas menempel pada persegi panjang yang sama: satu di sisi atas dan satu di sisi bawah deretan persegi panjang.",
+  },
+  tangga: {
+    label: "Tangga",
+    text: () => "Kedua alas menempel pada dua persegi panjang yang bersebelahan, sehingga tampak seperti tangga.",
+  },
+  bergeser: {
+    label: "Bergeser",
+    text: () => "Kedua alas menempel pada persegi panjang di ujung deretan yang saling berseberangan.",
+  },
+  bintang: {
+    label: "Bintang",
+    text: (bentuk) =>
+      `Satu ${bentuk} berada di tengah dan dikelilingi persegi panjang. ${cap(bentuk)} yang lain menempel pada ujung salah satu persegi panjang.`,
+  },
+};
+
+function jaringPrismaInfo(n: number, text: string, bentuk = SISI_ALAS[n]): ModelInfo {
+  return {
+    text: `Jaring-jaring prisma ${bentuk} terdiri atas ${n} persegi panjang (sisi tegak) dan 2 ${bentuk} (alas dan atas). ${text} Putar animasinya dan amati urutan lipatannya.`,
+    facts: [
+      ["Banyak sisi", `${n + 2} (${n} persegi panjang + 2 ${bentuk})`],
+      ["Banyak rusuk", `${3 * n}`],
+      ["Titik sudut", `${2 * n}`],
+    ],
+    formulas: [String.raw`L = 2\,L_{\text{alas}} + K_{\text{alas}} \times t`],
+  };
+}
+
+const JARING_PRISMA: SolidModel[] = [
+  /* Segitiga: "Salib" adalah model lama (kedua segitiga menempel pada persegi panjang tengah). */
+  {
+    id: "jaring-prisma",
+    group: "jaring-prisma",
+    family: "Segitiga",
+    title: "Jaring-jaring prisma segitiga (salib)",
+    short: "Salib",
+    file: file("jaring-prisma-segitiga"),
+    frame: "all",
+    info: jaringPrismaInfo(3, "Kedua segitiga menempel pada persegi panjang yang di tengah, di kiri dan kanannya."),
+  },
+  ...(["tangga", "bergeser", "bintang"] as const).map(
+    (v): SolidModel => ({
+      id: `jaring-prisma-segitiga-${v}`,
+      group: "jaring-prisma",
+      family: "Segitiga",
+      title: `Jaring-jaring prisma segitiga (${PRISMA_VARIAN[v].label.toLowerCase()})`,
+      short: PRISMA_VARIAN[v].label,
+      file: file(`jaring-prisma-segitiga-${v}`),
+      frame: "all",
+      info: jaringPrismaInfo(3, PRISMA_VARIAN[v].text("segitiga")),
+    }),
+  ),
+  {
+    id: "jaring-prisma-segitiga-siku",
+    group: "jaring-prisma",
+    family: "Segitiga",
+    title: "Jaring-jaring prisma segitiga siku-siku",
+    short: "Siku-siku",
+    file: file("jaring-prisma-segitiga-siku"),
+    frame: "all",
+    info: jaringPrismaInfo(
+      3,
+      "Alasnya segitiga siku-siku, sehingga ketiga persegi panjang berbeda lebar: sama dengan sisi siku-siku dan sisi miring alas.",
+      "segitiga siku-siku",
+    ),
+  },
+
+  /* Segilima dan segienam */
+  ...([5, 6] as const).flatMap((n) =>
+    (["sejajar", "tangga", "bergeser", "bintang"] as const).map(
+      (v): SolidModel => ({
+        id: `jaring-prisma-${SISI_ALAS[n]}-${v}`,
+        group: "jaring-prisma",
+        family: cap(SISI_ALAS[n]),
+        title: `Jaring-jaring prisma ${SISI_ALAS[n]} (${PRISMA_VARIAN[v].label.toLowerCase()})`,
+        short: PRISMA_VARIAN[v].label,
+        file: file(`jaring-prisma-${SISI_ALAS[n]}-${v}`),
+        frame: "all",
+        info: jaringPrismaInfo(n, PRISMA_VARIAN[v].text(SISI_ALAS[n])),
+      }),
+    ),
+  ),
+
+  /* Alas trapesium */
+  {
+    id: "jaring-prisma-trapesium",
+    group: "jaring-prisma",
+    family: "Trapesium",
+    title: "Jaring-jaring prisma trapesium",
+    short: "Trapesium",
+    file: file("jaring-prisma-trapesium"),
+    frame: "all",
+    info: {
+      text: "Jaring-jaring prisma trapesium terdiri atas 4 persegi panjang dengan lebar berbeda (sama dengan keempat sisi trapesium) dan 2 trapesium kongruen sebagai alas dan atas.",
+      facts: [
+        ["Banyak sisi", "6 (4 persegi panjang + 2 trapesium)"],
+        ["Banyak rusuk", "12"],
+        ["Titik sudut", "8"],
+      ],
+      formulas: [String.raw`L = 2\,L_{\text{alas}} + K_{\text{alas}} \times t`],
+    },
+  },
+];
+
+/* ───────── Jaring-jaring limas ───────── */
+
+const LIMAS_VARIAN: Record<string, { label: string; text: (bentuk: string, n: number) => string }> = {
+  bintang: {
+    label: "Bintang",
+    text: (_bentuk, n) => `Alas berada di tengah dan dikelilingi ${n} segitiga sisi tegak, membentuk pola seperti bintang.`,
+  },
+  ujung: {
+    label: "Pita ujung",
+    text: (_bentuk, n) =>
+      `Ke-${n} segitiga sisi tegak berderet berurutan; alas menempel pada segitiga yang berada di ujung deretan.`,
+  },
+  tengah: {
+    label: "Pita tengah",
+    text: (_bentuk, n) =>
+      `Ke-${n} segitiga sisi tegak berderet berurutan; alas menempel pada segitiga yang berada di tengah deretan.`,
+  },
+};
+
+function jaringLimasInfo(n: number, text: string): ModelInfo {
+  const bentuk = SISI_ALAS[n];
+  return {
+    text: `Jaring-jaring limas ${bentuk} terdiri atas 1 alas ${bentuk} dan ${n} segitiga sebagai sisi tegak. ${text} Amati bagaimana semua segitiga terlipat dan bertemu di satu titik puncak.`,
+    facts: [
+      ["Banyak sisi", `${n + 1} (1 alas + ${n} sisi tegak)`],
+      ["Banyak rusuk", `${2 * n}`],
+      ["Titik sudut", `${n + 1}`],
+    ],
+    formulas: [String.raw`L = L_{\text{alas}} + \text{jumlah luas sisi tegak}`],
+  };
+}
+
+const jaringLimasUrut: SolidModel[] = [
+  /* Segiempat: "Bintang" adalah model lama. */
+  {
+    id: "jaring-limas",
+    group: "jaring-limas",
+    family: "Segiempat",
+    title: "Jaring-jaring limas segiempat (bintang)",
+    short: "Bintang",
+    file: file("jaring-limas-segiempat"),
+    frame: "all",
+    info: jaringLimasInfo(4, LIMAS_VARIAN.bintang.text("segiempat", 4)),
+  },
+  ...([3, 4, 5, 6] as const).flatMap((n) =>
+    (["bintang", "ujung", "tengah"] as const)
+      .filter((v) => !(n === 4 && v === "bintang"))
+      .map(
+        (v): SolidModel => ({
+          id: `jaring-limas-${SISI_ALAS[n]}-${v}`,
+          group: "jaring-limas",
+          family: cap(SISI_ALAS[n]),
+          title: `Jaring-jaring limas ${SISI_ALAS[n]} (${LIMAS_VARIAN[v].label.toLowerCase()})`,
+          short: LIMAS_VARIAN[v].label,
+          file: file(`jaring-limas-${SISI_ALAS[n]}-${v}`),
+          frame: "all",
+          info: jaringLimasInfo(n, LIMAS_VARIAN[v].text(SISI_ALAS[n], n)),
+        }),
+      ),
+  ),
+];
+const JARING_LIMAS = [...jaringLimasUrut].sort((a, b) => limasOrder(a) - limasOrder(b));
+
+/** Urutan tampil: segitiga, segiempat, segilima, segienam; bintang lebih dulu. */
+function limasOrder(m: SolidModel) {
+  const alas = ["Segitiga", "Segiempat", "Segilima", "Segienam"].indexOf(m.family ?? "");
+  const varian = ["Bintang", "Pita ujung", "Pita tengah"].indexOf(m.short);
+  return alas * 10 + varian;
+}
+
+/* ───────── Jenis-jenis prisma ───────── */
+
+const PRISMA_BERATURAN: SolidModel[] = [3, 4, 5, 6, 8].map(
+  (n): SolidModel => ({
+    id: `prisma-${SISI_ALAS[n]}`,
+    group: "prisma",
+    family: "Alas segi-n beraturan",
+    title: `Prisma ${SISI_ALAS[n]}`,
+    short: cap(SISI_ALAS[n]),
+    file: file(`prisma-${SISI_ALAS[n]}`),
+    frame: "all",
+    info: prismaInfo(
+      n,
+      n === 4
+        ? {
+            alasFormula: String.raw`L_{\text{alas}} = s \times s = s^{2}`,
+            bentuk: "persegi (segiempat beraturan)",
+          }
+        : {},
+    ),
+  }),
+);
+
+const PRISMA_LAIN: SolidModel[] = [
+  {
+    id: "prisma-segitiga-siku",
+    group: "prisma",
+    family: "Alas tidak beraturan",
+    title: "Prisma segitiga siku-siku",
+    short: "Segitiga siku-siku",
+    file: file("prisma-segitiga-siku"),
+    frame: "all",
+    info: prismaInfo(3, {
+      bentuk: "segitiga siku-siku",
+      text: "Alas prisma ini segitiga siku-siku, sehingga ketiga sisi tegaknya persegi panjang dengan lebar berbeda. Contohnya bangun seperti atap atau potongan balok yang dibelah menurut diagonal.",
+      alasFormula: String.raw`L_{\text{alas}} = \tfrac{1}{2} \times a \times t_{\text{segitiga}}`,
+    }),
+  },
+  {
+    id: "prisma-trapesium",
+    group: "prisma",
+    family: "Alas tidak beraturan",
+    title: "Prisma trapesium",
+    short: "Trapesium",
+    file: file("prisma-trapesium"),
+    frame: "all",
+    info: prismaInfo(4, {
+      bentuk: "trapesium sama kaki",
+      text: "Alas dan atas prisma ini berbentuk trapesium. Dua dari empat sisi tegaknya lebih lebar, yaitu yang berimpit dengan sisi sejajar trapesium.",
+      alasFormula: String.raw`L_{\text{alas}} = \tfrac{1}{2}\,(a + b) \times t_{\text{trapesium}}`,
+    }),
+  },
+  {
+    id: "prisma-belah-ketupat",
+    group: "prisma",
+    family: "Alas tidak beraturan",
+    title: "Prisma belah ketupat",
+    short: "Belah ketupat",
+    file: file("prisma-belah-ketupat"),
+    frame: "all",
+    info: prismaInfo(4, {
+      bentuk: "belah ketupat",
+      text: "Alas prisma ini belah ketupat: keempat sisinya sama panjang, sehingga keempat sisi tegaknya persegi panjang yang kongruen.",
+      alasFormula: String.raw`L_{\text{alas}} = \tfrac{1}{2} \times d_{1} \times d_{2}`,
+    }),
+  },
+  {
+    id: "prisma-jajargenjang",
+    group: "prisma",
+    family: "Alas tidak beraturan",
+    title: "Prisma jajargenjang",
+    short: "Jajargenjang",
+    file: file("prisma-jajargenjang"),
+    frame: "all",
+    info: prismaInfo(4, {
+      bentuk: "jajargenjang",
+      text: "Alas prisma ini jajargenjang. Sisi tegak yang berhadapan kongruen, sehingga prisma tersusun dari 3 pasang sisi sejajar.",
+      alasFormula: String.raw`L_{\text{alas}} = a \times t_{\text{jajargenjang}}`,
+    }),
+  },
+  {
+    id: "prisma-segitiga-miring",
+    group: "prisma",
+    family: "Prisma miring",
+    title: "Prisma segitiga miring",
+    short: "Segitiga miring",
+    file: file("prisma-segitiga-miring"),
+    frame: "all",
+    info: prismaInfo(3, {
+      text: "Pada prisma miring, rusuk tegaknya tidak tegak lurus terhadap alas, sehingga sisi tegaknya berbentuk jajargenjang. Tinggi prisma adalah jarak tegak lurus antara bidang alas dan bidang atas, bukan panjang rusuk tegak.",
+      facts: [["Sisi tegak", "3 jajargenjang"]],
+      luasFormula: String.raw`L = 2\,L_{\text{alas}} + \text{jumlah luas sisi tegak}`,
+    }),
+  },
+];
 
 /* ───────── Daftar model ───────── */
 
@@ -184,59 +491,19 @@ export const MODELS: SolidModel[] = [
   },
 
   /* Jaring-jaring */
-  { id: "jaring-kubus-1", group: "jaring", title: "Jaring-jaring kubus 1", short: "Kubus 1", file: file("jaring-kubus-1"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-2", group: "jaring", title: "Jaring-jaring kubus 2", short: "Kubus 2", file: file("jaring-kubus-2"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-3", group: "jaring", title: "Jaring-jaring kubus 3", short: "Kubus 3", file: file("jaring-kubus-3"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-kubus-4", group: "jaring", title: "Jaring-jaring kubus 4", short: "Kubus 4", file: file("jaring-kubus-4"), frame: "all", info: JARING_KUBUS },
-  { id: "jaring-balok-1", group: "jaring", title: "Jaring-jaring balok 1", short: "Balok 1", file: file("jaring-balok-1"), frame: "all", info: JARING_BALOK },
-  { id: "jaring-balok-2", group: "jaring", title: "Jaring-jaring balok 2", short: "Balok 2", file: file("jaring-balok-2"), frame: "all", info: JARING_BALOK },
-  {
-    id: "jaring-limas",
-    group: "jaring",
-    title: "Jaring-jaring limas segiempat",
-    short: "Limas",
-    file: file("jaring-limas-segiempat"),
-    frame: "all",
-    info: {
-      text: "Jaring-jaring limas segiempat terdiri atas 1 alas segiempat dan 4 sisi tegak berbentuk segitiga. Amati bagaimana keempat sisi tegak terlipat dan bertemu di satu titik puncak.",
-      facts: [
-        ["Banyak sisi", "5 (1 alas + 4 sisi tegak)"],
-        ["Banyak rusuk", "8"],
-        ["Titik sudut", "5"],
-      ],
-      formulas: [String.raw`L = L_{\text{alas}} + \text{jumlah luas sisi tegak}`],
-    },
-  },
-  {
-    id: "jaring-prisma",
-    group: "jaring",
-    title: "Jaring-jaring prisma segitiga",
-    short: "Prisma",
-    file: file("jaring-prisma-segitiga"),
-    frame: "all",
-    info: {
-      text: "Jaring-jaring prisma segitiga terdiri atas 2 segitiga (alas dan atas) dan 3 persegi panjang sebagai sisi tegak. Amati bagaimana sisi-sisi tegak terlipat mengelilingi alas.",
-      facts: [
-        ["Banyak sisi", "5 (2 segitiga + 3 persegi panjang)"],
-        ["Banyak rusuk", "9"],
-        ["Titik sudut", "6"],
-      ],
-      formulas: [String.raw`L = 2\,L_{\text{alas}} + K_{\text{alas}} \times t`],
-    },
-  },
+  { id: "jaring-kubus-1", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 1", short: "Kubus 1", file: file("jaring-kubus-1"), frame: "all", info: JARING_KUBUS },
+  { id: "jaring-kubus-2", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 2", short: "Kubus 2", file: file("jaring-kubus-2"), frame: "all", info: JARING_KUBUS },
+  { id: "jaring-kubus-3", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 3", short: "Kubus 3", file: file("jaring-kubus-3"), frame: "all", info: JARING_KUBUS },
+  { id: "jaring-kubus-4", group: "jaring-kubus-balok", title: "Jaring-jaring kubus 4", short: "Kubus 4", file: file("jaring-kubus-4"), frame: "all", info: JARING_KUBUS },
+  { id: "jaring-balok-1", group: "jaring-kubus-balok", title: "Jaring-jaring balok 1", short: "Balok 1", file: file("jaring-balok-1"), frame: "all", info: JARING_BALOK },
+  { id: "jaring-balok-2", group: "jaring-kubus-balok", title: "Jaring-jaring balok 2", short: "Balok 2", file: file("jaring-balok-2"), frame: "all", info: JARING_BALOK },
+  /* Jaring-jaring prisma dan limas: lihat JARING_PRISMA dan JARING_LIMAS di bawah */
+  ...JARING_PRISMA,
+  ...JARING_LIMAS,
 
   /* Jenis-jenis prisma */
-  ...[3, 5, 6].map(
-    (n): SolidModel => ({
-      id: `prisma-${SISI_ALAS[n]}`,
-      group: "prisma",
-      title: `Prisma ${SISI_ALAS[n]}`,
-      short: SISI_ALAS[n][0].toUpperCase() + SISI_ALAS[n].slice(1),
-      file: file(`prisma-${SISI_ALAS[n]}`),
-      frame: "all",
-      info: prismaInfo(n),
-    }),
-  ),
+  ...PRISMA_BERATURAN,
+  ...PRISMA_LAIN,
 
   /* Jenis-jenis limas */
   ...[3, 4, 5, 6].map(

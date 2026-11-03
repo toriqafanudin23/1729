@@ -22,6 +22,7 @@ import {
   findModel,
   modelsOf,
   type GroupId,
+  type SolidModel,
 } from "../math/bangunRuangData";
 import { SolidStage, type StageCounts } from "../three/SolidStage";
 import "./BangunRuangSimulation.css";
@@ -57,6 +58,17 @@ type Status = "loading" | "ready" | "error" | "unsupported";
 
 const fmtTime = (seconds: number) => seconds.toFixed(1).replace(".", ",");
 const fmtSpeed = (speed: number) => `${String(speed).replace(".", ",")}×`;
+
+/** Kelompokkan model per `family` (urutan kemunculan dipertahankan); tanpa family jadi satu kelompok. */
+function familiesOf(items: SolidModel[]) {
+  const out: { family: string | undefined; models: SolidModel[] }[] = [];
+  for (const m of items) {
+    const last = out[out.length - 1];
+    if (last && last.family === m.family) last.models.push(m);
+    else out.push({ family: m.family, models: [m] });
+  }
+  return out;
+}
 
 const icon = (Icon: LucideIcon) => <Icon size={17} aria-hidden="true" />;
 
@@ -239,18 +251,31 @@ export function BangunRuangSimulation() {
                   <span className="br-group__hint">{g.hint}</span>
                 </button>
                 {active && items.length > 1 && (
-                  <div className="sim-seg br-group__models" role="radiogroup" aria-label={`Model ${g.label}`}>
-                    {items.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={m.id === model.id}
-                        className="sim-seg__btn"
-                        onClick={() => selectModel(m.id)}
-                      >
-                        {m.short}
-                      </button>
+                  <div className="br-group__models">
+                    {familiesOf(items).map(({ family, models }) => (
+                      <div key={family ?? "semua"} className="br-family">
+                        {family && (
+                          <p className="br-family__name">{family}</p>
+                        )}
+                        <div
+                          className="sim-seg"
+                          role="radiogroup"
+                          aria-label={family ? `${g.label}: ${family}` : `Model ${g.label}`}
+                        >
+                          {models.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={m.id === model.id}
+                              className="sim-seg__btn"
+                              onClick={() => selectModel(m.id)}
+                            >
+                              {m.short}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

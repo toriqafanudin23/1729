@@ -205,14 +205,20 @@
   border-color: var(--sim-primary);
   background: var(--sim-primary-soft);
 }
-.br-tbtn--primary {
+/* Selektor `.sim .br-tbtn--primary` sengaja lebih spesifik daripada `.sim button { color: inherit }`
+   (kit umum). Tanpa itu ikon putar/jeda berwarna gelap di atas latar gelap dan baru terlihat saat hover. */
+.sim .br-tbtn--primary {
   border-color: var(--sim-primary);
   background: var(--sim-primary);
   color: #fff;
 }
-.br-tbtn--primary:hover {
+.sim .br-tbtn--primary:hover,
+.sim .br-tbtn--primary:focus-visible {
   background: #3a3a44;
   color: #fff;
+}
+.sim .br-tbtn--primary svg {
+  stroke: currentColor;
 }
 .br-tbtn--text {
   padding: 0 8px;
@@ -280,7 +286,17 @@
 }
 
 .br-group__models {
-  padding: 6px 4px 8px;
+  display: grid;
+  gap: 8px;
+  padding: 6px 4px 10px;
+}
+.br-family__name {
+  margin: 0 0 3px 2px;
+  color: var(--sim-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 .br-group__models .sim-seg__btn {
   height: 32px;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SiteHeader } from "../../components/SiteHeader";
 import { SiteFooter } from "../../components/SiteFooter";
 import { useSeo } from "../../useSeo";
@@ -6,6 +6,15 @@ import { WEBSITE_SEO } from "../../seoText";
 // Memakai token dan komponen dasar (.sp-*) dari halaman toko; gaya khusus ada di WebsiteService.css.
 import "../shop/ShopLanding.css";
 import "./WebsiteService.css";
+import "@fontsource/poppins/latin-400.css";
+import "@fontsource/poppins/latin-600.css";
+import "@fontsource/playfair-display/latin-500.css";
+import "@fontsource/playfair-display/latin-700.css";
+import "@fontsource/nunito/latin-400.css";
+import "@fontsource/nunito/latin-700.css";
+import "@fontsource/nunito/latin-800.css";
+import "@fontsource/merriweather/latin-400.css";
+import "@fontsource/merriweather/latin-700.css";
 
 /* ------------------------------------------------------------------ *
  *  Pengaturan kontak dan harga.
@@ -150,9 +159,6 @@ const THEMES = [
   { id: "gelap", name: "Gelap", bg: "#141413", surface: "#30302e", text: "#faf9f5", mute: "#9c9a92" },
 ];
 
-const FONT_LINK =
-  "https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Nunito:wght@400;700;800&family=Playfair+Display:wght@500;700&family=Poppins:wght@400;600&display=swap";
-
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 const STACK = ["React", "Tailwind CSS", "Supabase", "Vercel / VPS"];
@@ -208,15 +214,6 @@ export default function WebsiteService() {
   const [color, setColor] = useState(COLORS[0].value);
   const [fontId, setFontId] = useState(FONTS[0].id);
   const [themeId, setThemeId] = useState(THEMES[0].id);
-
-  // Font contoh dimuat sekali saja, hanya di halaman ini.
-  useEffect(() => {
-    if (document.head.querySelector(`link[href="${FONT_LINK}"]`)) return;
-    const l = document.createElement("link");
-    l.rel = "stylesheet";
-    l.href = FONT_LINK;
-    document.head.appendChild(l);
-  }, []);
 
   const font = FONTS.find((f) => f.id === fontId) ?? FONTS[0];
   const theme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];

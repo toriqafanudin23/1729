@@ -42,3 +42,16 @@ Struktur dan cara menambah materi baru dijelaskan di komentar `src/materi/materi
 - `src/materi/labs/` — simulasi JSXGraph yang tertanam
 - `src/materi/three/` — mesin 3D bersama (three.js): `solidMath.ts` (matematika prisma/limas/jaring-jaring, tanpa three), `stage.ts`, `solid.ts`, `SolidScene.tsx`
 - `npm run check:materi` — memeriksa kunci jawaban, id soal, dan pilihan jaring kubus
+
+## PWA (offline)
+
+Aplikasi ini adalah PWA: bisa dipasang ke PC/ponsel dan dibuka tanpa internet setelah kunjungan pertama.
+
+- `public/manifest.webmanifest` + `public/icons/` — identitas aplikasi dan ikon (termasuk maskable)
+- `scripts/sw.template.js` — template service worker (cangkang SPA, precache, cache font)
+- `scripts/generate-sw.mjs` — dijalankan di akhir `npm run build`; menulis `dist/sw.js` berisi daftar semua berkas hasil build
+- `src/pwa/registerSW.ts` — pendaftaran SW dan notifikasi "siap offline" / "versi baru tersedia"
+
+Font di-host sendiri: `src/fonts.css` (Hanken Grotesk, Newsreader) dan impor `@fontsource/*` di `WebsiteService.tsx`; tidak ada permintaan ke Google Fonts.
+
+Service worker hanya aktif di build produksi. Uji lokal: `npm run build && npm run preview`, lalu buka DevTools → Application.

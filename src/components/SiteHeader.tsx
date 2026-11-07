@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
+import { InstallButton } from "./InstallButton";
 import "./SiteHeader.css";
 
 /* Satu navbar untuk seluruh halaman. Simulasi adalah fitur utama,
@@ -47,17 +48,6 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <button
-          className="site-header__menu-toggle"
-          type="button"
-          aria-label={menuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
-          aria-controls="site-navigation"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
-        </button>
-
         <nav
           className={`site-header__nav${menuOpen ? " site-header__nav--open" : ""}`}
           id="site-navigation"
@@ -77,6 +67,21 @@ export function SiteHeader() {
             ))}
           </div>
         </nav>
+
+        {/* Pojok kanan atas: tombol pasang PWA (jika tersedia) + menu mobile */}
+        <div className="site-header__actions">
+          <InstallButton />
+          <button
+            className="site-header__menu-toggle"
+            type="button"
+            aria-label={menuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+            aria-controls="site-navigation"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+          </button>
+        </div>
       </div>
     </header>
   );

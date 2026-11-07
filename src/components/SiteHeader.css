@@ -120,9 +120,86 @@
   font-weight: 650;
 }
 
+/* Pojok kanan atas: tombol pasang + tombol menu */
+.site-header__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-header__install {
+  position: relative;
+}
+.site-header__install-btn {
+  display: inline-flex;
+  height: 40px;
+  min-width: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  color: #fff;
+  background: var(--sh-accent);
+  border: 1px solid var(--sh-accent);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.site-header__install-btn:hover {
+  background: var(--sh-accent-hover);
+  border-color: var(--sh-accent-hover);
+}
+/* Mobile: hanya ikon (label tetap terbaca oleh screen reader) */
+.site-header__install-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.site-header__install-tip {
+  position: absolute;
+  z-index: 110;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(270px, calc(100vw - 40px));
+  padding: 14px 16px;
+  color: var(--sh-text);
+  background: #fff;
+  border: 1px solid var(--sh-line);
+  border-radius: 12px;
+  box-shadow: 0 18px 30px -12px rgba(20, 20, 19, 0.18);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.site-header__install-tip strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--sh-ink);
+  font-size: 14.5px;
+}
+.site-header__install-tip ol {
+  margin: 0;
+  padding-left: 18px;
+}
+.site-header__install-tip em {
+  color: var(--sh-ink);
+  font-style: normal;
+  font-weight: 600;
+}
+
 /* Fokus keyboard */
 .site-header__brand:focus-visible,
 .site-header__menu-toggle:focus-visible,
+.site-header__install-btn:focus-visible,
 .site-header__link:focus-visible {
   outline: 2px solid var(--sh-accent);
   outline-offset: 3px;
@@ -142,6 +219,7 @@
     position: static;
     display: flex;
     align-items: center;
+    margin-left: auto;
     gap: 20px;
     padding: 0;
     background: transparent;
@@ -153,6 +231,20 @@
     display: flex;
     align-items: center;
     gap: 2px;
+  }
+
+  .site-header__install {
+    margin-left: 12px;
+  }
+  .site-header__install-btn {
+    padding: 0 14px 0 12px;
+  }
+  .site-header__install-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
   }
 
   /* Desktop: tautan polos, aktif ditandai garis oranye di bawah teks */
@@ -184,9 +276,23 @@
   }
 }
 
+/* Layar sempit: beri ruang untuk dua tombol di kanan */
+@media (max-width: 479px) {
+  .site-header__inner {
+    gap: 8px;
+    padding-inline: 16px;
+  }
+  .site-header__name {
+    overflow: hidden;
+    font-size: 18px;
+    text-overflow: ellipsis;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-header__link,
   .site-header__link::after,
+  .site-header__install-btn,
   .site-header__menu-toggle {
     transition: none;
   }

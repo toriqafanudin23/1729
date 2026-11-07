@@ -51,6 +51,8 @@ Aplikasi ini adalah PWA: bisa dipasang ke PC/ponsel dan dibuka tanpa internet se
 - `scripts/sw.template.js` — template service worker (cangkang SPA, precache, cache font)
 - `scripts/generate-sw.mjs` — dijalankan di akhir `npm run build`; menulis `dist/sw.js` berisi daftar semua berkas hasil build
 - `src/pwa/registerSW.ts` — pendaftaran SW dan notifikasi "siap offline" / "versi baru tersedia"
+- `src/pwa/installPrompt.ts` — menangkap event `beforeinstallprompt` (dipasang dari `main.tsx`) dan hook `useInstallPrompt()`
+- `src/components/InstallButton.tsx` — tombol "Pasang" di pojok kanan atas navbar (`SiteHeader`); di iOS menampilkan petunjuk "Tambah ke Layar Utama", dan otomatis hilang setelah aplikasi terpasang
 
 Font di-host sendiri: `src/fonts.css` (Hanken Grotesk, Newsreader) dan impor `@fontsource/*` di `WebsiteService.tsx`; tidak ada permintaan ke Google Fonts.
 

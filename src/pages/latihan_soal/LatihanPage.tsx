@@ -1,0 +1,148 @@
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import { SiteHeader } from "../../components/SiteHeader";
+import { SiteFooter } from "../../components/SiteFooter";
+import { latihanSeo } from "../../seoText";
+import { useSeo } from "../../useSeo";
+import "katex/dist/katex.min.css";
+import "./styles/LatihanPage.css";
+import { SectionBlock } from "./components/SectionBlock";
+import { ScoreBar } from "./components/ScoreBar";
+import { Rich } from "./components/Rich";
+import { getMaterial } from "./data";
+import { QuizProvider } from "./state/QuizContext";
+import type { Material } from "./types";
+
+/* ------------------------------------------------------------------ *
+ *  Halaman latihan untuk satu materi. Semua isi datang dari `material`.
+ * ------------------------------------------------------------------ */
+export default function LatihanPage({ material }: { material: Material }) {
+  const seo = latihanSeo(material);
+  useSeo({
+    title: seo.title,
+    description: seo.description,
+    path: `/latihan/${material.slug}`,
+    jsonLd: seo.jsonLd,
+  });
+
+  const stats = useMemo(() => {
+    let questions = 0;
+    let maxPoints = 0;
+    const parts = material.sections.map((s) => {
+      const n = s.groups.reduce((a, g) => a + g.questions.length, 0);
+      questions += n;
+      maxPoints += n * s.pointsEach;
+      return `${n} ${s.title.toLowerCase()}`;
+    });
+    return { questions, maxPoints, parts };
+  }, [material]);
+
+  return (
+    <div className="lt">
+      <SiteHeader />
+
+      <QuizProvider material={material}>
+        <main>
+          <section className="lt-hero">
+            <div className="lt-wrap">
+              <p className="lt-eyebrow">Latihan soal</p>
+              <h1>{material.title}</h1>
+              <p className="lt-lead">{material.description}</p>
+
+              <ul className="lt-meta">
+                <li>{stats.questions} soal</li>
+                {material.durationMinutes && <li>{material.durationMinutes} menit</li>}
+                <li>{stats.maxPoints} poin</li>
+              </ul>
+              <p className="lt-parts">{stats.parts.join("  ·  ")}</p>
+
+              <nav className="lt-toc" aria-label="Bagian soal">
+                {material.sections.map((s) => (
+                  <a key={s.id} href={`#bagian-${s.id}`}>
+                    <span>{s.letter}</span>
+                    {s.title}
+                  </a>
+                ))}
+              </nav>
+
+              {material.notes && material.notes.length > 0 && (
+                <details className="lt-howto">
+                  <summary>Petunjuk dan penskoran</summary>
+                  <ul>
+                    {material.notes.map((n, i) => (
+                      <li key={i}>
+                        <Rich as="span" html={n} />
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          </section>
+
+          <ScoreBar material={material} />
+
+          <div className="lt-wrap lt-body">
+            {material.sections.map((s) => (
+              <SectionBlock key={s.id} section={s} />
+            ))}
+          </div>
+        </main>
+      </QuizProvider>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+function MissingMaterialPage({ path }: { path: string }) {
+  useSeo({
+    title: "Materi latihan tidak ditemukan",
+    description: "Materi latihan yang kamu cari tidak tersedia. Jelajahi paket latihan matematika berjenjang di Lab Simulasi Matematika.",
+    path,
+    noindex: true,
+  });
+
+  return (
+    <div className="lt">
+      <SiteHeader />
+      <main className="lt-wrap lt-hero">
+        <h1>Materi tidak ditemukan</h1>
+        <p className="lt-lead">Periksa kembali alamat latihan yang kamu buka.</p>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
+/** Pembungkus untuk route `/latihan/:slug`. */
+export function LatihanRoute() {
+  const { slug } = useParams();
+  const { pathname } = useLocation();
+  const [material, setMaterial] = useState<Material | null>();
+
+  useEffect(() => {
+    let active = true;
+    setMaterial(undefined);
+    getMaterial(slug)
+      .then((loaded) => {
+        if (active) setMaterial(loaded ?? null);
+      })
+      .catch(() => {
+        if (active) setMaterial(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (material === undefined) {
+    return (
+      <div className="lt lt-loading" role="status" aria-live="polite">
+        <p>Memuat paket latihan…</p>
+      </div>
+    );
+  }
+  if (!material) return <MissingMaterialPage path={pathname} />;
+  return <LatihanPage key={material.slug} material={material} />;
+}

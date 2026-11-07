@@ -1,0 +1,2124 @@
+/* ==========================================================================
+   1729 — Materi (bacaan + simulasi + cek poin)
+   Token warna, huruf, dan jarak mengikuti .sp (pages/pages.css).
+   Semua kelas berawalan `mt-`.
+   ========================================================================== */
+
+.mt-landing,
+.mt-page {
+  --ok: #4f7a3a;
+  --ok-bg: #f1f4e8;
+  --ok-line: #d3dcbb;
+  --bad: #9f3a30;
+  --bad-bg: #fbefec;
+  --bad-line: #efcfc8;
+  --warn: #92400e;
+  --warn-bg: #fffbeb;
+  --warn-line: #fde68a;
+  --read: 42rem;
+  --rail: 288px;
+  --nav-h: 68px;
+}
+
+.mt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- Tombol --- */
+
+.sp .mt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: 500 15px/1 var(--sans);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.sp .mt-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.sp .mt-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.sp .mt-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.sp .mt-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.sp .mt-btn--ghost {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+.sp .mt-btn--quiet {
+  min-height: 36px;
+  padding: 0 12px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--mute);
+  font-size: 13px;
+}
+.sp .mt-btn--quiet:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------- Beranda materi ---- */
+
+.mt-hero {
+  padding: clamp(40px, 7vw, 88px) 0 clamp(36px, 6vw, 72px);
+}
+.mt-hero__grid {
+  display: grid;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+}
+.mt-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+.sp .mt-hero__cta .sp-btn {
+  text-decoration: none;
+}
+
+.mt-specimen {
+  margin: 0;
+  padding: 18px 18px 20px;
+  background: var(--wash);
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+}
+.mt-specimen figcaption {
+  margin-bottom: 10px;
+  font: 500 13px/1.4 var(--sans);
+  color: var(--mute);
+}
+.mt-specimen svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.mt-specimen__ctl {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+.mt-specimen__ctl label {
+  min-width: 84px;
+  font: 500 16px/1 var(--serif);
+  color: var(--ink);
+}
+.mt-specimen__ctl output {
+  font-family: var(--mono);
+  font-size: 14px;
+}
+.mt-specimen__ctl input {
+  flex: 1;
+  accent-color: #7a76a8;
+}
+.mt-specimen__q {
+  margin-top: 12px;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.mt-how {
+  padding: 8px 0 clamp(40px, 6vw, 72px);
+}
+.mt-how__h {
+  margin-bottom: 18px;
+  font: 500 clamp(22px, 2.4vw, 28px) / 1.2 var(--serif);
+  color: var(--ink);
+}
+.mt-how__list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line-strong);
+  counter-reset: how;
+}
+.mt-how__list li {
+  display: grid;
+  gap: 4px 28px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  counter-increment: how;
+}
+.mt-how__list b {
+  font: 600 18px/1.3 var(--serif);
+  color: var(--ink);
+}
+.mt-how__list b::before {
+  content: counter(how) ". ";
+  color: var(--accent);
+}
+.mt-how__list span {
+  max-width: 44rem;
+  font-size: 15.5px;
+}
+
+.mt-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font: 500 13px/1.4 var(--sans);
+  color: var(--mute);
+}
+.mt-facts li + li::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 14px 3px 0;
+  border-radius: 50%;
+  background: var(--soft);
+}
+
+.mt-minibar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--line);
+}
+.mt-minibar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ok);
+  transition: width 0.3s ease;
+}
+
+.mt-soon {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 24px 22px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 14px;
+  color: var(--mute);
+  font-size: 15px;
+}
+.mt-soon__title {
+  font: 500 22px/1.2 var(--serif);
+  color: var(--ink);
+}
+.mt-soon__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-weight: 500;
+}
+.sp .mt-soon__links a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------- Gambaran satu materi ---- */
+
+.mt-overview {
+  padding: clamp(32px, 5vw, 64px) 0 clamp(56px, 8vw, 96px);
+}
+.mt-crumb {
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--mute);
+}
+.sp .mt-crumb a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mt-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0;
+  margin: 32px 0 0;
+  border-block: 1px solid var(--line-strong);
+}
+.mt-meta > div {
+  padding: 14px 0;
+}
+.mt-meta dt {
+  font: 500 12px/1.3 var(--sans);
+  color: var(--mute);
+}
+.mt-meta dd {
+  margin: 2px 0 0;
+  font: 500 17px/1.4 var(--serif);
+  color: var(--ink);
+}
+.mt-overview__cols {
+  display: grid;
+  gap: 8px 56px;
+  margin-top: 40px;
+}
+.mt-overview__cp {
+  margin-top: 48px;
+}
+
+/* --------------------------------------------------------- Pembaca ------ */
+
+.mt-shell {
+  display: grid;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+.mt-rail {
+  display: none;
+}
+.mt-main {
+  min-width: 0;
+  padding: 28px 0 72px;
+}
+
+.mt-mobilebar {
+  position: sticky;
+  top: 64px;
+  z-index: 40;
+  background: rgba(250, 249, 245, 0.94);
+  border-bottom: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.sp .mt-mobilebar__btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--pad);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1.2 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.mt-mobilebar__title {
+  overflow: hidden;
+  color: var(--mute);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mt-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+.sp .mt-drawer__scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(20, 20, 19, 0.45);
+  cursor: pointer;
+}
+.mt-drawer__panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(88vw, 360px);
+  padding: 20px 18px 28px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: -24px 0 48px -24px rgba(20, 20, 19, 0.3);
+}
+
+.mt-rail__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  font: 600 14px/1.3 var(--sans);
+  color: var(--mute);
+}
+.sp .mt-rail__home:hover {
+  color: var(--ink);
+}
+.mt-rail__progress {
+  margin-bottom: 14px;
+  font-size: 13.5px;
+}
+.mt-rail__progress p {
+  margin-bottom: 6px;
+}
+.mt-rail__list {
+  display: grid;
+  gap: 2px;
+}
+.sp .mt-rail__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  color: var(--text);
+  transition: background 0.15s ease;
+}
+.sp .mt-rail__item:hover {
+  background: var(--wash);
+}
+.sp .mt-rail__item.is-current {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.mt-rail__mark {
+  display: grid;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  place-items: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: #fff;
+  font: 600 12px/1 var(--sans);
+  color: var(--mute);
+}
+.is-current .mt-rail__mark {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+.is-done .mt-rail__mark {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: #fff;
+}
+.mt-rail__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.mt-rail__title {
+  font: 600 14.5px/1.35 var(--sans);
+}
+.mt-rail__sub {
+  font-size: 12.5px;
+  color: var(--mute);
+}
+.mt-reset {
+  margin-top: 16px;
+}
+
+.mt-article {
+  container-type: inline-size;
+  max-width: 54rem;
+  margin: 0 auto;
+}
+.mt-article__no {
+  font: 500 13px/1.4 var(--sans);
+  color: var(--accent-hover);
+}
+.mt-article__title {
+  margin: 6px 0 20px;
+  font: 500 clamp(32px, 4.6vw, 48px) / 1.08 var(--serif);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.mt-goals {
+  max-width: var(--read);
+  padding: 16px 18px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.mt-goals__title {
+  margin-bottom: 6px;
+  font: 600 14px/1.4 var(--sans);
+  color: var(--ink);
+}
+.mt-goals ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 1.1em;
+  list-style: disc;
+  font-size: 15px;
+}
+.mt-goals li::marker {
+  color: var(--accent);
+}
+
+.mt-content {
+  display: grid;
+  gap: 22px;
+  margin-top: 36px;
+}
+.mt-loading,
+.mt-missing {
+  padding: 24px;
+  color: var(--mute);
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+}
+
+/* ------------------------------------------------------ Teks bacaan ----- */
+
+.mt-rich p,
+.mt-rich ul {
+  margin: 0;
+}
+.mt-p,
+.mt-list,
+.mt-mb {
+  max-width: var(--read);
+}
+.mt-p {
+  font: 400 18px/1.75 var(--serif);
+  color: #30302e;
+}
+.mt-p b,
+.mt-list b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.mt-h2 {
+  max-width: var(--read);
+  margin-top: 18px;
+  font: 500 clamp(26px, 3vw, 32px) / 1.2 var(--serif);
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.mt-h3 {
+  margin-top: 8px;
+  font: 600 20px/1.3 var(--serif);
+  color: var(--ink);
+}
+.mt-mb {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+.mt-mb .katex-display {
+  margin: 0.2em 0;
+  text-align: left;
+}
+.mt-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 1.3em;
+  list-style: disc;
+  font: 400 17px/1.65 var(--serif);
+}
+.mt-list--ol {
+  list-style: decimal;
+}
+.mt-list li::marker {
+  color: var(--accent);
+}
+.mt-rich .katex {
+  font-size: 1.06em;
+}
+
+/* Kotak penjelasan */
+.mt-box {
+  max-width: var(--read);
+  padding: 16px 20px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+}
+.mt-box__title {
+  margin-bottom: 8px;
+  font: 600 14px/1.3 var(--sans);
+  color: var(--ink);
+}
+.mt-box__body {
+  display: grid;
+  gap: 10px;
+}
+.mt-box__body .mt-p {
+  font-size: 17px;
+  line-height: 1.7;
+}
+.mt-box--konsep {
+  border-left: 4px solid var(--accent);
+  border-radius: 4px 12px 12px 4px;
+  background: #fffdfb;
+}
+.mt-box--awas {
+  border-color: var(--warn-line);
+  border-left: 4px solid #b7791f;
+  border-radius: 4px 12px 12px 4px;
+  background: var(--warn-bg);
+}
+.mt-box--awas .mt-box__title {
+  color: var(--warn);
+}
+.mt-box--pemantik {
+  padding: 18px 22px 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--wash);
+}
+.mt-box--pemantik .mt-box__title {
+  font: italic 500 20px/1.3 var(--serif);
+  letter-spacing: -0.01em;
+}
+.mt-box--rangkuman {
+  max-width: 100%;
+  margin-top: 16px;
+  border: 0;
+  border-top: 2px solid var(--ink);
+  border-radius: 0;
+  padding: 16px 0 0;
+}
+.mt-box--rangkuman .mt-list {
+  font-size: 16.5px;
+}
+
+/* Contoh soal */
+.mt-contoh {
+  max-width: var(--read);
+  padding: 16px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+}
+.mt-contoh__title {
+  margin-bottom: 6px;
+  font: 600 14px/1.3 var(--sans);
+  color: var(--accent-hover);
+}
+.mt-contoh__soal {
+  font: 400 17.5px/1.7 var(--serif);
+  color: var(--ink);
+}
+.mt-contoh__sol {
+  margin-top: 12px;
+}
+.mt-contoh__sol summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font: 500 14px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+.mt-contoh__sol summary::-webkit-details-marker {
+  display: none;
+}
+.mt-contoh__sol summary:hover {
+  border-color: var(--ink);
+}
+.mt-contoh__open,
+.mt-contoh__sol[open] .mt-contoh__closed {
+  display: none;
+}
+.mt-contoh__sol[open] .mt-contoh__open {
+  display: inline;
+}
+.mt-contoh__body {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-strong);
+}
+.mt-contoh__body .mt-p {
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+
+/* Tabel */
+.mt-tablewrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+}
+.mt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.mt-table caption {
+  padding: 10px 14px;
+  text-align: left;
+  font: 600 13px/1.3 var(--sans);
+  color: var(--mute);
+  caption-side: top;
+}
+.mt-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font: 600 13px/1.3 var(--sans);
+  color: var(--ink);
+  background: var(--wash);
+  border-block: 1px solid var(--line);
+}
+.mt-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.mt-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ------------------------------------------------------- Cek poin ------- */
+
+.mt-cp {
+  --stripe: var(--line-strong);
+  position: relative;
+  max-width: var(--read);
+  padding: 16px 20px 18px 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+}
+.mt-cp::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 5px;
+  border-radius: 12px 0 0 12px;
+  background: var(--stripe);
+}
+.mt-cp--ok {
+  --stripe: var(--ok);
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+}
+.mt-cp--bad {
+  --stripe: var(--bad);
+}
+.mt-cp--seen {
+  --stripe: #b7791f;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+}
+.mt-cp--challenge {
+  max-width: 100%;
+}
+.mt-cp--challenge:not(.mt-cp--ok):not(.mt-cp--seen) {
+  --stripe: var(--accent);
+}
+.mt-cp__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.mt-cp__tag {
+  font: 600 13px/1.3 var(--sans);
+  color: var(--accent-hover);
+}
+.mt-cp__count {
+  color: var(--mute);
+  font-weight: 500;
+}
+.mt-cp__state {
+  display: grid;
+  place-items: center;
+}
+.mt-cp--ok .mt-cp__state {
+  color: var(--ok);
+}
+.mt-cp--bad .mt-cp__state {
+  color: var(--bad);
+}
+.mt-cp--seen .mt-cp__state {
+  color: #b45309;
+}
+.mt-cp__prompt {
+  font: 400 17.5px/1.65 var(--serif);
+  color: var(--ink);
+}
+.mt-cp__prompt b {
+  font-weight: 600;
+}
+.mt-cp__body {
+  margin-top: 14px;
+}
+.mt-cp__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mt-cp__body > .mt-cp__form .mt-cp__row,
+.mt-cp__body .mt-cp__form .mt-cp__row {
+  margin-top: 0;
+}
+.mt-cp__row {
+  align-items: stretch;
+}
+.mt-cp__field {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 0 14px;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  cursor: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mt-cp__field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(198, 97, 63, 0.18);
+}
+/* Satu-satunya kotak adalah pembungkusnya; input di dalamnya polos.
+   Selektor diperberat agar menang atas `.sp input:focus-visible` (pages.css). */
+.sp .mt-cp__field input,
+.sp .mt-cp__field input:focus,
+.sp .mt-cp__field input:focus-visible {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  outline-offset: 0;
+  box-shadow: none;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  font: 500 16px/1 var(--mono);
+  color: var(--ink);
+}
+.sp .mt-cp__field input::placeholder {
+  font-family: var(--sans);
+  font-weight: 400;
+  color: var(--soft);
+}
+.mt-cp__field.is-bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+}
+.mt-cp__field.is-bad:focus-within {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.16);
+}
+.mt-cp__field.is-ok {
+  border-color: var(--ok);
+  background: #fff;
+}
+.mt-cp__unit {
+  flex: none;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line-strong);
+  font: 500 14px/1 var(--sans);
+  color: var(--mute);
+  white-space: nowrap;
+}
+.sp .mt-cp__row .mt-btn {
+  min-height: 46px;
+}
+.mt-cp__format {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--mute);
+}
+.mt-cp__keys {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sp .mt-key {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--wash);
+  font: 500 15px/1 var(--mono);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sp .mt-key:hover {
+  border-color: var(--ink);
+}
+
+.mt-cp__feedback {
+  min-height: 0;
+}
+.mt-cp__msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font: 500 15px/1.55 var(--sans);
+}
+.mt-cp__msg svg {
+  flex: none;
+  margin-top: 3px;
+}
+.mt-cp__msg--ok {
+  color: var(--ok);
+}
+.mt-cp__msg--bad {
+  color: var(--bad);
+}
+.mt-cp__msg--seen {
+  color: var(--warn);
+}
+.mt-cp__hints {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mt-cp__hints li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.mt-cp__hint-no {
+  font: 600 12px/1.3 var(--sans);
+  color: var(--accent-hover);
+}
+.mt-cp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mt-cp__explain {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-strong);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.mt-cp__explain-title {
+  margin-bottom: 4px;
+  font: 600 13px/1.3 var(--sans);
+  color: var(--ink);
+}
+
+/* Pilihan ganda */
+.mt-choice {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mt-choice__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mt-choice__item:hover {
+  border-color: var(--ink);
+}
+.mt-choice__item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.mt-choice__mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 4px;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  background: #fff;
+}
+.mt-choice__item.is-picked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mt-choice__item.is-picked .mt-choice__mark {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 45%, #fff 50%);
+}
+.mt-choice__item:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.mt-choice__item.is-ok {
+  border-color: var(--ok);
+  background: #fff;
+}
+.mt-choice__item.is-ok .mt-choice__mark {
+  border-color: var(--ok);
+  background: radial-gradient(circle, var(--ok) 45%, #fff 50%);
+}
+.mt-choice__item.is-bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+}
+.mt-choice__text {
+  font: 400 16.5px/1.55 var(--serif);
+  color: var(--ink);
+}
+.mt-choice:disabled .mt-choice__item {
+  cursor: default;
+}
+
+/* Benar / salah */
+.mt-stmts {
+  display: grid;
+  gap: 10px;
+}
+.mt-stmt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.mt-stmt.is-ok {
+  border-color: var(--ok-line);
+}
+.mt-stmt.is-bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+}
+.mt-stmt__text {
+  flex: 1 1 240px;
+  font: 400 16.5px/1.55 var(--serif);
+  color: var(--ink);
+}
+.mt-seg {
+  display: inline-flex;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+}
+.sp .mt-seg button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  background: #fff;
+  font: 500 14px/1 var(--sans);
+  color: var(--text);
+  cursor: pointer;
+}
+.sp .mt-seg button + button {
+  border-left: 1px solid var(--line-strong);
+}
+.sp .mt-seg button.is-on {
+  background: var(--ink);
+  color: #fff;
+}
+.sp .mt-seg button:disabled {
+  cursor: default;
+}
+
+/* ----------------------------------------------------- Simulasi --------- */
+
+.mt-lab {
+  margin: 0;
+  overflow: hidden;
+  overflow: clip; /* clip tidak membuat wadah scroll, sehingga stage bisa sticky */
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+}
+.mt-lab__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+}
+.mt-lab__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 13.5px/1.3 var(--sans);
+  color: var(--ink);
+}
+.mt-lab__title svg {
+  color: var(--accent);
+}
+.mt-lab__grid {
+  display: grid;
+}
+.mt-lab__stage {
+  min-width: 0;
+  background: #fff;
+}
+.mt-boardbox {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 520px;
+  margin-inline: auto;
+}
+.mt-board {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0;
+  background: #fff;
+  /* JSXGraph memasang touch-action:none; tanpa !important halaman tidak bisa
+     di-scroll saat jari menyentuh grafik. Papan materi tidak bisa digeser. */
+  touch-action: pan-y !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.mt-board > svg {
+  display: block;
+}
+.mt-lab__panel {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border-top: 1px solid var(--line);
+}
+.mt-lab__controls {
+  display: grid;
+  gap: 14px;
+}
+.mt-lab__hint {
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--wash);
+  font: 400 13.5px/1.5 var(--sans);
+  color: var(--mute);
+}
+.mt-lab__ballrow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mt-ball {
+  width: 84px;
+  height: auto;
+  flex: none;
+}
+.mt-pen {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin-inline: auto;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.mt-lab__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mt-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 14px/1.3 var(--sans);
+  color: var(--text);
+}
+.mt-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.mt-slider__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.mt-slider__top label {
+  font: 500 16px/1 var(--serif);
+  color: var(--c);
+}
+.mt-slider__top output {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  font: 600 13px/1.4 var(--mono);
+  color: var(--ink);
+}
+.mt-slider__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mt-slider__row input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  accent-color: var(--c);
+  cursor: pointer;
+}
+.sp .mt-slider__row button {
+  display: grid;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  font: 500 18px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sp .mt-slider__row button:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.sp .mt-slider__row button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mt-readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+.mt-readout__item {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+}
+.mt-readout__item.is-wide {
+  grid-column: 1 / -1;
+}
+.mt-readout dt {
+  font: 500 12px/1.3 var(--sans);
+  color: var(--mute);
+}
+.mt-readout dd {
+  margin: 2px 0 0;
+  overflow-x: auto;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.mt-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sp .mt-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: #fff;
+  font: 500 14px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sp .mt-chip:hover {
+  border-color: var(--ink);
+}
+.sp .mt-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.mt-steps {
+  display: grid;
+  gap: 4px;
+  counter-reset: st;
+}
+.mt-steps li {
+  position: relative;
+  padding: 6px 0 6px 30px;
+  counter-increment: st;
+  color: var(--soft);
+  font: 500 14px/1.4 var(--sans);
+}
+.mt-steps li::before {
+  content: counter(st);
+  position: absolute;
+  left: 0;
+  top: 5px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  font: 600 11.5px/1 var(--sans);
+}
+.mt-steps li.is-done {
+  color: var(--text);
+}
+.mt-steps li.is-done::before {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: #fff;
+}
+.mt-steps li.is-now {
+  color: var(--ink);
+}
+.mt-steps li.is-now::before {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.mt-steps__title {
+  display: block;
+}
+.mt-steps__text {
+  margin-top: 4px;
+  font: 400 14.5px/1.6 var(--sans);
+  color: var(--text);
+}
+
+.mt-difftable {
+  padding: 14px;
+  overflow-x: auto;
+}
+.mt-difftable table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font: 500 15px/1 var(--mono);
+}
+.mt-difftable th,
+.mt-difftable td {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mt-difftable th {
+  position: sticky;
+  left: 0;
+  padding-right: 14px;
+  background: #fff;
+  text-align: left;
+  font: 600 13px/1 var(--sans);
+  color: var(--mute);
+}
+.mt-difftable td.is-empty {
+  color: transparent;
+}
+.mt-difftable tr.is-const td:not(.is-empty) {
+  background: #eaf6ee;
+  color: var(--ok);
+  font-weight: 700;
+}
+.mt-difftable__note {
+  margin-top: 12px;
+  font: 500 14px/1.5 var(--sans);
+  color: var(--text);
+}
+
+.mt-challenge__lab {
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------- Hasil dan penutup ---- */
+
+.mt-result {
+  max-width: var(--read);
+  padding: 18px 22px 20px;
+  border: 1px solid var(--ok-line);
+  border-radius: 14px;
+  background: var(--ok-bg);
+}
+.mt-result__title {
+  font: 600 13px/1.3 var(--sans);
+  color: var(--ok);
+}
+.mt-result__big {
+  margin: 4px 0 6px;
+  font: 400 22px/1.35 var(--serif);
+  color: var(--ink);
+}
+.mt-result__big span {
+  color: var(--mute);
+  font-size: 17px;
+}
+.mt-result__sub {
+  margin-top: 6px;
+  font-size: 15.5px;
+}
+.mt-result__list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.mt-result__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.sp .mt-result__list a {
+  font-weight: 600;
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mt-result__list span {
+  font-size: 13px;
+  color: var(--mute);
+}
+.mt-next {
+  display: grid;
+  max-width: var(--read);
+  border-top: 1px solid var(--line-strong);
+}
+.mt-next li {
+  display: grid;
+  gap: 2px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.sp .mt-next a {
+  font: 600 17px/1.3 var(--serif);
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mt-next span {
+  font-size: 14.5px;
+  color: var(--mute);
+}
+
+.mt-pager {
+  max-width: var(--read);
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line-strong);
+}
+.mt-pager__note {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  font: 500 14px/1.5 var(--sans);
+  color: var(--warn);
+}
+.mt-pager__row {
+  display: grid;
+  gap: 10px;
+}
+.sp .mt-pager__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  font: 600 16px/1.3 var(--serif);
+  color: var(--ink);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.sp .mt-pager__link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mt-pager__link small {
+  display: block;
+  margin-bottom: 2px;
+  font: 500 12px/1.3 var(--sans);
+  color: var(--mute);
+}
+.mt-pager__link--next {
+  justify-content: space-between;
+  text-align: right;
+}
+
+/* ------------------------------------------------------ Fokus & gerak --- */
+
+.sp .mt-btn:focus-visible,
+.sp .mt-key:focus-visible,
+.sp .mt-chip:focus-visible,
+.sp .mt-seg button:focus-visible,
+.sp .mt-slider__row button:focus-visible,
+.sp .mt-slider__row input:focus-visible,
+.mt-contoh__sol summary:focus-visible,
+.mt-tablewrap:focus-visible,
+.mt-difftable:focus-visible,
+.mt-check input:focus-visible,
+.mt-specimen__ctl input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-minibar span,
+  .sp .mt-btn,
+  .mt-choice__item,
+  .mt-cp__field,
+  .sp .mt-pager__link {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------- Responsif ----- */
+
+@container (min-width: 700px) {
+  .mt-lab__grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .mt-lab__panel {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .mt-boardbox {
+    max-height: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .mt-how__list li {
+    grid-template-columns: 180px 1fr;
+    align-items: baseline;
+  }
+  .mt-pager__row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .mt-overview__cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .mt-hero__grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+}
+
+@media (min-width: 1000px) {
+  .mt-mobilebar,
+  .mt-drawer {
+    display: none;
+  }
+  .mt-shell {
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+    gap: clamp(32px, 4vw, 64px);
+  }
+  .mt-rail {
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+    display: block;
+    align-self: start;
+    max-height: calc(100vh - var(--nav-h) - 40px);
+    margin-top: 28px;
+    padding-right: 6px;
+    overflow-y: auto;
+  }
+  .mt-main {
+    padding-top: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  .mt-p {
+    font-size: 17px;
+  }
+  .mt-cp,
+  .mt-box,
+  .mt-contoh {
+    padding-inline: 16px;
+  }
+  .mt-readout {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ==========================================================================
+   Optimasi HP / layar sentuh
+   ========================================================================== */
+
+.sp .mt-btn,
+.sp .mt-key,
+.sp .mt-chip,
+.sp .mt-seg button,
+.sp .mt-slider__row button,
+.mt-choice__item,
+.mt-contoh__sol summary,
+.mt-mobilebar__btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Slider: jalur dan jempol besar agar mudah digeser dengan jari */
+.sp .mt-slider__row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
+}
+.mt-slider__row input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  background: #e8e6dc;
+  background: color-mix(in srgb, var(--c) 24%, #e8e6dc);
+}
+.mt-slider__row input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  background: #e8e6dc;
+  background: color-mix(in srgb, var(--c) 24%, #e8e6dc);
+}
+.mt-slider__row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -10px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 1px 5px rgba(20, 20, 19, 0.4);
+}
+.mt-slider__row input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 1px 5px rgba(20, 20, 19, 0.4);
+}
+
+/* Papan menempel di atas saat slider di bawahnya digeser (tampilan satu kolom) */
+@container (max-width: 699.98px) {
+  .mt-lab__stage:has(.mt-boardbox) {
+    --stick: 120px; /* header situs 64px + bilah bab 55px */
+    position: sticky;
+    top: var(--stick);
+    z-index: 3;
+    align-self: start;
+    background: #fff;
+    border-bottom: 1px solid var(--line-strong);
+    box-shadow: 0 8px 12px -10px rgba(20, 20, 19, 0.35);
+  }
+  .mt-boardbox {
+    aspect-ratio: auto;
+    height: 34vh;
+    height: clamp(190px, 34svh, 290px);
+  }
+  .mt-lab__panel {
+    gap: 14px;
+    padding: 14px;
+    border-top: 0;
+  }
+}
+
+@media (min-width: 1000px) {
+  /* tanpa bilah bab di layar lebar */
+  @container (max-width: 699.98px) {
+    .mt-lab__stage:has(.mt-boardbox) {
+      --stick: 76px;
+    }
+  }
+}
+
+/* Layar sentuh: sasaran sentuh minimal 44px */
+@media (pointer: coarse) {
+  .sp .mt-slider__row button {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .sp .mt-key {
+    min-width: 48px;
+    height: 44px;
+  }
+  .sp .mt-chip {
+    min-height: 44px;
+    padding: 0 16px;
+  }
+  .sp .mt-seg button {
+    min-height: 44px;
+  }
+  .sp .mt-btn--ghost,
+  .sp .mt-btn--quiet {
+    min-height: 44px;
+  }
+  .mt-choice__item {
+    min-height: 48px;
+    padding-block: 12px;
+  }
+  .mt-contoh__sol summary {
+    min-height: 44px;
+  }
+  .mt-cp__keys {
+    gap: 8px;
+  }
+}
+
+/* Bilah bab di HP: nomor bab, judul, dan progres bab ini */
+.sp .mt-mobilebar__btn {
+  min-height: 52px;
+  padding-inline: max(var(--pad), env(safe-area-inset-left, 0)) max(var(--pad), env(safe-area-inset-right, 0));
+}
+.mt-mobilebar__no {
+  flex: none;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mt-mobilebar__count {
+  flex: none;
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  font: 600 12px/1.2 var(--mono);
+  color: var(--mute);
+}
+.mt-mobilebar__count.is-done {
+  border-color: var(--ok-line);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.mt-mobilebar__bar {
+  display: block;
+  height: 3px;
+  background: var(--line);
+}
+.mt-mobilebar__bar span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.3s ease;
+}
+
+.mt-drawer__panel {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0));
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 720px) {
+  .mt-content {
+    gap: 18px;
+    margin-top: 28px;
+  }
+  .mt-main {
+    padding-top: 20px;
+  }
+  .mt-article__title {
+    margin-bottom: 16px;
+  }
+  .mt-h2 {
+    margin-top: 12px;
+  }
+  .mt-pager {
+    margin-top: 40px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .sp .mt-pager__link {
+    min-height: 64px;
+  }
+  .mt-hero__cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .sp .mt-hero__cta .sp-btn {
+    justify-content: center;
+    min-height: 48px;
+  }
+  .mt-difftable table {
+    font-size: 14px;
+  }
+  .mt-difftable th,
+  .mt-difftable td {
+    padding: 9px 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  /* isian jawaban: kolom penuh, tombol Periksa selebar kartu */
+  .mt-cp__field {
+    flex-basis: 100%;
+  }
+  .sp .mt-cp__row .mt-btn {
+    flex: 1 1 100%;
+    min-height: 48px;
+  }
+  .mt-cp__actions .mt-btn {
+    flex: 1 1 auto;
+  }
+  .mt-cp__keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .sp .mt-key {
+    min-width: 0;
+  }
+  /* benar/salah: pernyataan di atas, dua tombol selebar baris di bawahnya */
+  .mt-stmt {
+    padding: 12px;
+  }
+  .mt-stmt__text {
+    flex-basis: 100%;
+  }
+  .mt-seg {
+    width: 100%;
+  }
+  .sp .mt-seg button {
+    flex: 1;
+  }
+  .mt-readout {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .mt-readout__item {
+    padding: 7px 9px;
+  }
+  .mt-readout dd {
+    font-size: 14px;
+  }
+  .mt-lab__head {
+    padding-left: 12px;
+  }
+  .mt-lab__title {
+    font-size: 13px;
+  }
+  .mt-ball {
+    width: 72px;
+  }
+  .mt-goals {
+    padding: 14px;
+  }
+  .mt-box--pemantik {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mt-readout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* HP dimiringkan: layar pendek, papan tidak perlu menempel */
+@media (max-height: 520px) and (orientation: landscape) {
+  .mt-lab__stage:has(.mt-boardbox) {
+    position: static;
+    box-shadow: none;
+  }
+  .mt-boardbox {
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-height: 82vh;
+    max-height: 82svh;
+  }
+  .mt-mobilebar {
+    position: static;
+  }
+}
+
+/* Elemen yang difokuskan keyboard layar tidak boleh tertutup bilah menempel */
+.mt-cp__field,
+.mt-choice__item,
+.mt-stmt {
+  scroll-margin-top: 220px;
+  scroll-margin-bottom: 120px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-mobilebar__bar span {
+    transition: none;
+  }
+}
+
+/* Rumus sebaris jangan terpotong di tanda "=" atau "+" (mis. y = / x²) */
+.mt-rich .katex {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap; /* KaTeX hanya memasangnya pada rumus tampilan */
+}
+.mt-rich .katex-display > .katex {
+  display: block;
+}
+
+/* ==========================================================================
+   Penegasan jarak: pages.css mereset margin/padding h1-h3, p, ul dengan
+   selektor `.sp tag` (lebih kuat dari satu kelas). Nilai di bawah memulihkannya.
+   ========================================================================== */
+
+.sp .mt-list {
+  padding-left: 1.3em;
+  list-style: disc; /* .sp ul { list-style: none } menimpa kelas tunggal */
+}
+.sp .mt-list--ol {
+  list-style: decimal;
+}
+.sp .mt-box__title {
+  margin-bottom: 8px;
+}
+.sp .mt-contoh__title {
+  margin-bottom: 6px;
+}
+.sp .mt-goals__title {
+  margin-bottom: 6px;
+}
+.sp .mt-cp__explain-title {
+  margin-bottom: 4px;
+}
+.sp .mt-cp__msg {
+  margin-top: 12px;
+}
+.sp .mt-cp__format {
+  margin-top: 8px;
+}
+.sp .mt-lab__hint {
+  padding: 10px 16px;
+}
+.sp .mt-pager__note {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+}
+.sp .mt-result__big {
+  margin: 4px 0 6px;
+}
+.sp .mt-result__sub {
+  margin-top: 6px;
+}
+.sp .mt-difftable__note,
+.sp .mt-specimen__q {
+  margin-top: 12px;
+}
+.sp .mt-soon__links {
+  padding-top: 8px;
+}
+.sp .mt-article__title {
+  margin: 6px 0 20px;
+}
+.sp .mt-h2 {
+  margin-top: 18px;
+}
+.sp .mt-h3 {
+  margin-top: 8px;
+}
+.sp .mt-how__h {
+  margin-bottom: 18px;
+}
+@media (max-width: 720px) {
+  .sp .mt-article__title {
+    margin-bottom: 16px;
+  }
+  .sp .mt-h2 {
+    margin-top: 12px;
+  }
+}
+
+/* Slider padat di HP: [simbol] [−] ====== [+] [nilai] dalam satu baris */
+@container (max-width: 699.98px) {
+  .mt-slider {
+    display: grid;
+    grid-template-columns: 1.4em 44px minmax(0, 1fr) 44px 3.4em;
+    align-items: center;
+    column-gap: 4px;
+  }
+  .mt-slider__top,
+  .mt-slider__row {
+    display: contents;
+  }
+  .mt-slider__top label {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 18px;
+  }
+  .mt-slider__row button:first-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .mt-slider__row input {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .mt-slider__row button:last-child {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .mt-slider__top output {
+    grid-column: 5;
+    grid-row: 1;
+    justify-self: end;
+    min-width: 3.4em;
+    text-align: center;
+  }
+  .mt-lab__controls {
+    gap: 4px;
+  }
+}
+
+/* ==========================================================================
+   Peragaan 3D (three.js)
+   ========================================================================== */
+
+.mt-3d {
+  background: linear-gradient(#ffffff, #f5f4ed);
+}
+.mt-3d__canvas {
+  position: absolute;
+  inset: 0;
+}
+.mt-3d__canvas canvas {
+  touch-action: pan-y;
+  cursor: grab;
+}
+.mt-3d__canvas canvas:active {
+  cursor: grabbing;
+}
+.mt-3d__bar {
+  position: absolute;
+  inset: auto 8px 8px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  pointer-events: none;
+}
+.mt-3d__views,
+.mt-3d__tools {
+  display: inline-flex;
+  gap: 4px;
+  pointer-events: auto;
+}
+.sp .mt-3d__btn {
+  min-width: 36px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(250, 249, 245, 0.92);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font: 500 12.5px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sp .mt-3d__btn:hover {
+  border-color: var(--ink);
+}
+.sp .mt-3d__btn.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+.mt-3d__tip {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: rgba(250, 249, 245, 0.88);
+  font: 500 11.5px/1.3 var(--sans);
+  color: var(--mute);
+  pointer-events: none;
+}
+.mt-3d__fail {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  font: 500 14px/1.6 var(--sans);
+  color: var(--mute);
+}
+@media (pointer: coarse) {
+  .sp .mt-3d__btn {
+    min-width: 40px;
+    height: 40px;
+  }
+}
+@media (max-width: 520px) {
+  .sp .mt-3d__btn {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .mt-3d__tip {
+    display: none;
+  }
+}
+
+/* Pilihan jawaban bergambar (jaring-jaring) dan kotak keterangan bidang */
+.mt-net-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+.mt-net-opt b {
+  min-width: 1.2em;
+  font: 600 15px/1 var(--sans);
+  color: var(--ink);
+}
+.mt-net {
+  display: block;
+  width: 112px;
+  max-width: 100%;
+  height: auto;
+}
+.mt-lab__facebox {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--wash);
+  font: 400 14.5px/1.5 var(--sans);
+}
+.mt-lab__facebox p {
+  margin: 0;
+}

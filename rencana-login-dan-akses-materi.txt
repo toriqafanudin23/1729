@@ -1,0 +1,141 @@
+RENCANA IMPLEMENTASI LOGIN DAN AKSES MATERI
+Express.js + Prisma + Supabase
+
+Arsitektur yang disarankan
+-------------------------
+- Frontend React + Vite menangani tampilan, formulir, dan navigasi.
+- Supabase Auth mengelola akun email/password, verifikasi email, reset password,
+  dan penerbitan token sesi.
+- Express.js menyediakan API aplikasi dan memeriksa identitas serta izin akses
+  pada setiap endpoint yang membutuhkan login.
+- Supabase menyediakan PostgreSQL. Prisma mengelola skema aplikasi, migrasi,
+  dan query tabel aplikasi seperti profil, katalog materi, serta hak akses.
+- Browser tidak terhubung langsung ke database untuk data terlindungi; browser
+  meminta data melalui Express API.
+
+Alur autentikasi
+----------------
+1. Pengguna mendaftar atau login dari frontend melalui Supabase Auth.
+2. Supabase mengirim email verifikasi bila diperlukan dan memberikan token
+   setelah autentikasi berhasil.
+3. Frontend mengirim token ke Express API melalui header Authorization.
+4. Express memvalidasi token menggunakan mekanisme verifikasi Supabase yang
+   sesuai, lalu mengidentifikasi pengguna.
+5. Untuk endpoint materi, Express memeriksa metadata akses dan hak pengguna di
+   database sebelum mengirim konten.
+6. Kunci service role Supabase dan DATABASE_URL hanya disimpan di server,
+   tidak pernah dimasukkan ke bundle frontend atau repositori.
+
+1. Tetapkan aturan akses materi
+------------------------------
+- Inventarisasi slug seluruh materi latihan dan slides.
+- Beri status akses sederhana: PUBLIC atau ACCOUNT.
+- Materi publik dapat dibaca pengunjung tanpa akun.
+- Materi ACCOUNT hanya dikirim setelah pengguna terautentikasi.
+- Tampilkan penanda “Gratis” atau “Perlu login” pada katalog.
+- Tunda role admin, langganan, dan akses berbayar sampai ada kebutuhan nyata.
+
+2. Siapkan Supabase
+-------------------
+- Buat proyek Supabase dan konfigurasi PostgreSQL serta Supabase Auth.
+- Aktifkan pendaftaran dengan email/password dan verifikasi email.
+- Atur URL redirect untuk verifikasi email dan reset password pada lokal serta
+  domain produksi.
+- Siapkan SMTP untuk pengiriman email produksi.
+- Buat environment variable frontend hanya untuk URL Supabase dan publishable
+  key yang memang aman digunakan di browser.
+- Simpan kredensial database dan service role key hanya di environment backend.
+
+3. Bangun backend Express.js
+----------------------------
+- Buat aplikasi backend terpisah, misalnya di folder server/.
+- Siapkan endpoint health check, konfigurasi CORS khusus domain frontend,
+  validasi input, penanganan error, dan logging yang tidak membocorkan token.
+- Buat middleware autentikasi yang mengambil bearer token, memvalidasinya,
+  dan memasang identitas pengguna pada request.
+- Terapkan pemeriksaan otorisasi per endpoint; status login saja tidak otomatis
+  memberi izin ke setiap materi.
+- Tambahkan rate limiting pada endpoint autentikasi/API yang rentan disalahgunakan.
+
+4. Siapkan Prisma dan skema database
+------------------------------------
+- Hubungkan Prisma ke PostgreSQL Supabase menggunakan DATABASE_URL backend.
+- Gunakan Prisma Migrate untuk menyimpan perubahan skema secara terulang.
+- Buat tabel profil aplikasi dengan ID pengguna Supabase sebagai ID referensi.
+- Buat tabel materi berisi slug, judul, jenis, status akses, dan metadata lain.
+- Jika akses kelak diberikan per pengguna, tambahkan tabel grants/entitlements
+  yang menghubungkan pengguna dengan materi atau paket akses.
+- Jangan menyimpan password pengguna di tabel aplikasi; Supabase Auth mengelola
+  kredensial tersebut.
+
+5. Rancang API materi
+---------------------
+- Buat endpoint katalog yang dapat mengirim metadata publik dan label akses.
+- Buat endpoint detail materi publik yang dapat dipanggil tanpa login.
+- Buat endpoint materi ACCOUNT yang selalu mewajibkan middleware autentikasi
+  dan pemeriksaan hak akses.
+- Pindahkan konten khusus akun dari bundle frontend ke penyimpanan server,
+  database, atau storage privat yang hanya diakses setelah pemeriksaan izin.
+- Jangan mengirim konten terkunci ke browser lalu hanya menutupinya dengan UI.
+- Gunakan Prisma dari backend untuk query metadata dan hak akses.
+
+6. Integrasikan frontend
+------------------------
+- Tambahkan Supabase client untuk operasi Auth di frontend.
+- Buat halaman /login, /register, konfirmasi email, lupa/reset password,
+  dan halaman hasil verifikasi.
+- Sediakan state sesi global; navbar menampilkan Login/Daftar atau menu akun/
+  Logout sesuai status sesi.
+- Buat API client yang mengirim bearer token ke Express untuk permintaan privat.
+- Lindungi navigasi sebagai pengalaman pengguna, tetapi tetap anggap pemeriksaan
+  backend sebagai sumber keputusan akses yang sebenarnya.
+- Jika belum login, arahkan pengguna ke /login dengan parameter next, lalu
+  kembalikan ke materi setelah login berhasil.
+
+7. Keamanan dan konfigurasi operasional
+---------------------------------------
+- Jangan pernah mengirim SUPABASE_SERVICE_ROLE_KEY atau DATABASE_URL ke browser.
+- Batasi CORS ke origin frontend yang diizinkan.
+- Validasi body, parameter, dan slug pada setiap endpoint.
+- Atur masa berlaku sesi dan penanganan token kedaluwarsa melalui Supabase Auth.
+- Terapkan RLS pada tabel yang terekspos melalui Supabase Data API. Jika seluruh
+  akses aplikasi melewati Express/Prisma, batasi atau nonaktifkan akses langsung
+  yang tidak diperlukan dari anon/authenticated roles.
+- Siapkan backup dan konfigurasi environment terpisah untuk development dan
+  produksi.
+
+8. Urutan pengerjaan
+--------------------
+1. Putuskan dan dokumentasikan daftar materi PUBLIC dan ACCOUNT.
+2. Buat proyek Supabase, atur Auth, domain redirect, dan SMTP.
+3. Buat backend Express, konfigurasi environment, CORS, dan validasi token.
+4. Hubungkan Prisma ke PostgreSQL Supabase dan buat migrasi skema awal.
+5. Implementasikan profil, katalog, metadata akses, dan API materi.
+6. Pindahkan konten ACCOUNT ke sumber yang hanya dapat dibaca dari backend.
+7. Implementasikan halaman dan alur Auth di frontend serta integrasi API.
+8. Uji akses anonim, akun belum terverifikasi, akun aktif, token kedaluwarsa,
+   URL langsung, materi terkunci, dan akses ke data pengguna lain.
+9. Siapkan deployment backend, secret produksi, domain CORS, redirect Auth,
+   SMTP, dan backup database.
+
+Pembagian tanggung jawab
+------------------------
+Supabase Auth : identitas, password, verifikasi email, reset, sesi/token.
+Express.js    : API, validasi token, otorisasi, dan pengiriman materi.
+Prisma        : skema, migrasi, dan query database dari backend.
+Supabase DB   : PostgreSQL untuk profil, metadata materi, dan hak akses.
+React/Vite    : UI Auth, katalog, navigasi, dan pemanggilan API.
+
+Referensi resmi
+---------------
+Supabase Auth email/password:
+https://supabase.com/docs/guides/auth/passwords
+
+Supabase Row Level Security:
+https://supabase.com/docs/guides/database/postgres/row-level-security
+
+Prisma dengan Supabase:
+https://supabase.com/docs/guides/database/prisma
+
+Express.js:
+https://expressjs.com/

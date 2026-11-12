@@ -1,0 +1,478 @@
+/* Gaya khusus simulasi Bangun Ruang Sisi Datar. Prefix: br-
+   Kerangka, tombol, dan slider memakai kit umum (sim-). */
+
+/* ───────── Panggung 3D ───────── */
+
+.br-stage {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+}
+
+.br-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #fff;
+  cursor: grab;
+}
+.br-canvas:active {
+  cursor: grabbing;
+}
+.br-canvas canvas {
+  outline: none;
+}
+
+/* ───────── Judul model + tombol sebelumnya/berikutnya ───────── */
+
+.br-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  max-width: 440px;
+  pointer-events: none;
+}
+
+.br-nav {
+  display: grid;
+  flex: none;
+  width: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--sim-radius);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--sim-shadow);
+  color: var(--sim-text);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.br-nav:hover {
+  background: var(--sim-primary-soft);
+}
+
+.br-title {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-content: center;
+  gap: 1px;
+  padding: 4px 10px;
+  border-radius: var(--sim-radius);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--sim-shadow);
+  line-height: 1.25;
+}
+.br-title__group {
+  overflow: hidden;
+  color: var(--sim-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.br-title__name {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.br-title__count {
+  color: #b4491f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ───────── Status muat / galat ───────── */
+
+.br-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: min(320px, calc(100% - 32px));
+  padding: 10px 16px;
+  border-radius: var(--sim-radius);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--sim-shadow);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+.br-status--error {
+  flex-direction: column;
+}
+.br-status p {
+  margin: 0;
+  line-height: 1.5;
+}
+.br-status .sim-text-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 0 14px;
+}
+
+.br-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d6d4c9;
+  border-top-color: var(--sim-primary);
+  border-radius: 50%;
+  animation: br-spin 0.8s linear infinite;
+}
+@keyframes br-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ───────── Petunjuk gerakan ───────── */
+
+.br-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  z-index: 2;
+  max-width: calc(100% - 120px);
+  margin: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(38, 38, 36, 0.82);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: br-fade 0.4s ease 0.2s both;
+}
+.br-hint--lifted {
+  bottom: 58px;
+}
+@keyframes br-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ───────── Kontrol animasi ───────── */
+
+.br-transport {
+  position: absolute;
+  right: 56px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 5px 8px;
+  border-radius: var(--sim-radius);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--sim-shadow);
+}
+
+.br-tbtn {
+  display: grid;
+  flex: none;
+  min-width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--sim-border);
+  border-radius: var(--sim-radius);
+  background: #fff;
+  cursor: pointer;
+}
+.br-tbtn:hover {
+  border-color: var(--sim-primary);
+  background: var(--sim-primary-soft);
+}
+/* Selektor `.sim .br-tbtn--primary` sengaja lebih spesifik daripada `.sim button { color: inherit }`
+   (kit umum). Tanpa itu ikon putar/jeda berwarna gelap di atas latar gelap dan baru terlihat saat hover. */
+.sim .br-tbtn--primary {
+  border-color: var(--sim-primary);
+  background: var(--sim-primary);
+  color: #fff;
+}
+.sim .br-tbtn--primary:hover,
+.sim .br-tbtn--primary:focus-visible {
+  background: #3d3d3a;
+  color: #fff;
+}
+.sim .br-tbtn--primary svg {
+  stroke: currentColor;
+}
+.br-tbtn--text {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.br-seek {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.br-time {
+  flex: none;
+  min-width: 78px;
+  color: var(--sim-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ───────── Panel ───────── */
+
+.br-groups {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-group {
+  border-bottom: 1px solid var(--sim-border);
+}
+.br-group:last-child {
+  border-bottom: 0;
+}
+
+.br-group__btn {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  min-height: 40px;
+  padding: 5px 8px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.br-group__btn:hover {
+  background: var(--sim-surface-alt);
+}
+.br-group.is-active .br-group__btn {
+  border-left-color: var(--sim-primary);
+  background: var(--sim-primary-soft);
+}
+.br-group__name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.br-group__hint {
+  color: var(--sim-muted);
+  font-size: 11px;
+}
+
+.br-group__models {
+  display: grid;
+  gap: 8px;
+  padding: 6px 4px 10px;
+}
+.br-family__name {
+  margin: 0 0 3px 2px;
+  color: var(--sim-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.br-group__models .sim-seg__btn {
+  height: 32px;
+  padding: 0 10px;
+}
+
+.br-counter {
+  margin: 4px 0 0;
+  color: #b4491f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.br-text {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.br-facts {
+  display: grid;
+  margin: 0 0 6px;
+}
+.br-facts__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-top: 1px dotted var(--sim-border);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.br-facts dt {
+  color: var(--sim-muted);
+}
+.br-facts dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.br-formulas {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.br-formulas li {
+  padding: 4px 8px;
+  overflow-x: auto;
+  border-left: 3px solid var(--sim-border);
+  font-size: 14px;
+  scrollbar-width: none;
+}
+.br-formulas li::-webkit-scrollbar {
+  display: none;
+}
+
+/* ───────── Layar sentuh: sasaran sentuh lebih besar ───────── */
+
+@media (pointer: coarse) {
+  .br-group__btn {
+    min-height: 46px;
+  }
+  .br-group__models .sim-seg__btn {
+    height: 38px;
+  }
+  .br-tbtn,
+  .br-nav {
+    min-width: 38px;
+  }
+  .br-tbtn {
+    height: 38px;
+  }
+}
+
+/* ───────── Ponsel potret & layar sempit ───────── */
+
+@media (max-width: 480px) {
+  .br-time {
+    display: none;
+  }
+  .br-hint {
+    font-size: 10.5px;
+  }
+}
+
+/* ───────── Ponsel lanskap (tinggi sangat pendek) ───────── */
+
+@media (orientation: landscape) and (max-height: 380px) {
+  .br-title__group {
+    display: none;
+  }
+  .br-title {
+    padding: 2px 8px;
+  }
+  .br-title__name {
+    font-size: 12px;
+  }
+  .br-nav {
+    width: 30px;
+  }
+  .br-transport {
+    min-height: 38px;
+    padding: 2px 8px;
+  }
+  .br-hint--lifted {
+    bottom: 50px;
+  }
+}
+
+/* ───────── Desktop & tablet lanskap ───────── */
+
+@media (min-width: 900px) and (min-height: 541px) {
+  .br-top {
+    top: 12px;
+    left: 12px;
+  }
+  .br-nav {
+    width: 38px;
+  }
+  .br-title {
+    padding: 6px 14px;
+  }
+  .br-title__name {
+    font-size: 17px;
+  }
+  .br-title__count {
+    font-size: 14px;
+  }
+  .br-transport {
+    right: 64px;
+    bottom: 12px;
+    left: 12px;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .br-time {
+    min-width: 96px;
+    font-size: 12px;
+  }
+  .br-hint {
+    bottom: 14px;
+    font-size: 12.5px;
+  }
+  .br-hint--lifted {
+    bottom: 68px;
+  }
+  .br-group__btn {
+    padding: 8px 12px;
+  }
+  .br-group__name {
+    font-size: 14px;
+  }
+  .br-group__hint {
+    font-size: 12px;
+  }
+  .br-text {
+    font-size: 13px;
+  }
+  .br-facts__row {
+    font-size: 13px;
+  }
+  .br-formulas li {
+    font-size: 15px;
+  }
+}
+
+/* ───────── Layar penuh ───────── */
+
+.sim.is-fs .br-top {
+  top: 12px;
+  left: 12px;
+}
+.sim.is-fs .br-transport {
+  right: 64px;
+  bottom: 12px;
+  left: 12px;
+}
